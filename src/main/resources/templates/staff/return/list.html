@@ -1,0 +1,63 @@
+<div th:fragment="content">
+    <div class="card-sky">
+        <div class="card-header">
+            <h3 class="card-title"><span class="icon"><i class="fas fa-undo"></i></span>Danh sách yêu cầu hoàn trả</h3>
+            <div class="card-actions" style="display:flex;gap:.5rem;">
+                <a th:href="@{/staff/returns}" class="btn-sky btn-sky-sm" th:classappend="${status == null ? 'btn-sky-primary' : 'btn-sky-secondary'}">Tất cả</a>
+                <a th:href="@{/staff/returns(status=1)}" class="btn-sky btn-sky-sm" th:classappend="${status == 1 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Chờ duyệt</a>
+                <a th:href="@{/staff/returns(status=2)}" class="btn-sky btn-sky-sm" th:classappend="${status == 2 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã duyệt</a>
+                <a th:href="@{/staff/returns(status=3)}" class="btn-sky btn-sky-sm" th:classappend="${status == 3 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Từ chối</a>
+                <a th:href="@{/staff/returns(status=4)}" class="btn-sky btn-sky-sm" th:classappend="${status == 4 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã hoàn tiền</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="returnTable" class="table-sky">
+                <thead>
+                <tr>
+                    <th>Mã YC</th>
+                    <th>Mã đơn hàng</th>
+                    <th>Lý do</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th style="width:80px;">Chi tiết</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="req : ${requests}">
+                    <td th:text="${req.id}">RT001</td>
+                    <td>
+                        <a th:href="@{/staff/orders/{id}(id=${req.bill.id})}"
+                           th:text="${req.bill.id}" style="color:var(--primary);">HD001</a>
+                    </td>
+                    <td th:text="${req.reason}">Lý do</td>
+                    <td>
+                        <span class="badge-sky"
+                              th:classappend="${req.status == 1 ? 'warning' : (req.status == 2 ? 'success' : (req.status == 3 ? 'danger' : 'info'))}">
+                            <span th:switch="${req.status}">
+                                <span th:case="1">Chờ duyệt</span>
+                                <span th:case="2">Đã duyệt</span>
+                                <span th:case="3">Từ chối</span>
+                                <span th:case="4">Đã hoàn tiền</span>
+                            </span>
+                        </span>
+                    </td>
+                    <td th:text="${#temporals.format(req.createDate, 'dd/MM/yyyy HH:mm')}">24/06/2024</td>
+                    <td>
+                        <a th:href="@{/staff/returns/{id}(id=${req.id})}" class="action-btn" style="color:#36a4eb;">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(requests)}">
+                    <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">Không có yêu cầu nào</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initDataTable('#returnTable');
+        });
+    </script>
+</div>

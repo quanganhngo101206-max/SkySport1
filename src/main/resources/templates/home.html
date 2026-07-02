@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Trang chủ - SkySport')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<!-- ===== HERO BANNER ===== -->
+<section style="background:linear-gradient(135deg,#0a0a0a 50%,#1a0505);padding:4rem 0;border-bottom:2px solid #e63030;">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+                <p style="color:#e63030;font-size:.8rem;font-weight:700;letter-spacing:4px;text-transform:uppercase;">
+                    <i class="fas fa-bolt me-2"></i> Bộ sưu tập mới 2024
+                </p>
+                <h1 style="font-size:3.2rem;font-weight:900;line-height:1.1;color:#f5f5f5;margin-bottom:1.2rem;">
+                    PHONG CÁCH<br>
+                    <span style="color:#e63030;">THỂ THAO</span><br>
+                    ĐỈNH CAO
+                </h1>
+                <p style="color:#888;font-size:1rem;max-width:440px;margin-bottom:1.8rem;line-height:1.7;">
+                    Khám phá bộ sưu tập áo thể thao cao cấp từ các thương hiệu hàng đầu thế giới.
+                    Chất lượng vượt trội, phong cách không giới hạn.
+                </p>
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                    <a href="/san-pham" class="btn btn-red" style="padding:.9rem 2.5rem;font-size:1rem;border-radius:10px;">
+                        <i class="fas fa-shopping-bag me-2"></i> Mua ngay
+                    </a>
+                    <a href="#featured" class="btn btn-outline" style="padding:.9rem 2.5rem;font-size:1rem;border-radius:10px;">
+                        Xem sản phẩm <i class="fas fa-arrow-down ms-2"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6" style="text-align:center;">
+                <div style="background:linear-gradient(135deg,#1a1a1a,#2a0a0a);border:2px solid #333;border-radius:20px;padding:3rem 2rem;display:inline-block;">
+                    <i class="fas fa-tshirt" style="font-size:8rem;color:#e63030;opacity:.8;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== STATS ===== -->
+<section style="background:#0d0d0d;border-bottom:1px solid #1a1a1a;padding:1.5rem 0;">
+    <div class="container">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;text-align:center;">
+            <div><p style="font-size:1.8rem;font-weight:900;color:#e63030;">500+</p><p style="color:#888;font-size:.8rem;">Sản phẩm</p></div>
+            <div style="border-left:1px solid #222;padding-left:1rem;"><p style="font-size:1.8rem;font-weight:900;color:#e63030;">50+</p><p style="color:#888;font-size:.8rem;">Thương hiệu</p></div>
+            <div style="border-left:1px solid #222;padding-left:1rem;"><p style="font-size:1.8rem;font-weight:900;color:#e63030;">10K+</p><p style="color:#888;font-size:.8rem;">Khách hàng</p></div>
+            <div style="border-left:1px solid #222;padding-left:1rem;"><p style="font-size:1.8rem;font-weight:900;color:#2ed573;">Free</p><p style="color:#888;font-size:.8rem;">Ship đơn > 500K</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CATEGORIES ===== -->
+<section style="padding:4rem 0;background:#0a0a0a;">
+    <div class="container">
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <p style="color:#e63030;font-size:.8rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Danh mục</p>
+            <h2 style="font-size:2.2rem;font-weight:900;color:#f5f5f5;">CHỌN THEO <span style="color:#e63030;">DANH MỤC</span></h2>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;">
+            <a th:each="cat : ${categories}"
+               th:href="@{/san-pham(categoryId=${cat.id})}"
+               style="background:#111;border:1px solid #222;border-radius:14px;padding:1.5rem 1rem;text-align:center;transition:.3s;display:block;"
+               onmouseover="this.style.borderColor='#e63030';this.style.background='#1a1a1a'"
+               onmouseout="this.style.borderColor='#222';this.style.background='#111'">
+                <i class="fas fa-tag" style="font-size:2rem;color:#e63030;margin-bottom:.8rem;display:block;"></i>
+                <p style="font-weight:700;color:#f5f5f5;font-size:.9rem;" th:text="${cat.name}">Danh mục</p>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FEATURED PRODUCTS ===== -->
+<section id="featured" style="padding:4rem 0;background:#0d0d0d;">
+    <div class="container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2.5rem;flex-wrap:wrap;gap:1rem;">
+            <div>
+                <p style="color:#e63030;font-size:.8rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Nổi bật</p>
+                <h2 style="font-size:2.2rem;font-weight:900;color:#f5f5f5;">SẢN PHẨM <span style="color:#e63030;">NỔI BẬT</span></h2>
+            </div>
+            <a href="/san-pham" style="color:#e63030;font-weight:600;font-size:.9rem;">Xem tất cả <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.5rem;">
+            <div th:each="product : ${featuredProducts}" th:object="${product}"
+                 style="background:#111;border:1px solid #222;border-radius:16px;overflow:hidden;transition:.3s;"
+                 onmouseover="this.style.borderColor='#e63030';this.style.transform='translateY(-6px)'"
+                 onmouseout="this.style.borderColor='#222';this.style.transform='translateY(0)'">
+
+                <a th:href="@{/san-pham/{slug}(slug=${product.slug})}" style="display:block;">
+                    <div style="background:#1a1a1a;height:220px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #222;position:relative;">
+                        <i class="fas fa-tshirt" style="font-size:4.5rem;color:#333;"></i>
+                        <span style="position:absolute;top:12px;left:12px;background:#e63030;padding:.2rem .8rem;border-radius:20px;font-size:.65rem;font-weight:700;color:#fff;">Hot</span>
+                    </div>
+                </a>
+
+                <div style="padding:1rem 1.2rem 1.2rem;">
+                    <div style="font-size:.7rem;color:#888;margin-bottom:.3rem;">
+                        <span th:text="${product.brand != null ? product.brand.name : ''}">Nike</span>
+                        <span th:if="${product.category != null}" style="color:#333;"> · </span>
+                        <span th:text="${product.category != null ? product.category.name : ''}">Thể thao</span>
+                    </div>
+
+                    <a th:href="@{/san-pham/{slug}(slug=${product.slug})}"
+                       style="display:block;font-weight:700;color:#f5f5f5;font-size:.95rem;margin-bottom:.4rem;"
+                       th:text="${product.name}">Tên sản phẩm</a>
+
+                    <!-- ✅ Lấy giá từ productDetails đầu tiên -->
+                    <div th:with="firstDetail=${product.productDetails != null and !#lists.isEmpty(product.productDetails) ? product.productDetails[0] : null}">
+                        <div style="font-size:1.1rem;font-weight:800;color:#e63030;margin-bottom:.8rem;"
+                             th:text="${firstDetail != null ? #numbers.formatDecimal(firstDetail.price, 0, 'COMMA', 0, 'POINT') + 'đ' : 'Liên hệ'}">
+                            250,000đ
+                        </div>
+
+                        <div style="display:flex;gap:8px;">
+                            <a th:href="@{/san-pham/{slug}(slug=${product.slug})}"
+                               style="flex:1;text-align:center;padding:.5rem .8rem;background:transparent;border:1px solid #333;border-radius:8px;color:#888;font-size:.8rem;font-weight:600;transition:.3s;"
+                               onmouseover="this.style.borderColor='#e63030';this.style.color='#e63030'"
+                               onmouseout="this.style.borderColor='#333';this.style.color='#888'">
+                                <i class="fas fa-eye me-1"></i> Xem
+                            </a>
+                            <!-- ✅ Dùng đúng endpoint của bạn -->
+                            <form th:action="@{/customer/cart/add}" method="post" style="flex:1;">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" name="productDetailId" th:value="${firstDetail != null ? firstDetail.id : ''}"/>
+                                <input type="hidden" name="quantity" value="1"/>
+                                <button type="submit"
+                                        style="width:100%;padding:.5rem .8rem;background:#e63030;border:none;border-radius:8px;color:#fff;font-size:.8rem;font-weight:600;cursor:pointer;transition:.3s;"
+                                        onmouseover="this.style.background='#c82020'"
+                                        onmouseout="this.style.background='#e63030'"
+                                        th:disabled="${firstDetail == null or firstDetail.quantity <= 0}"
+                                        th:classappend="${firstDetail == null or firstDetail.quantity <= 0} ? 'opacity-50' : ''">
+                                    <i class="fas fa-cart-plus me-1"></i>
+                                    <span th:if="${firstDetail == null or firstDetail.quantity <= 0}">Hết hàng</span>
+                                    <span th:unless="${firstDetail == null or firstDetail.quantity <= 0}">Thêm</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(featuredProducts)}" style="grid-column:1/-1;text-align:center;padding:3rem;color:#555;">
+                <i class="fas fa-box-open" style="font-size:3rem;color:#333;display:block;margin-bottom:1rem;"></i>
+                <p>Chưa có sản phẩm nào</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== BRANDS ===== -->
+<section style="padding:4rem 0;background:#0a0a0a;border-top:1px solid #1a1a1a;">
+    <div class="container">
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <p style="color:#e63030;font-size:.8rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Đối tác</p>
+            <h2 style="font-size:2.2rem;font-weight:900;color:#f5f5f5;">THƯƠNG HIỆU <span style="color:#e63030;">ĐỐI TÁC</span></h2>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:.8rem;justify-content:center;">
+            <a th:each="brand : ${brands}"
+               th:href="@{/san-pham(brandId=${brand.id})}"
+               style="background:#111;border:1px solid #222;border-radius:10px;padding:.7rem 2rem;font-weight:600;color:#888;font-size:.9rem;transition:.3s;"
+               onmouseover="this.style.borderColor='#e63030';this.style.color='#f5f5f5'"
+               onmouseout="this.style.borderColor='#222';this.style.color='#888'"
+               th:text="${brand.name}">Nike</a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== WHY US ===== -->
+<section style="padding:4rem 0;background:#0d0d0d;border-top:1px solid #1a1a1a;">
+    <div class="container">
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <p style="color:#e63030;font-size:.8rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Lợi ích</p>
+            <h2 style="font-size:2.2rem;font-weight:900;color:#f5f5f5;">TẠI SAO CHỌN <span style="color:#e63030;">SKYSPORT?</span></h2>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2rem;text-align:center;">
+            <div style="padding:1.5rem 1rem;background:#111;border:1px solid #222;border-radius:14px;">
+                <i class="fas fa-award" style="font-size:2.5rem;color:#e63030;margin-bottom:1rem;display:block;"></i>
+                <h4 style="color:#f5f5f5;font-weight:700;margin-bottom:.5rem;">Chính hãng 100%</h4>
+                <p style="color:#888;font-size:.9rem;">Cam kết sản phẩm chính hãng</p>
+            </div>
+            <div style="padding:1.5rem 1rem;background:#111;border:1px solid #222;border-radius:14px;">
+                <i class="fas fa-shipping-fast" style="font-size:2.5rem;color:#e63030;margin-bottom:1rem;display:block;"></i>
+                <h4 style="color:#f5f5f5;font-weight:700;margin-bottom:.5rem;">Giao hàng nhanh</h4>
+                <p style="color:#888;font-size:.9rem;">Free ship đơn từ 500.000đ</p>
+            </div>
+            <div style="padding:1.5rem 1rem;background:#111;border:1px solid #222;border-radius:14px;">
+                <i class="fas fa-undo" style="font-size:2.5rem;color:#e63030;margin-bottom:1rem;display:block;"></i>
+                <h4 style="color:#f5f5f5;font-weight:700;margin-bottom:.5rem;">Đổi trả dễ dàng</h4>
+                <p style="color:#888;font-size:.9rem;">Hoàn trả trong 7 ngày</p>
+            </div>
+            <div style="padding:1.5rem 1rem;background:#111;border:1px solid #222;border-radius:14px;">
+                <i class="fas fa-headset" style="font-size:2.5rem;color:#e63030;margin-bottom:1rem;display:block;"></i>
+                <h4 style="color:#f5f5f5;font-weight:700;margin-bottom:.5rem;">Hỗ trợ 24/7</h4>
+                <p style="color:#888;font-size:.9rem;">Đội ngũ hỗ trợ sẵn sàng</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

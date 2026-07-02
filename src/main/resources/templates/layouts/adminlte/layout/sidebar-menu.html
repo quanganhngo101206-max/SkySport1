@@ -1,0 +1,247 @@
+<nav class="mt-2" th:fragment="sidebar-menu">
+    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- TỔNG QUAN                                          -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="nav-label">Tổng quan</div>
+
+        <li class="nav-item">
+            <a th:href="@{/admin}" class="nav-link" th:classappend="${#strings.contains(pageContent, 'dashboard')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-th-large"></i></span>
+                <span>Dashboard</span>
+            </a>
+        </li>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- QUẢN LÝ                                            -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="nav-label">Quản lý</div>
+
+        <!-- Sản phẩm -->
+        <li class="nav-item">
+            <a href="#" class="nav-link has-sub"
+               th:classappend="${#strings.contains(pageContent, 'product')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-box"></i></span>
+                <span>Sản phẩm</span>
+                <span class="arrow" th:classappend="${#strings.contains(pageContent, 'product')} ? 'open' : ''">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+            </a>
+            <ul class="sub-menu" th:classappend="${#strings.contains(pageContent, 'product')} ? 'open' : ''">
+                <li class="nav-item">
+                    <a th:href="@{/admin/products/list}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'product/list')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-list"></i></span>
+                        <span>Danh sách</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/products/create}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'product/create')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-plus"></i></span>
+                        <span>Thêm mới</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Đơn hàng -->
+        <li class="nav-item">
+            <a th:href="@{/admin/bills}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'bill')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-file-invoice"></i></span>
+                <span>Đơn hàng</span>
+                <span class="badge-count" th:if="${pendingOrders != null}" th:text="${pendingOrders}">0</span>
+            </a>
+        </li>
+
+        <!-- Phiếu nhập -->
+        <li class="nav-item">
+            <a href="#" class="nav-link has-sub"
+               th:classappend="${#strings.contains(pageContent, 'import-order')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-truck-loading"></i></span>
+                <span>Phiếu nhập</span>
+                <span class="arrow" th:classappend="${#strings.contains(pageContent, 'import-order')} ? 'open' : ''">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+            </a>
+            <ul class="sub-menu" th:classappend="${#strings.contains(pageContent, 'import-order')} ? 'open' : ''">
+                <li class="nav-item">
+                    <a th:href="@{/admin/import-orders}" class="nav-link"
+                       th:classappend="${pageContent == 'admin/import-order/list'} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-list"></i></span>
+                        <span>Danh sách</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/import-orders/create}" class="nav-link"
+                       th:classappend="${pageContent == 'admin/import-order/create'} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-plus"></i></span>
+                        <span>Tạo phiếu nhập</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Hoàn trả -->
+        <li class="nav-item">
+            <a th:href="@{/admin/return-requests}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'return-request')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-undo-alt"></i></span>
+                <span>Hoàn trả</span>
+            </a>
+        </li>
+
+        <!-- Mã giảm giá -->
+        <li class="nav-item">
+            <a href="#" class="nav-link has-sub"
+               th:classappend="${#strings.contains(pageContent, 'discount-code')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-ticket-alt"></i></span>
+                <span>Mã giảm giá</span>
+                <span class="arrow" th:classappend="${#strings.contains(pageContent, 'discount-code')} ? 'open' : ''">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+            </a>
+            <ul class="sub-menu" th:classappend="${#strings.contains(pageContent, 'discount-code')} ? 'open' : ''">
+                <li class="nav-item">
+                    <a th:href="@{/admin/discount-codes}" class="nav-link"
+                       th:classappend="${pageContent == 'admin/discount-code/list'} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-list"></i></span>
+                        <span>Danh sách</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/discount-codes/create}" class="nav-link"
+                       th:classappend="${pageContent == 'admin/discount-code/create'} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-plus"></i></span>
+                        <span>Tạo mã mới</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- NGƯỜI DÙNG                                         -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="nav-label">Người dùng</div>
+
+        <!-- Khách hàng -->
+        <li class="nav-item">
+            <a th:href="@{/admin/customers}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'customer')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-user"></i></span>
+                <span>Khách hàng</span>
+            </a>
+        </li>
+
+        <!-- Nhân viên -->
+        <li class="nav-item">
+            <a th:href="@{/admin/staffs}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'staff')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-users"></i></span>
+                <span>Nhân viên</span>
+            </a>
+        </li>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- THUỘC TÍNH SẢN PHẨM                               -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="nav-label">Thuộc tính</div>
+
+        <li class="nav-item">
+            <a href="#" class="nav-link has-sub"
+               th:classappend="${#strings.contains(pageContent, 'brand') or
+                                #strings.contains(pageContent, 'category') or
+                                #strings.contains(pageContent, 'material') or
+                                #strings.contains(pageContent, 'size') or
+                                #strings.contains(pageContent, 'color')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-cogs"></i></span>
+                <span>Thuộc tính</span>
+                <span class="arrow"
+                      th:classappend="${#strings.contains(pageContent, 'brand') or
+                                       #strings.contains(pageContent, 'category') or
+                                       #strings.contains(pageContent, 'material') or
+                                       #strings.contains(pageContent, 'size') or
+                                       #strings.contains(pageContent, 'color')} ? 'open' : ''">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+            </a>
+            <ul class="sub-menu"
+                th:classappend="${#strings.contains(pageContent, 'brand') or
+                                 #strings.contains(pageContent, 'category') or
+                                 #strings.contains(pageContent, 'material') or
+                                 #strings.contains(pageContent, 'size') or
+                                 #strings.contains(pageContent, 'color')} ? 'open' : ''">
+                <li class="nav-item">
+                    <a th:href="@{/admin/brands}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'brand')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-tag"></i></span>
+                        <span>Thương hiệu</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/categories}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'category')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-folder"></i></span>
+                        <span>Danh mục</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/materials}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'material')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-thread"></i></span>
+                        <span>Chất liệu</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/sizes}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'size')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-ruler"></i></span>
+                        <span>Kích cỡ</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/admin/colors}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'color')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-palette"></i></span>
+                        <span>Màu sắc</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- HỆ THỐNG                                           -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="nav-label">Hệ thống</div>
+
+        <!-- Nhà cung cấp -->
+        <li class="nav-item">
+            <a th:href="@{/admin/suppliers}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'supplier')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-truck"></i></span>
+                <span>Nhà cung cấp</span>
+            </a>
+        </li>
+
+        <!-- Thông báo -->
+        <li class="nav-item">
+            <a th:href="@{/admin/notifications}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'notification')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-bell"></i></span>
+                <span>Thông báo</span>
+            </a>
+        </li>
+
+        <!-- Tài khoản cá nhân -->
+        <li class="nav-item">
+            <a th:href="@{/admin/profile}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'profile')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-user-circle"></i></span>
+                <span>Tài khoản</span>
+            </a>
+        </li>
+
+    </ul>
+</nav>

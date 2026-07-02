@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head><title>Page</title></head>
+<body>
+<div th:fragment="content">
+
+    <div class="card-sky" style="max-width:1100px;">
+        <div class="card-header">
+            <h3 class="card-title"><span class="icon"><i class="fas fa-tags"></i></span>Danh sách thương hiệu</h3>
+            <div class="card-actions">
+                <button type="button" class="btn-sky btn-sky-primary btn-sky-sm" data-bs-toggle="modal" data-bs-target="#brandModal">
+                    <i class="fas fa-plus"></i> Thêm thương hiệu
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="brandTable" class="table-sky">
+                <thead><tr>
+                    <th>ID</th><th>Tên thương hiệu</th><th>Mô tả</th><th>Trạng thái</th><th style="width:100px;">Hành động</th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="brand : ${brands}">
+                    <td th:text="${brand.id}">BR001</td>
+                    <td th:text="${brand.name}">Nike</td>
+                    <td th:text="${brand.description}">Thương hiệu thể thao</td>
+                    <td>
+                        <span class="badge-sky" th:classappend="${brand.status == 1 ? 'success' : 'danger'}">
+                            <span th:if="${brand.status == 1}">Hoạt động</span>
+                            <span th:if="${brand.status != 1}">Không hoạt động</span>
+                        </span>
+                    </td>
+                    <td>
+                        <button class="action-btn warning" style="color:#ffc107;" data-bs-toggle="modal" data-bs-target="#brandModal"
+                                th:data-id="${brand.id}" th:data-name="${brand.name}"
+                                th:data-description="${brand.description}" th:data-status="${brand.status}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form th:action="@{/admin/brands/delete/{id}(id=${brand.id})}" method="post" style="display:inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="action-btn danger" style="color:#e63030;" onclick="return confirm('Bạn có chắc muốn xóa?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa thương hiệu -->
+<div class="modal fade" id="brandModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius);">
+            <div class="modal-header" style="border-bottom:1px solid var(--border-color);">
+                <h5 class="modal-title" style="color:var(--text-primary);">Thêm thương hiệu</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="brandForm" th:action="@{/admin/brands/save}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <input type="hidden" id="brandId" name="id">
+                    <div class="mb-3">
+                        <label class="form-sky-label required">Tên thương hiệu</label>
+                        <input type="text" class="form-sky" id="brandName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-sky-label">Mô tả</label>
+                        <textarea class="form-sky" id="brandDescription" name="description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-sky-label">Trạng thái</label>
+                        <select class="form-sky" id="brandStatus" name="status">
+                            <option value="1">Hoạt động</option>
+                            <option value="0">Không hoạt động</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid var(--border-color);">
+                    <button type="button" class="btn-sky btn-sky-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn-sky btn-sky-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('brandModal').addEventListener('show.bs.modal', function(event) {
+        var btn = event.relatedTarget;
+        var id = btn.getAttribute('data-id');
+        var modal = this;
+        if (id) {
+            modal.querySelector('.modal-title').textContent = 'Sửa thương hiệu';
+            modal.querySelector('#brandId').value = id;
+            modal.querySelector('#brandName').value = btn.getAttribute('data-name');
+            modal.querySelector('#brandDescription').value = btn.getAttribute('data-description') || '';
+            modal.querySelector('#brandStatus').value = btn.getAttribute('data-status');
+            modal.querySelector('#brandForm').action = '/admin/brands/update';
+        } else {
+            modal.querySelector('.modal-title').textContent = 'Thêm thương hiệu';
+            modal.querySelector('#brandId').value = '';
+            modal.querySelector('#brandName').value = '';
+            modal.querySelector('#brandDescription').value = '';
+            modal.querySelector('#brandStatus').value = '1';
+            modal.querySelector('#brandForm').action = '/admin/brands/save';
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initDataTable('#brandTable');
+    });
+</script>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

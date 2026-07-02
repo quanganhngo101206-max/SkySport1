@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' | SkySport'">Chi tiết đơn hàng - SkySport</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e63030;
+            --primary-dark: #c82020;
+            --bg-body: #0a0a0a;
+            --bg-card: #141414;
+            --bg-hover: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #6b6b6b;
+            --border-color: #2a2a2a;
+            --radius: 14px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .container-custom {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .card-sky {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .card-sky .card-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .card-sky .card-header .card-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-sky .card-header .card-title .icon {
+            color: var(--primary);
+        }
+        .card-sky .card-body {
+            padding: 24px;
+        }
+        .badge-status {
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .badge-status.pending { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
+        .badge-status.confirmed { background: rgba(54, 164, 235, 0.15); color: #36a4eb; }
+        .badge-status.shipping { background: rgba(54, 164, 235, 0.25); color: #36a4eb; }
+        .badge-status.delivered { background: rgba(46, 213, 115, 0.15); color: #2ed573; }
+        .badge-status.completed { background: rgba(46, 213, 115, 0.25); color: #2ed573; }
+        .badge-status.cancelled { background: rgba(230, 48, 48, 0.15); color: var(--primary); }
+        .badge-status.returning { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
+        .badge-status.unpaid { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
+        .badge-status.paid { background: rgba(46, 213, 115, 0.15); color: #2ed573; }
+        .badge-status.refunded { background: rgba(54, 164, 235, 0.15); color: #36a4eb; }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 4px;
+            bottom: 4px;
+            width: 2px;
+            background: var(--border-color);
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 24px;
+        }
+        .timeline-item:last-child { padding-bottom: 0; }
+        .timeline-item .dot {
+            position: absolute;
+            left: -26px;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            background: var(--bg-card);
+        }
+        .timeline-item.active .dot {
+            background: var(--primary);
+            box-shadow: 0 0 0 4px rgba(230, 48, 48, 0.2);
+        }
+        .timeline-item .content .status {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .timeline-item .content .date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .timeline-item .content .note {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .table-sky {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .table-sky thead th {
+            background: var(--bg-hover);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 16px;
+        }
+        .table-sky tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .btn-back {
+            padding: 8px 20px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-back:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+        .btn-print {
+            padding: 8px 20px;
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-print:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .card-sky { border: 1px solid #ddd; }
+            body { background: #fff; color: #000; }
+            .badge-status { border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<div class="container-custom">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 style="font-size:24px;font-weight:800;">
+                <i class="fas fa-receipt" style="color:var(--primary);margin-right:10px;"></i>
+                Đơn hàng <span th:text="${bill.id}">HD001</span>
+            </h1>
+            <p style="color:var(--text-muted);font-size:14px;margin:0;">
+                <i class="fas fa-calendar-alt me-1"></i>
+                <span th:text="${#temporals.format(bill.createDate, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:30</span>
+            </p>
+        </div>
+        <div class="d-flex gap-2 no-print">
+            <a href="/guest/track" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Tra cứu lại
+            </a>
+            <button onclick="window.print()" class="btn-print">
+                <i class="fas fa-print"></i> In
+            </button>
+        </div>
+    </div>
+
+    <!-- Status -->
+    <div class="card-sky">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div style="color:var(--text-muted);font-size:13px;">Trạng thái</div>
+                    <div>
+                        <span class="badge-status" th:classappend="
+                            ${bill.status == 1} ? 'pending' :
+                            ${bill.status == 2} ? 'confirmed' :
+                            ${bill.status == 3} ? 'shipping' :
+                            ${bill.status == 4} ? 'delivered' :
+                            ${bill.status == 5} ? 'cancelled' :
+                            ${bill.status == 6} ? 'returning' :
+                            ${bill.status == 7} ? 'completed' : ''
+                        ">
+                            <span th:if="${bill.status == 1}">Chờ xác nhận</span>
+                            <span th:if="${bill.status == 2}">Đã xác nhận</span>
+                            <span th:if="${bill.status == 3}">Đang giao</span>
+                            <span th:if="${bill.status == 4}">Đã giao</span>
+                            <span th:if="${bill.status == 5}">Đã hủy</span>
+                            <span th:if="${bill.status == 6}">Đang hoàn trả</span>
+                            <span th:if="${bill.status == 7}">Hoàn thành</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="color:var(--text-muted);font-size:13px;">Thanh toán</div>
+                    <div>
+                        <span class="badge-status" th:classappend="
+                            ${bill.paymentStatus == 0} ? 'unpaid' :
+                            ${bill.paymentStatus == 1} ? 'paid' :
+                            ${bill.paymentStatus == 2} ? 'refunded' : ''
+                        ">
+                            <span th:if="${bill.paymentStatus == 0}">Chưa thanh toán</span>
+                            <span th:if="${bill.paymentStatus == 1}">Đã thanh toán</span>
+                            <span th:if="${bill.paymentStatus == 2}">Đã hoàn tiền</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <span class="icon"><i class="fas fa-user"></i></span>
+                Thông tin nhận hàng
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div style="color:var(--text-muted);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Người nhận</div>
+                    <div style="font-weight:600;" th:text="${bill.receiverName != null ? bill.receiverName : 'Khách hàng'}">Nguyễn Văn A</div>
+                </div>
+                <div class="col-md-6">
+                    <div style="color:var(--text-muted);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Số điện thoại</div>
+                    <div style="font-weight:600;" th:text="${bill.receiverPhone != null ? bill.receiverPhone : '-'}">0123456789</div>
+                </div>
+                <div class="col-12">
+                    <div style="color:var(--text-muted);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Địa chỉ giao hàng</div>
+                    <div style="font-weight:500;" th:text="${bill.shippingAddress != null ? bill.shippingAddress : '-'}">123 Đường ABC, Quận 1, TP.HCM</div>
+                </div>
+                <div th:if="${bill.guestEmail != null}" class="col-12">
+                    <div style="color:var(--text-muted);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Email (khách vãng lai)</div>
+                    <div style="font-weight:500;" th:text="${bill.guestEmail}">guest@example.com</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products -->
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <span class="icon"><i class="fas fa-box"></i></span>
+                Danh sách sản phẩm
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <table class="table-sky table mb-0">
+                <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th style="text-align:center;">Số lượng</th>
+                    <th style="text-align:right;">Thành tiền</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="detail : ${bill.billDetails}">
+                    <td>
+                        <div style="font-weight:600;color:var(--text-primary);" th:text="${detail.productNameSnapshot}">Áo thun Nike</div>
+                        <div style="font-size:12px;color:var(--text-muted);">
+                            <span th:text="${detail.sizeSnapshot != null ? detail.sizeSnapshot : ''}">M</span>
+                            <span th:text="${detail.colorSnapshot != null ? ' / ' + detail.colorSnapshot : ''}">Đen</span>
+                            <span style="color:var(--primary);font-weight:600;margin-left:8px;" th:text="${#numbers.formatDecimal(detail.priceSnapshot, 0, 'COMMA', 0, 'POINT') + 'đ'}">250,000đ</span>
+                        </div>
+                    </td>
+                    <td style="text-align:center;" th:text="${detail.quantity}">2</td>
+                    <td style="text-align:right;font-weight:600;color:var(--text-primary);" th:text="${#numbers.formatDecimal(detail.totalAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">500,000đ</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card-sky">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 offset-md-6">
+                    <table style="width:100%;">
+                        <tr>
+                            <td style="padding:6px 0;color:var(--text-muted);">Tạm tính</td>
+                            <td style="padding:6px 0;text-align:right;font-weight:600;" th:text="${#numbers.formatDecimal(bill.subtotal, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 0;color:var(--text-muted);">Phí vận chuyển</td>
+                            <td style="padding:6px 0;text-align:right;font-weight:600;" th:text="${bill.shippingFee != null && bill.shippingFee > 0 ? #numbers.formatDecimal(bill.shippingFee, 0, 'COMMA', 0, 'POINT') + 'đ' : 'Miễn phí'}">30,000đ</td>
+                        </tr>
+                        <tr th:if="${bill.discountAmount != null && bill.discountAmount > 0}">
+                            <td style="padding:6px 0;color:var(--text-muted);">Giảm giá</td>
+                            <td style="padding:6px 0;text-align:right;font-weight:600;color:#2ed573;">
+                                <span>- </span>
+                                <span th:text="${#numbers.formatDecimal(bill.discountAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">50,000đ</span>
+                            </td>
+                        </tr>
+                        <tr style="border-top:1px solid var(--border-color);">
+                            <td style="padding:12px 0 0;font-weight:700;font-size:18px;color:var(--text-primary);">Tổng cộng</td>
+                            <td style="padding:12px 0 0;text-align:right;font-weight:800;font-size:18px;color:var(--primary);" th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <span class="icon"><i class="fas fa-clock"></i></span>
+                Lịch sử trạng thái
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                <div th:each="history : ${timeline}" class="timeline-item" th:classappend="${historyStat != null && historyStat.status == 'active' ? 'active' : ''}">
+                    <div class="dot"></div>
+                    <div class="content">
+                        <div class="status">
+                            <span th:if="${history.newStatus == 1}">Chờ xác nhận</span>
+                            <span th:if="${history.newStatus == 2}">Đã xác nhận</span>
+                            <span th:if="${history.newStatus == 3}">Đang giao</span>
+                            <span th:if="${history.newStatus == 4}">Đã giao</span>
+                            <span th:if="${history.newStatus == 5}">Đã hủy</span>
+                            <span th:if="${history.newStatus == 6}">Đang hoàn trả</span>
+                            <span th:if="${history.newStatus == 7}">Hoàn thành</span>
+                        </div>
+                        <div class="date" th:text="${#temporals.format(history.createDate, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:30</div>
+                        <div class="note" th:text="${history.note != null ? history.note : '-'}">-</div>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(timeline)}" style="text-align:center;padding:20px 0;color:var(--text-muted);">
+                <i class="fas fa-clock" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+                Chưa có cập nhật trạng thái
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to tracking -->
+    <div class="text-center mt-4 no-print">
+        <a href="/guest/track" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Tra cứu đơn hàng khác
+        </a>
+    </div>
+
+</div>
+
+<!-- Footer -->
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

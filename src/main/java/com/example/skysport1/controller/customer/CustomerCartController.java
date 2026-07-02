@@ -1,0 +1,228 @@
+package com.example.skysport1.controller.customer;
+
+import com.example.skysport1.entity.Cart;
+import com.example.skysport1.entity.CartDetail;
+import com.example.skysport1.entity.ProductDetail;
+import com.example.skysport1.repository.CartDetailRepository;
+import com.example.skysport1.repository.ProductDetailRepository;
+import com.example.skysport1.service.AccountService;
+import com.example.skysport1.service.CartService;
+import com.example.skysport1.service.CustomerService;
+import com.example.skysport1.service.ProductDetailService;
+import com.example.skysport1.util.mapper.CustomerMapper;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Controller
+@RequestMapping("/customer/cart")
+public class CustomerCartController {
+
+    private static final String SESSION_GUEST_CART = "GUEST_CART";
+
+    private final CartService cartService;
+    private final AccountService accountService;
+    private final CustomerService customerService;
+    private final ProductDetailService productDetailService;
+    private final ProductDetailRepository productDetailRepository;
+    private final CartDetailRepository cartDetailRepository;  // ✅ THÊM
+
+    @SuppressWarnings("unused")
+    private final CustomerMapper customerMapper;
+
+    public CustomerCartController(
+            CartService cartService,
+            AccountService accountService,
+            CustomerService customerService,
+            ProductDetailService productDetailService,
+            ProductDetailRepository productDetailRepository,
+            CartDetailRepository cartDetailRepository,  // ✅ THÊM
+            CustomerMapper customerMapper
+    ) {
+        this.cartService = cartService;
+        this.accountService = accountService;
+        this.customerService = customerService;
+        this.productDetailService = productDetailService;
+        this.productDetailRepository = productDetailRepository;
+        this.cartDetailRepository = cartDetailRepository;  // ✅ THÊM
+        this.customerMapper = customerMapper;
+    }
+
+    @GetMapping
+    public String viewCart(Model model, HttpSession session) {
+        String customerId = getCurrentCustomerId().orElse(null);
+
+        // Guest mode: convert session map -> CartDetail list for template
+        if (customerId == null) {
+            Map<Integer, Integer> guestCart = getGuestCart(session);
+            List<CartDetail> guestItems = new ArrayList<>();
+            for (Map.Entry<Integer, Integer> e : guestCart.entrySet()) {
+                try {
+                    ProductDetail pd = productDetailRepository.findByIdWithProductSizeColor(e.getKey()).orElseThrow();
+                    CartDetail cd = CartDetail.builder()
+                            .productDetail(pd)
+                            .quantity(e.getValue())
+                            .build();
+                    guestItems.add(cd);
+                } catch (Exception ex) {
+                    // sản phẩm không còn tồn tại -> bỏ qua
+                }
+            }
+            model.addAttribute("cart", null);
+            model.addAttribute("items", guestItems);
+            model.addAttribute("guestCart", guestCart);
+            model.addAttribute("totalItems",
+                    guestCart.values().stream().mapToInt(Integer::intValue).sum());
+            addCartSummary(model, guestItems);
+            return "customer/cart/cart";
+        }
+
+        // ✅ Logged-in user: lấy cart + details có fetch join Product
+        Cart cart = cartService.getOrCreateCart(customerId);
+        List<CartDetail> details = cartDetailRepository.findByCartIdWithProduct(cart.getId());
+
+        model.addAttribute("cart", cart);
+        model.addAttribute("items", details);
+        model.addAttribute("totalItems", details.stream().mapToInt(CartDetail::getQuantity).sum());
+        addCartSummary(model, details);
+        return "customer/cart/cart";
+    }
+
+    @PostMapping("/add")
+    public String addToCart(
+            @RequestParam("productDetailId") Integer productDetailId,
+            @RequestParam(value = "quantity", defaultValue = "1") int quantity,
+            HttpSession session
+    ) {
+        String customerId = getCurrentCustomerId().orElse(null);
+
+        if (productDetailId == null || productDetailId <= 0) {
+            return "redirect:/customer/cart";
+        }
+        if (quantity <= 0) {
+            return "redirect:/customer/cart";
+        }
+
+        if (customerId == null) {
+            Map<Integer, Integer> guestCart = getGuestCart(session);
+            guestCart.merge(productDetailId, quantity, Integer::sum);
+            session.setAttribute(SESSION_GUEST_CART, guestCart);
+            return "redirect:/customer/cart";
+        }
+
+        cartService.addToCart(customerId, productDetailId, quantity);
+        return "redirect:/customer/cart";
+    }
+
+    @PostMapping("/update")
+    public String updateQuantity(
+            @RequestParam("cartDetailId") Integer cartDetailId,
+            @RequestParam(value = "quantity", defaultValue = "1") int quantity,
+            HttpSession session
+    ) {
+        String customerId = getCurrentCustomerId().orElse(null);
+
+        if (cartDetailId == null || cartDetailId <= 0) {
+            return "redirect:/customer/cart";
+        }
+
+        if (customerId == null) {
+            // guest: cartDetailId treated as productDetailId
+            Map<Integer, Integer> guestCart = getGuestCart(session);
+            if (quantity <= 0) guestCart.remove(cartDetailId);
+            else guestCart.put(cartDetailId, quantity);
+            session.setAttribute(SESSION_GUEST_CART, guestCart);
+            return "redirect:/customer/cart";
+        }
+
+        cartService.updateQuantity(customerId, cartDetailId, quantity);
+        return "redirect:/customer/cart";
+    }
+
+    @PostMapping("/remove")
+    public String removeItem(
+            @RequestParam("cartDetailId") Integer cartDetailId,
+            HttpSession session
+    ) {
+        String customerId = getCurrentCustomerId().orElse(null);
+
+        if (cartDetailId == null || cartDetailId <= 0) {
+            return "redirect:/customer/cart";
+        }
+
+        if (customerId == null) {
+            // guest: cartDetailId treated as productDetailId
+            Map<Integer, Integer> guestCart = getGuestCart(session);
+            guestCart.remove(cartDetailId);
+            session.setAttribute(SESSION_GUEST_CART, guestCart);
+            return "redirect:/customer/cart";
+        }
+
+        cartService.removeItem(customerId, cartDetailId);
+        return "redirect:/customer/cart";
+    }
+
+    private Map<Integer, Integer> getGuestCart(HttpSession session) {
+        Object raw = session.getAttribute(SESSION_GUEST_CART);
+        if (raw instanceof Map<?, ?> map) {
+            Map<Integer, Integer> result = new HashMap<>();
+            for (Map.Entry<?, ?> e : map.entrySet()) {
+                if (e.getKey() instanceof Integer k && e.getValue() instanceof Integer v) {
+                    result.put(k, v);
+                }
+            }
+            return result;
+        }
+        return new HashMap<>();
+    }
+
+    /**
+     * Map logged-in user -> customerId.
+     */
+    private java.util.Optional<String> getCurrentCustomerId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return java.util.Optional.empty();
+        }
+
+        String username = auth.getName();
+        if (username == null || username.isBlank()) {
+            return java.util.Optional.empty();
+        }
+
+        try {
+            var account = accountService.findByUsername(username);
+            var customer = customerService.findByAccountId(account.getId());
+            return java.util.Optional.ofNullable(customer.getId());
+        } catch (Exception e) {
+            return java.util.Optional.empty();
+        }
+    }
+
+    private void addCartSummary(Model model, List<CartDetail> items) {
+        BigDecimal subtotal = items.stream()
+                .filter(i -> i.getProductDetail() != null && i.getProductDetail().getPrice() != null)
+                .map(i -> i.getProductDetail().getPrice()
+                        .multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal shippingFee = subtotal.compareTo(BigDecimal.valueOf(500_000)) < 0
+                ? BigDecimal.valueOf(30_000) : BigDecimal.ZERO;
+
+        BigDecimal totalAmount = subtotal.add(shippingFee);
+
+        model.addAttribute("subtotal", subtotal);
+        model.addAttribute("shippingFee", shippingFee);
+        model.addAttribute("discountAmount", BigDecimal.ZERO);
+        model.addAttribute("totalAmount", totalAmount);
+    }
+}

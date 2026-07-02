@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Phiếu nhập</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible">
+        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible">
+        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-boxes-stacked icon"></i>
+                Danh sách phiếu nhập
+            </div>
+            <div class="card-actions">
+                <a th:href="@{/admin/import-orders/create}" class="btn-sky btn-sky-primary">
+                    <i class="fas fa-plus"></i>
+                    Tạo phiếu nhập
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(orders)}" class="empty-state">
+                <div class="icon"><i class="fas fa-circle-info"></i></div>
+                <div class="title">Chưa có phiếu nhập</div>
+                <div class="desc">Bạn có thể tạo phiếu nhập mới để cập nhật tồn kho.</div>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(orders)}" class="table-sky table table-striped align-middle">
+                <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="o : ${orders}">
+                    <td th:text="${o.id}">ID</td>
+                    <td th:text="${o.status}">-</td>
+                    <td>
+                        <a th:href="@{/admin/import-orders/{id}(id=${o.id})}" class="btn-sky btn-sky-secondary btn-sky-sm">
+                            <i class="fas fa-eye"></i>
+                            Chi tiết
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

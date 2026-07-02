@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <title>Hồ sơ nhân viên</title>
+</head>
+<body>
+<div th:fragment="content">
+
+  <div class="card-sky">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-user icon"></i>
+        Thông tin tài khoản
+      </div>
+      <div class="card-actions">
+        <!-- Chưa có trang sửa profile riêng, trỏ tạm về chính trang này -->
+        <a th:href="@{/admin/profile}" class="btn-sky btn-sky-secondary">
+          Chỉnh sửa
+        </a>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div th:if="${account != null}">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-sky-label">Tên đăng nhập</div>
+            <div class="form-control-plaintext" th:text="${account.username}">username</div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-sky-label">Email</div>
+            <div class="form-control-plaintext" th:text="${account.email != null ? account.email : '-'}">-</div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-sky-label">Họ và tên</div>
+            <div class="form-control-plaintext" th:text="${account.fullName != null ? account.fullName : '-'}">-</div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-sky-label">Vai trò</div>
+            <div class="form-control-plaintext" th:text="${account.role != null ? account.role : '-'}">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div th:if="${account == null}" class="empty-state">
+        <div class="icon"><i class="fas fa-circle-exclamation"></i></div>
+        <div class="title">Không có dữ liệu hồ sơ</div>
+        <div class="desc">Vui lòng đăng nhập lại hoặc kiểm tra quyền truy cập.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

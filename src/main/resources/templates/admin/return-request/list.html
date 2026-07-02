@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Danh sách yêu cầu hoàn trả</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible">
+        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible">
+        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-rotate-left icon"></i>
+                Yêu cầu hoàn trả
+            </div>
+            <div class="card-actions">
+                <a th:href="@{/admin/return-requests}" class="btn-sky btn-sky-secondary">
+                    Làm mới
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(requests)}" class="empty-state">
+                <div class="icon"><i class="fas fa-circle-info"></i></div>
+                <div class="title">Chưa có yêu cầu hoàn trả</div>
+                <div class="desc">Khi có yêu cầu hoàn trả, hệ thống sẽ hiển thị tại đây.</div>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(requests)}"
+                   class="table-sky table table-striped align-middle">
+                <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Khách hàng</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th style="width: 170px;">Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${requests}">
+                    <td th:text="${r.id}">#1</td>
+                    <td th:text="${r.bill != null and r.bill.customer != null ? r.bill.customer.fullName : (r.bill != null ? r.bill.guestEmail : '-')}">-</td>
+                    <td>
+                        <span th:switch="${r.status}">
+                            <span th:case="1">Chờ duyệt</span>
+                            <span th:case="2">Đã duyệt</span>
+                            <span th:case="3">Từ chối</span>
+                            <span th:case="4">Đã hoàn tiền</span>
+                            <span th:case="*">-</span>
+                        </span>
+                    </td>
+                    <td th:text="${r.createDate != null ? #temporals.format(r.createDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                    <td>
+                        <a th:href="@{/admin/return-requests/{id}(id=${r.id})}"
+                           class="btn-sky btn-sky-primary btn-sky-sm">
+                            <i class="fas fa-eye"></i>
+                            Chi tiết
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

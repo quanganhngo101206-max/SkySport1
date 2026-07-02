@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Chi tiết yêu cầu hoàn trả</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible">
+        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible">
+        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-file-signature icon"></i>
+                Chi tiết yêu cầu hoàn trả
+            </div>
+            <div class="card-actions">
+                <a th:href="@{/admin/return-requests}" class="btn-sky btn-sky-secondary">
+                    ← Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div th:if="${request != null}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-sky-label">Mã</div>
+                        <div class="form-control-plaintext" th:text="${request.id}">#</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-sky-label">Khách hàng</div>
+                        <div class="form-control-plaintext"
+                             th:text="${request.bill != null and request.bill.customer != null ? request.bill.customer.fullName : (request.bill != null ? request.bill.guestEmail : '-')}">-</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-sky-label">Đơn hàng liên quan</div>
+                        <div class="form-control-plaintext">
+                            <a th:if="${request.bill != null}" th:href="@{/admin/bills/{id}(id=${request.bill.id})}"
+                               th:text="${request.bill.id}">HD001</a>
+                            <span th:if="${request.bill == null}">-</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-sky-label">Trạng thái</div>
+                        <div class="form-control-plaintext">
+                            <span th:switch="${request.status}">
+                                <span th:case="1">Chờ duyệt</span>
+                                <span th:case="2">Đã duyệt</span>
+                                <span th:case="3">Từ chối</span>
+                                <span th:case="4">Đã hoàn tiền</span>
+                                <span th:case="*">-</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-sky-label">Lý do hoàn trả</div>
+                        <div class="form-control-plaintext" th:text="${request.reason != null ? request.reason : '-'}">-</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-sky-label">Ngày tạo</div>
+                        <div class="form-control-plaintext"
+                             th:text="${request.createDate != null ? #temporals.format(request.createDate, 'dd/MM/yyyy HH:mm') : '-'}">-</div>
+                    </div>
+
+                    <div class="col-12" th:if="${request.description != null}">
+                        <div class="form-sky-label">Mô tả</div>
+                        <div class="form-control-plaintext" th:text="${request.description}">-</div>
+                    </div>
+
+                    <div class="col-12" th:if="${request.evidenceUrl != null}">
+                        <div class="form-sky-label">Hình ảnh minh chứng</div>
+                        <a th:href="${request.evidenceUrl}" target="_blank" th:text="${request.evidenceUrl}">link</a>
+                    </div>
+                </div>
+
+                <hr class="border-sky" style="opacity:0.35;">
+
+                <!-- Hành động theo trạng thái -->
+                <div class="mb-3" th:if="${request.status == 1 or request.status == 2}">
+                    <div class="form-sky-label mb-2">Xử lý yêu cầu</div>
+                    <div class="d-flex flex-wrap" style="gap:8px;">
+
+                        <form th:if="${request.status == 1}"
+                              th:action="@{/admin/return-requests/{id}/approve(id=${request.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <input type="hidden" name="note" value="">
+                            <button type="submit" class="btn-sky btn-sky-success"
+                                    onclick="return confirm('Duyệt yêu cầu hoàn trả này?')">
+                                <i class="fas fa-check"></i> Duyệt
+                            </button>
+                        </form>
+
+                        <form th:if="${request.status == 1}"
+                              th:action="@{/admin/return-requests/{id}/reject(id=${request.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <input type="hidden" name="note" value="">
+                            <button type="submit" class="btn-sky btn-sky-danger"
+                                    onclick="return confirm('Từ chối yêu cầu hoàn trả này?')">
+                                <i class="fas fa-times"></i> Từ chối
+                            </button>
+                        </form>
+
+                        <form th:if="${request.status == 2}"
+                              th:action="@{/admin/return-requests/{id}/confirm-refund(id=${request.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <input type="hidden" name="note" value="">
+                            <button type="submit" class="btn-sky btn-sky-primary"
+                                    onclick="return confirm('Xác nhận đã hoàn tiền cho khách?')">
+                                <i class="fas fa-money-bill-wave"></i> Xác nhận hoàn tiền
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <hr class="border-sky" style="opacity:0.35;">
+
+                <div>
+                    <div class="form-sky-label mb-2">Danh sách sản phẩm hoàn trả</div>
+                    <table class="table-sky table table-striped align-middle">
+                        <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Size</th>
+                            <th>Màu</th>
+                            <th>Số lượng hoàn</th>
+                            <th>Tiền hoàn</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="d : ${details}">
+                            <td th:text="${d.productDetail != null ? d.productDetail.product.name : '-'}">-</td>
+                            <td th:text="${d.productDetail != null and d.productDetail.size != null ? d.productDetail.size.name : '-'}">-</td>
+                            <td th:text="${d.productDetail != null and d.productDetail.color != null ? d.productDetail.color.name : '-'}">-</td>
+                            <td th:text="${d.quantityReturn != null ? d.quantityReturn : 0}">0</td>
+                            <td th:text="${d.refundPrice != null ? #numbers.formatDecimal(d.refundPrice, 0, 'COMMA', 0, 'POINT') + 'đ' : '-'}">-</td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(details)}">
+                            <td colspan="5" class="text-center text-muted py-3">Chưa có chi tiết</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div th:if="${request == null}" class="empty-state">
+                <div class="icon"><i class="fas fa-circle-exclamation"></i></div>
+                <div class="title">Không tìm thấy dữ liệu</div>
+                <div class="desc">Yêu cầu hoàn trả không tồn tại hoặc không đủ quyền.</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

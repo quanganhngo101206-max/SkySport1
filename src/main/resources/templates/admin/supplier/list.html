@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Nhà cung cấp</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-truck icon"></i>
+                Danh sách nhà cung cấp
+            </div>
+            <div class="card-actions">
+                <!-- Nếu supplier controller có endpoint create riêng thì đổi link tại đây -->
+                <a th:href="@{/admin/suppliers/create}" class="btn-sky btn-sky-primary">
+                    <i class="fas fa-plus"></i>
+                    Tạo nhà cung cấp
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(suppliers)}" class="empty-state">
+                <div class="icon"><i class="fas fa-circle-exclamation"></i></div>
+                <div class="title">Chưa có nhà cung cấp</div>
+                <div class="desc">Hãy tạo nhà cung cấp đầu tiên.</div>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(suppliers)}"
+                   class="table-sky table table-striped align-middle">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>SĐT</th>
+                    <th>Địa chỉ</th>
+                    <th style="width: 180px;">Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${suppliers}">
+                    <td th:text="${s.name}">Tên</td>
+                    <td th:text="${s.phone != null ? s.phone : '-'}">-</td>
+                    <td th:text="${s.address != null ? s.address : '-'}">-</td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a th:href="@{/admin/suppliers/{id}/edit(id=${s.id})}"
+                               class="btn-sky btn-sky-secondary btn-sky-sm">
+                                <i class="fas fa-edit"></i>
+                                Sửa
+                            </a>
+
+                            <form th:action="@{/admin/suppliers/delete/{id}(id=${s.id})}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit"
+                                        class="btn-sky btn-sky-danger btn-sky-sm"
+                                        onclick="return confirm('Xóa nhà cung cấp này?')">
+                                    <i class="fas fa-trash"></i>
+                                    Xóa
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

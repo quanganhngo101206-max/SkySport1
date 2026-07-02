@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head><title>Page</title></head>
+<body>
+<div th:fragment="content">
+    <div class="card-sky">
+        <div class="card-header">
+            <h3 class="card-title"><span class="icon"><i class="fas fa-users"></i></span>Danh sách khách hàng</h3>
+        </div>
+        <div class="card-body">
+            <table id="customerTable" class="table-sky">
+                <thead><tr>
+                    <th>ID</th><th>Họ tên</th><th>Email</th><th>Số điện thoại</th>
+                    <th>Giới tính</th><th>Trạng thái</th><th>Ngày tạo</th><th style="width:100px;">Hành động</th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="customer : ${customers}">
+                    <td th:text="${customer.id}">KH001</td>
+                    <td th:text="${customer.fullName}">Nguyễn Văn A</td>
+                    <td th:text="${customer.email}">customer@example.com</td>
+                    <td th:text="${customer.phone}">0123456789</td>
+                    <td>
+                        <span th:if="${customer.gender == true}">Nam</span>
+                        <span th:if="${customer.gender == false}">Nữ</span>
+                        <span th:if="${customer.gender == null}" style="color:var(--text-muted);">—</span>
+                    </td>
+                    <td>
+                        <span class="badge-sky" th:classappend="${customer.status == 1 ? 'success' : 'danger'}">
+                            <span th:if="${customer.status == 1}">Hoạt động</span>
+                            <span th:if="${customer.status != 1}">Không hoạt động</span>
+                        </span>
+                    </td>
+                    <td th:text="${#temporals.format(customer.createDate, 'dd/MM/yyyy')}">24/06/2024</td>
+                    <td>
+                        <a th:href="@{/admin/customers/edit/{id}(id=${customer.id})}" class="action-btn warning" style="color:#ffc107;">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form th:action="@{/admin/customers/delete/{id}(id=${customer.id})}" method="post" style="display:inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="action-btn danger" style="color:#e63030;" onclick="return confirm('Bạn có chắc muốn xóa?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initDataTable('#customerTable');
+    });
+</script>
+</body>
+</html>

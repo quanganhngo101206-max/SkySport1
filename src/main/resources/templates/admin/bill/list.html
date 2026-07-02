@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<body>
+<div th:fragment="content">
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible">
+        <button type="button" class="close" data-bs-dismiss="alert">&times;</button>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible">
+        <button type="button" class="close" data-bs-dismiss="alert">&times;</button>
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Danh sách đơn hàng</h3>
+            <form method="get" class="float-right d-flex" style="gap:8px;">
+                <select name="status" class="form-control" style="width:auto;">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="1" th:selected="${status == 1}">Chờ xác nhận</option>
+                    <option value="2" th:selected="${status == 2}">Đã xác nhận</option>
+                    <option value="3" th:selected="${status == 3}">Đang giao</option>
+                    <option value="4" th:selected="${status == 4}">Đã giao</option>
+                    <option value="5" th:selected="${status == 5}">Đã hủy</option>
+                    <option value="7" th:selected="${status == 7}">Hoàn thành</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Lọc</button>
+            </form>
+        </div>
+        <div class="card-body">
+            <table id="billTable" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="bill : ${bills}">
+                    <td th:text="${bill.id}">HD001</td>
+                    <td th:text="${bill.customer != null ? bill.customer.fullName : bill.guestEmail}">Khách hàng</td>
+                    <td th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${bill.status == 1} ? 'bg-warning text-dark' :
+                                             (${bill.status == 2} ? 'bg-info text-white' :
+                                             (${bill.status == 3} ? 'bg-primary' :
+                                             (${bill.status == 4} ? 'bg-success' :
+                                             (${bill.status == 5} ? 'bg-danger' : 'bg-secondary'))))">
+                            <span th:if="${bill.status == 1}">Chờ xác nhận</span>
+                            <span th:if="${bill.status == 2}">Đã xác nhận</span>
+                            <span th:if="${bill.status == 3}">Đang giao</span>
+                            <span th:if="${bill.status == 4}">Đã giao</span>
+                            <span th:if="${bill.status == 5}">Đã hủy</span>
+                            <span th:if="${bill.status == 7}">Hoàn thành</span>
+                        </span>
+                    </td>
+                    <td th:text="${#temporals.format(bill.createDate, 'dd/MM/yyyy HH:mm')}">24/06/2024 15:30</td>
+                    <td>
+                        <a th:href="@{/admin/bills/{id}(id=${bill.id})}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Phân trang -->
+            <nav th:if="${totalPages > 1}">
+                <ul class="pagination pagination-sm justify-content-end">
+                    <li class="page-item" th:classappend="${page == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/bills(page=${page - 1}, size=${size}, status=${status})}">«</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:classappend="${i == page} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/bills(page=${i}, size=${size}, status=${status})}"
+                           th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${page == totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/bills(page=${page + 1}, size=${size}, status=${status})}">»</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script>
+        $(function () {
+            $("#billTable").DataTable({
+                "responsive": true,
+                "lengthChange": false,
+                "autoWidth": false,
+                "paging": false,
+                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            }).buttons().container().appendTo('#billTable_wrapper .col-md-6:eq(0)');
+        });
+    </script>
+</th:block>
+</body>
+</html>

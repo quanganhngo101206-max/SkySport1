@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Thông báo</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-bell icon"></i>
+                Thông báo
+            </div>
+            <div class="card-actions">
+                <!-- Nếu có nút mark-as-read trong controller thì sửa link tại đây -->
+                <a th:href="@{/admin/notifications}" class="btn-sky btn-sky-secondary">
+                    Làm mới
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(notifications)}" class="empty-state">
+                <div class="icon"><i class="fas fa-bell-slash"></i></div>
+                <div class="title">Không có thông báo</div>
+                <div class="desc">Chờ sự kiện từ hệ thống.</div>
+            </div>
+
+            <div th:if="${!#lists.isEmpty(notifications)}">
+                <table class="table-sky table table-striped align-middle">
+                    <thead>
+                    <tr>
+                        <th>Nội dung</th>
+                        <th>Loại</th>
+                        <th>Trạng thái</th>
+                        <th>Thời gian</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="n : ${notifications}">
+                        <td th:text="${n.content != null ? n.content : '-'}">Nội dung</td>
+                        <td th:text="${n.type != null ? n.type : '-'}">TYPE</td>
+                        <td>
+                            <span class="badge-sky"
+                                  th:classappend="${n.status != null and n.status == 1 ? ' success' : ' secondary'}">
+                                <span th:text="${n.status != null and n.status == 1 ? 'Chưa đọc' : 'Đã đọc'}">
+                                    Chưa đọc
+                                </span>
+                            </span>
+                        </td>
+                        <td th:text="${n.createdAt != null ? n.createdAt : '-'}">-</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

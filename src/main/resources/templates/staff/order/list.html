@@ -1,0 +1,81 @@
+<div th:fragment="content">
+    <div class="card-sky">
+        <div class="card-header">
+            <h3 class="card-title"><span class="icon"><i class="fas fa-shopping-bag"></i></span>Danh sách đơn hàng</h3>
+            <div class="card-actions" style="display:flex;gap:.5rem;align-items:center;">
+                <a th:href="@{/staff/orders}" class="btn-sky btn-sky-sm" th:classappend="${status == null ? 'btn-sky-primary' : 'btn-sky-secondary'}">Tất cả</a>
+                <a th:href="@{/staff/orders(status=1)}" class="btn-sky btn-sky-sm" th:classappend="${status == 1 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Chờ xác nhận</a>
+                <a th:href="@{/staff/orders(status=2)}" class="btn-sky btn-sky-sm" th:classappend="${status == 2 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã xác nhận</a>
+                <a th:href="@{/staff/orders(status=3)}" class="btn-sky btn-sky-sm" th:classappend="${status == 3 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đang giao</a>
+                <a th:href="@{/staff/orders(status=4)}" class="btn-sky btn-sky-sm" th:classappend="${status == 4 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã giao</a>
+                <a th:href="@{/staff/orders(status=5)}" class="btn-sky btn-sky-sm" th:classappend="${status == 5 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã hủy</a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <table id="orderTable" class="table-sky">
+                <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th style="width:80px;">Chi tiết</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="bill : ${bills}">
+                    <td th:text="${bill.id}">HD001</td>
+                    <td th:text="${bill.customer != null ? bill.customer.fullName : bill.guestEmail}">Khách hàng</td>
+                    <td th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                    <td>
+                        <span class="badge-sky"
+                              th:classappend="${bill.status == 1 ? 'warning' :
+                                              (bill.status == 2 ? 'info' :
+                                              (bill.status == 3 ? 'primary' :
+                                              (bill.status == 4 ? 'success' :
+                                              (bill.status == 5 ? 'danger' : 'secondary'))))}">
+                            <span th:switch="${bill.status}">
+                                <span th:case="1">Chờ xác nhận</span>
+                                <span th:case="2">Đã xác nhận</span>
+                                <span th:case="3">Đang giao</span>
+                                <span th:case="4">Đã giao</span>
+                                <span th:case="5">Đã hủy</span>
+                                <span th:case="7">Hoàn thành</span>
+                                <span th:case="*">Không rõ</span>
+                            </span>
+                        </span>
+                    </td>
+                    <td th:text="${#temporals.format(bill.createDate, 'dd/MM/yyyy HH:mm')}">24/06/2024</td>
+                    <td>
+                        <a th:href="@{/staff/orders/{id}(id=${bill.id})}" class="action-btn" style="color:#36a4eb;">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(bills)}">
+                    <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">Không có đơn hàng nào</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div th:if="${totalPages > 1}" style="display:flex;justify-content:center;gap:.5rem;margin-top:1.5rem;">
+                <a th:if="${page > 0}" th:href="@{/staff/orders(page=${page - 1}, status=${status})}"
+                   class="btn-sky btn-sky-secondary btn-sky-sm">‹</a>
+
+                <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                    <a th:href="@{/staff/orders(page=${i},status=${status})}"
+                       class="btn-sky btn-sky-sm"
+                       th:classappend="${i == page ? 'btn-sky-primary' : 'btn-sky-secondary'}"
+                       th:text="${i + 1}">1</a>
+                </span>
+
+                <a th:if="${page < totalPages - 1}" th:href="@{/staff/orders(page=${page+1},status=${status})}"
+                   class="btn-sky btn-sky-secondary btn-sky-sm">›</a>
+            </div>
+        </div>
+    </div>
+</div>

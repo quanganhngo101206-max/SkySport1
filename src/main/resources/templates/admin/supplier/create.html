@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Thêm nhà cung cấp</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-truck icon"></i>
+                Thêm nhà cung cấp
+            </div>
+        </div>
+
+        <div class="card-body">
+            <form th:action="@{/admin/suppliers/save}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-sky-label required">Tên nhà cung cấp</label>
+                        <input type="text" name="name" class="form-sky" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Số điện thoại</label>
+                        <input type="text" name="phone" class="form-sky">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Email</label>
+                        <input type="email" name="email" class="form-sky">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Người liên hệ</label>
+                        <input type="text" name="contactPerson" class="form-sky">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-sky-label">Địa chỉ</label>
+                        <input type="text" name="address" class="form-sky">
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex gap-2">
+                    <button type="submit" class="btn-sky btn-sky-primary">
+                        <i class="fas fa-save"></i> Lưu
+                    </button>
+                    <a th:href="@{/admin/suppliers}" class="btn-sky btn-sky-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

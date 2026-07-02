@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Tạo mã giảm giá</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-plus icon"></i>
+                Tạo mã giảm giá
+            </div>
+            <div class="card-actions">
+                <a th:href="@{/admin/discount-codes}" class="btn-sky btn-sky-secondary">
+                    ← Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <form th:action="@{/admin/discount-codes/save}" method="post">
+
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-sky-label required">Mã</label>
+                        <input class="form-sky" type="text" name="code" required placeholder="VD: SPORT10"/>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-sky-label required">Tên</label>
+                        <input class="form-sky" type="text" name="name" required placeholder="VD: Giảm 10% mùa hè"/>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-sky-label required">Loại giảm</label>
+                        <select class="form-sky" name="discountType" required>
+                            <option value="">-- Chọn loại --</option>
+                            <option th:each="dt : ${discountTypes}"
+                                    th:value="${dt.value}"
+                                    th:text="${dt.label}"></option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-sky-label required">Giá trị giảm</label>
+                        <input class="form-sky" type="number" name="discountValue" min="0" step="0.01" required placeholder="VD: 10"/>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-sky-label">Số lượng</label>
+                        <input class="form-sky" type="number" name="quantity" min="0" placeholder="VD: 100"/>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Giá trị đơn tối thiểu</label>
+                        <input class="form-sky" type="number" name="minOrderValue" min="0" step="0.01" placeholder="VD: 200000"/>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Giảm tối đa</label>
+                        <input class="form-sky" type="number" name="maxDiscountValue" min="0" step="0.01" placeholder="VD: 50000"/>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Ngày bắt đầu</label>
+                        <input class="form-sky"
+                               type="datetime-local"
+                               name="startDate"/>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Ngày kết thúc</label>
+                        <input class="form-sky"
+                               type="datetime-local"
+                               name="endDate"/>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn-sky btn-sky-primary">
+                        <i class="fas fa-save"></i>
+                        Lưu mã
+                    </button>
+                    <a th:href="@{/admin/discount-codes}" class="btn-sky btn-sky-secondary">
+                        Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

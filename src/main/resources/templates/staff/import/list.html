@@ -1,0 +1,58 @@
+<div th:fragment="content">
+    <div class="card-sky">
+        <div class="card-header">
+            <h3 class="card-title"><span class="icon"><i class="fas fa-truck-loading"></i></span>Danh sách phiếu nhập</h3>
+            <div class="card-actions" style="display:flex;gap:.5rem;">
+                <a th:href="@{/staff/imports}" class="btn-sky btn-sky-sm" th:classappend="${status == null ? 'btn-sky-primary' : 'btn-sky-secondary'}">Tất cả</a>
+                <a th:href="@{/staff/imports(status=1)}" class="btn-sky btn-sky-sm" th:classappend="${status == 1 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Chờ duyệt</a>
+                <a th:href="@{/staff/imports(status=2)}" class="btn-sky btn-sky-sm" th:classappend="${status == 2 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã duyệt</a>
+                <a th:href="@{/staff/imports(status=3)}" class="btn-sky btn-sky-sm" th:classappend="${status == 3 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Từ chối</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="importTable" class="table-sky">
+                <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th style="width:80px;">Chi tiết</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td th:text="${order.id}">PN001</td>
+                    <td th:text="${order.supplier?.name ?: '—'}">Nhà cung cấp</td>
+                    <td th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                    <td>
+                        <span class="badge-sky"
+                              th:classappend="${order.status == 1 ? 'warning' : (order.status == 2 ? 'success' : 'danger')}">
+                            <span th:switch="${order.status}">
+                                <span th:case="1">Chờ duyệt</span>
+                                <span th:case="2">Đã duyệt</span>
+                                <span th:case="3">Từ chối</span>
+                            </span>
+                        </span>
+                    </td>
+                    <td th:text="${#temporals.format(order.createDate, 'dd/MM/yyyy HH:mm')}">24/06/2024</td>
+                    <td>
+                        <a th:href="@{/staff/imports/{id}(id=${order.id})}" class="action-btn" style="color:#36a4eb;">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(orders)}">
+                    <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">Không có phiếu nhập nào</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initDataTable('#importTable');
+        });
+    </script>
+</div>

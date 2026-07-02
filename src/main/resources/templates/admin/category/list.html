@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head><title>Page</title></head>
+<body>
+<div th:fragment="content">
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible">
+        <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+        <span th:text="${success}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible">
+        <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Danh sách danh mục</h3>
+            <button type="button" class="btn btn-primary float-end"
+                    data-bs-toggle="modal" data-bs-target="#categoryModal">
+                <i class="fas fa-plus"></i> Thêm danh mục
+            </button>
+        </div>
+        <div class="card-body">
+            <table id="categoryTable" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên danh mục</th>
+                    <th>Mô tả</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="category : ${categories}">
+                    <td th:text="${category.id}">CAT001</td>
+                    <td th:text="${category.name}">Áo thể thao</td>
+                    <td th:text="${category.description}">Mô tả danh mục</td>
+                    <td>
+                                    <span class="badge"
+                                          th:classappend="${category.status == 1 ? 'bg-success' : 'bg-danger'}">
+                                        <span th:if="${category.status == 1}">Hoạt động</span>
+                                        <span th:if="${category.status != 1}">Không hoạt động</span>
+                                    </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                data-bs-target="#categoryModal"
+                                th:data-id="${category.id}"
+                                th:data-name="${category.name}"
+                                th:data-description="${category.description}"
+                                th:data-status="${category.status}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form th:action="@{/admin/categories/delete/{id}(id=${category.id})}"
+                              method="post" style="display:inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Bạn có chắc muốn xóa danh mục này?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm danh mục</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="categoryForm" th:action="@{/admin/categories/save}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <input type="hidden" id="categoryId" name="id">
+                    <div class="mb-3">
+                        <label class="form-label">Tên danh mục <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="categoryName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="categoryDescription" name="description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Trạng thái</label>
+                        <select class="form-select" id="categoryStatus" name="status">
+                            <option value="1">Hoạt động</option>
+                            <option value="0">Không hoạt động</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('categoryModal').addEventListener('show.bs.modal', function(event) {
+        var btn = event.relatedTarget;
+        var id = btn.getAttribute('data-id');
+        var modal = this;
+        if (id) {
+            modal.querySelector('.modal-title').textContent = 'Sửa danh mục';
+            modal.querySelector('#categoryId').value = id;
+            modal.querySelector('#categoryName').value = btn.getAttribute('data-name');
+            modal.querySelector('#categoryDescription').value = btn.getAttribute('data-description') || '';
+            modal.querySelector('#categoryStatus').value = btn.getAttribute('data-status');
+            modal.querySelector('#categoryForm').action = '/admin/categories/update';
+        } else {
+            modal.querySelector('.modal-title').textContent = 'Thêm danh mục';
+            modal.querySelector('#categoryId').value = '';
+            modal.querySelector('#categoryName').value = '';
+            modal.querySelector('#categoryDescription').value = '';
+            modal.querySelector('#categoryStatus').value = '1';
+            modal.querySelector('#categoryForm').action = '/admin/categories/save';
+        }
+    });
+</script>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

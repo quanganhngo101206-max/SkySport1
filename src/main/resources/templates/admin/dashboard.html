@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+
+    <!-- ===== STATS ROW ===== -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon red"><i class="fas fa-box"></i></div>
+                    <span class="stat-change">+12%</span>
+                </div>
+                <div class="stat-number" th:text="${totalProducts}">0</div>
+                <div class="stat-label">Tổng sản phẩm</div>
+                <a th:href="@{/admin/products/list}" class="stat-link">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon green"><i class="fas fa-file-invoice"></i></div>
+                    <span class="stat-change">+8%</span>
+                </div>
+                <div class="stat-number" th:text="${totalOrders}">0</div>
+                <div class="stat-label">Tổng đơn hàng</div>
+                <a th:href="@{/admin/bills}" class="stat-link">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                    <span class="stat-change">+5%</span>
+                </div>
+                <div class="stat-number" th:text="${totalCustomers}">0</div>
+                <div class="stat-label">Tổng khách hàng</div>
+                <a th:href="@{/admin/customers}" class="stat-link">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="stat-icon yellow"><i class="fas fa-money-bill-wave"></i></div>
+                    <span class="stat-change">+18%</span>
+                </div>
+                <div class="stat-number" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</div>
+                <div class="stat-label">Doanh thu</div>
+                <a href="#" class="stat-link">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ROW 2: BIỂU ĐỒ + TRẠNG THÁI ĐƠN HÀNG ===== -->
+    <div class="row g-4 mb-4">
+        <!-- Biểu đồ doanh thu theo tháng -->
+        <div class="col-xl-8">
+            <div class="card-sky h-100">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <span class="icon"><i class="fas fa-chart-line"></i></span>
+                        Doanh thu 6 tháng gần đây
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Thống kê trạng thái đơn hàng -->
+        <div class="col-xl-4">
+            <div class="card-sky h-100">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <span class="icon"><i class="fas fa-chart-pie"></i></span>
+                        Trạng thái đơn hàng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="orderStatusChart" height="200"></canvas>
+                    <div class="mt-3" style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);">
+                                <span style="width:10px;height:10px;border-radius:50%;background:#ffc107;display:inline-block;"></span> Chờ xác nhận
+                            </span>
+                            <span style="font-weight:600;font-size:13px;" th:text="${pendingOrders != null ? pendingOrders : 0}">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);">
+                                <span style="width:10px;height:10px;border-radius:50%;background:#36a4eb;display:inline-block;"></span> Đang giao
+                            </span>
+                            <span style="font-weight:600;font-size:13px;" th:text="${deliveringOrders != null ? deliveringOrders : 0}">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);">
+                                <span style="width:10px;height:10px;border-radius:50%;background:#2ed573;display:inline-block;"></span> Hoàn thành
+                            </span>
+                            <span style="font-weight:600;font-size:13px;" th:text="${completedOrders != null ? completedOrders : 0}">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);">
+                                <span style="width:10px;height:10px;border-radius:50%;background:#e63030;display:inline-block;"></span> Đã hủy
+                            </span>
+                            <span style="font-weight:600;font-size:13px;" th:text="${cancelledOrders != null ? cancelledOrders : 0}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ROW 3: ĐƠN HÀNG GẦN ĐÂY + SẢN PHẨM BÁN CHẠY ===== -->
+    <div class="row g-4 mb-4">
+        <!-- Đơn hàng gần đây -->
+        <div class="col-xl-7">
+            <div class="card-sky">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <span class="icon"><i class="fas fa-clock"></i></span>
+                        Đơn hàng gần đây
+                    </h5>
+                    <div class="card-actions">
+                        <a th:href="@{/admin/bills}" class="btn-sky btn-sky-primary btn-sky-sm">
+                            <i class="fas fa-eye"></i> Xem tất cả
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sky">
+                            <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="bill : ${recentBills}">
+                                <td>
+                                    <a th:href="@{/admin/bills/{id}(id=${bill.id})}"
+                                       class="text-red fw-bold"
+                                       th:text="${bill.id}">HD001</a>
+                                </td>
+                                <td th:text="${bill.customer != null ? bill.customer.fullName : (bill.guestEmail != null ? bill.guestEmail : 'Khách vãng lai')}">Khách hàng</td>
+                                <td th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                                <td>
+                                    <span class="badge-sky"
+                                          th:classappend="${bill.status == 1} ? 'warning' :
+                                                         (${bill.status == 2} ? 'info' :
+                                                         (${bill.status == 3} ? 'primary' :
+                                                         (${bill.status == 4} ? 'success' :
+                                                         (${bill.status == 5} ? 'danger' : 'secondary'))))">
+                                        <span th:switch="${bill.status}">
+                                            <span th:case="1"><i class="fas fa-clock"></i> Chờ</span>
+                                            <span th:case="2"><i class="fas fa-check"></i> Xác nhận</span>
+                                            <span th:case="3"><i class="fas fa-truck"></i> Đang giao</span>
+                                            <span th:case="4"><i class="fas fa-check-double"></i> Đã giao</span>
+                                            <span th:case="5"><i class="fas fa-times"></i> Đã hủy</span>
+                                            <span th:case="7"><i class="fas fa-trophy"></i> Hoàn thành</span>
+                                        </span>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentBills)}">
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x d-block mb-2"></i>
+                                    Chưa có đơn hàng nào
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sản phẩm bán chạy -->
+        <div class="col-xl-5">
+            <div class="card-sky h-100">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <span class="icon"><i class="fas fa-fire"></i></span>
+                        Sản phẩm bán chạy
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div th:if="${topProducts != null and !#lists.isEmpty(topProducts)}">
+                        <div th:each="product, stat : ${topProducts}"
+                             style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border-color);">
+                            <span style="width:28px;height:28px;border-radius:50%;background:var(--primary-gradient);
+                                         display:flex;align-items:center;justify-content:center;
+                                         font-size:12px;font-weight:700;color:#fff;flex-shrink:0;"
+                                  th:text="${stat.index + 1}">1</span>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:13px;font-weight:600;color:var(--text-primary);
+                                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                                     th:text="${product.productName}">Sản phẩm</div>
+                                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;"
+                                     th:text="'Đã bán: ' + ${product.soldQuantity}">Đã bán: 0</div>
+                            </div>
+                            <span style="font-size:13px;font-weight:700;color:var(--primary);"
+                                  th:text="${#numbers.formatDecimal(product.revenue, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</span>
+                        </div>
+                    </div>
+                    <div th:if="${topProducts == null or #lists.isEmpty(topProducts)}"
+                         style="padding:40px;text-align:center;color:var(--text-muted);">
+                        <i class="fas fa-box-open fa-2x d-block mb-2"></i>
+                        Chưa có dữ liệu
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ROW 4: HOẠT ĐỘNG GẦN ĐÂY + THỐNG KÊ NHANH ===== -->
+    <div class="row g-4">
+        <!-- Thống kê nhanh -->
+        <div class="col-xl-4">
+            <div class="card-sky h-100">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <span class="icon"><i class="fas fa-bolt"></i></span>
+                        Thống kê nhanh
+                    </h5>
+                </div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;
+                                padding:14px 16px;background:rgba(230,48,48,0.06);
+                                border-radius:10px;border:1px solid rgba(230,48,48,0.15);">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <i class="fas fa-tag" style="color:var(--primary);width:18px;"></i>
+                            <span style="font-size:13px;color:var(--text-secondary);">Voucher đang hoạt động</span>
+                        </div>
+                        <span style="font-weight:700;color:var(--primary);"
+                              th:text="${activeVouchers != null ? activeVouchers : 0}">0</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;
+                                padding:14px 16px;background:rgba(46,213,115,0.06);
+                                border-radius:10px;border:1px solid rgba(46,213,115,0.15);">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <i class="fas fa-boxes" style="color:#2ed573;width:18px;"></i>
+                            <span style="font-size:13px;color:var(--text-secondary);">Sản phẩm còn hàng</span>
+                        </div>
+                        <span style="font-weight:700;color:#2ed573;"
+                              th:text="${inStockProducts != null ? inStockProducts : 0}">0</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;
+                                padding:14px 16px;background:rgba(255,193,7,0.06);
+                                border-radius:10px;border:1px solid rgba(255,193,7,0.15);">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <i class="fas fa-exclamation-triangle" style="color:#ffc107;width:18px;"></i>
+                            <span style="font-size:13px;color:var(--text-secondary);">Sắp hết hàng (&lt;5)</span>
+                        </div>
+                        <span style="font-weight:700;color:#ffc107;"
+                              th:text="${lowStockProducts != null ? lowStockProducts : 0}">0</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;
+                                padding:14px 16px;background:rgba(54,164,235,0.06);
+                                border-radius:10px;border:1px solid rgba(54,164,235,0.15);">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <i class="fas fa-user-plus" style="color:#36a4eb;width:18px;"></i>
+                            <span style="font-size:13px;color:var(--text-secondary);">KH mới trong tháng</span>
+                        </div>
+                        <span style="font-weight:700;color:#36a4eb;"
+                              th:text="${newCustomersThisMonth != null ? newCustomersThisMonth : 0}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khách hàng mới nhất -->
+        <div class="col-xl-8">
+            <div class="card-sky">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <span class="icon"><i class="fas fa-user-plus"></i></span>
+                        Khách hàng mới nhất
+                    </h5>
+                    <div class="card-actions">
+                        <a th:href="@{/admin/customers}" class="btn-sky btn-sky-primary btn-sky-sm">
+                            <i class="fas fa-eye"></i> Xem tất cả
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sky">
+                            <thead>
+                            <tr>
+                                <th>Khách hàng</th>
+                                <th>Email</th>
+                                <th>Số điện thoại</th>
+                                <th>Ngày tạo</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="customer : ${recentCustomers}">
+                                <td>
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <div style="width:32px;height:32px;border-radius:50%;
+                                                    background:var(--primary-gradient);
+                                                    display:flex;align-items:center;justify-content:center;
+                                                    font-size:13px;font-weight:700;color:#fff;flex-shrink:0;"
+                                             th:text="${#strings.substring(customer.fullName,0,1).toUpperCase()}">A</div>
+                                        <span style="font-size:13px;font-weight:500;"
+                                              th:text="${customer.fullName}">Nguyễn Văn A</span>
+                                    </div>
+                                </td>
+                                <td style="font-size:13px;color:var(--text-secondary);"
+                                    th:text="${customer.email}">email@gmail.com</td>
+                                <td style="font-size:13px;color:var(--text-secondary);"
+                                    th:text="${customer.phone != null ? customer.phone : '—'}">—</td>
+                                <td style="font-size:13px;color:var(--text-muted);"
+                                    th:text="${#temporals.format(customer.createDate, 'dd/MM/yyyy')}">01/01/2024</td>
+                            </tr>
+                            <tr th:if="${recentCustomers == null or #lists.isEmpty(recentCustomers)}">
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="fas fa-users fa-2x d-block mb-2"></i>
+                                    Chưa có khách hàng
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script th:inline="javascript">
+        // Revenue chart
+        const revenueLabels = /*[[${revenueLabels}]]*/ ['T1','T2','T3','T4','T5','T6'];
+        const revenueData   = /*[[${revenueData}]]*/ [0,0,0,0,0,0];
+
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    label: 'Doanh thu (đ)',
+                    data: revenueData,
+                    borderColor: '#e63030',
+                    backgroundColor: 'rgba(230,48,48,0.08)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#e63030',
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: '#2a2a2a' }, ticks: { color: '#a0a0a0' } },
+                    y: { grid: { color: '#2a2a2a' }, ticks: { color: '#a0a0a0' } }
+                }
+            }
+        });
+
+        // Order status chart
+        const pendingOrders   = /*[[${pendingOrders != null ? pendingOrders : 0}]]*/ 0;
+        const deliveringOrders= /*[[${deliveringOrders != null ? deliveringOrders : 0}]]*/ 0;
+        const completedOrders = /*[[${completedOrders != null ? completedOrders : 0}]]*/ 0;
+        const cancelledOrders = /*[[${cancelledOrders != null ? cancelledOrders : 0}]]*/ 0;
+
+        new Chart(document.getElementById('orderStatusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Chờ xác nhận','Đang giao','Hoàn thành','Đã hủy'],
+                datasets: [{
+                    data: [pendingOrders, deliveringOrders, completedOrders, cancelledOrders],
+                    backgroundColor: ['#ffc107','#36a4eb','#2ed573','#e63030'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '70%',
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

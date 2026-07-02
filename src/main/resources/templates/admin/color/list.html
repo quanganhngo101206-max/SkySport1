@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head><title>Page</title></head>
+<body>
+<div th:fragment="content">
+
+    <div class="card-sky" style="max-width:1000px;">
+        <div class="card-header">
+            <h3 class="card-title"><span class="icon"><i class="fas fa-palette"></i></span>Danh sách màu sắc</h3>
+            <div class="card-actions">
+                <button type="button" class="btn-sky btn-sky-primary btn-sky-sm" data-bs-toggle="modal" data-bs-target="#colorModal">
+                    <i class="fas fa-plus"></i> Thêm màu sắc
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="colorTable" class="table-sky">
+                <thead><tr>
+                    <th>ID</th><th>Tên màu</th><th>Mã HEX</th><th>Trạng thái</th><th style="width:100px;">Hành động</th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="color : ${colors}">
+                    <td th:text="${color.id}">COL001</td>
+                    <td th:text="${color.name}">Đen</td>
+                    <td>
+                        <span style="display:inline-flex; align-items:center; gap:6px;">
+                            <span style="display:inline-block; width:16px; height:16px; border-radius:50%; border:1px solid var(--border-color);"
+                                  th:style="'display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid var(--border-color);background-color:' + ${color.hexCode}"></span>
+                            <span th:text="${color.hexCode}" style="color:var(--text-secondary); font-size:.85rem;">#000000</span>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge-sky" th:classappend="${color.status == 1 ? 'success' : 'danger'}">
+                            <span th:if="${color.status == 1}">Hoạt động</span>
+                            <span th:if="${color.status != 1}">Không hoạt động</span>
+                        </span>
+                    </td>
+                    <td>
+                        <button class="action-btn warning" style="color:#ffc107;" data-bs-toggle="modal" data-bs-target="#colorModal"
+                                th:data-id="${color.id}" th:data-name="${color.name}"
+                                th:data-hexcode="${color.hexCode}" th:data-status="${color.status}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form th:action="@{/admin/colors/delete/{id}(id=${color.id})}" method="post" style="display:inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="action-btn danger" style="color:#e63030;" onclick="return confirm('Bạn có chắc muốn xóa?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa màu sắc -->
+<div class="modal fade" id="colorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius);">
+            <div class="modal-header" style="border-bottom:1px solid var(--border-color);">
+                <h5 class="modal-title" style="color:var(--text-primary);">Thêm màu sắc</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="colorForm" th:action="@{/admin/colors/save}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <input type="hidden" id="colorId" name="id">
+                    <div class="mb-3">
+                        <label class="form-sky-label required">Tên màu</label>
+                        <input type="text" class="form-sky" id="colorName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-sky-label required">Mã HEX</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="color" id="colorPicker" value="#000000"
+                                   style="width:48px; height:42px; padding:2px; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-input); cursor:pointer;"
+                                   oninput="document.getElementById('colorHex').value=this.value">
+                            <input type="text" class="form-sky" id="colorHex" name="hexCode" style="flex:1;"
+                                   placeholder="#000000" pattern="^#[0-9A-Fa-f]{6}$" required
+                                   oninput="if(this.value.match(/^#[0-9A-Fa-f]{6}$/)) document.getElementById('colorPicker').value=this.value">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-sky-label">Trạng thái</label>
+                        <select class="form-sky" id="colorStatus" name="status">
+                            <option value="1">Hoạt động</option>
+                            <option value="0">Không hoạt động</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid var(--border-color);">
+                    <button type="button" class="btn-sky btn-sky-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn-sky btn-sky-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('colorModal').addEventListener('show.bs.modal', function(e) {
+        var btn = e.relatedTarget, id = btn.getAttribute('data-id'), m = this;
+        if (id) {
+            var hex = btn.getAttribute('data-hexcode') || '#000000';
+            m.querySelector('.modal-title').textContent = 'Sửa màu sắc';
+            m.querySelector('#colorId').value = id;
+            m.querySelector('#colorName').value = btn.getAttribute('data-name');
+            m.querySelector('#colorHex').value = hex;
+            m.querySelector('#colorPicker').value = hex;
+            m.querySelector('#colorStatus').value = btn.getAttribute('data-status');
+            m.querySelector('#colorForm').action = '/admin/colors/update';
+        } else {
+            m.querySelector('.modal-title').textContent = 'Thêm màu sắc';
+            m.querySelector('#colorId').value = '';
+            m.querySelector('#colorName').value = '';
+            m.querySelector('#colorHex').value = '';
+            m.querySelector('#colorPicker').value = '#000000';
+            m.querySelector('#colorStatus').value = '1';
+            m.querySelector('#colorForm').action = '/admin/colors/save';
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initDataTable('#colorTable');
+    });
+</script>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

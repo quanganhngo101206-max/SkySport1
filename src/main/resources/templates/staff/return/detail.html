@@ -1,0 +1,113 @@
+<div th:fragment="content">
+  <div class="card-sky">
+    <div class="card-header">
+      <h3 class="card-title">
+        <span class="icon"><i class="fas fa-undo"></i></span>
+        Chi tiết hoàn trả: <strong th:text="${request.id}">RT001</strong>
+      </h3>
+      <div class="card-actions">
+        <a th:href="@{/staff/returns}" class="btn-sky btn-sky-secondary btn-sky-sm">
+          <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Thông tin yêu cầu -->
+      <div style="background:var(--bg-hover);border-radius:var(--radius-sm);padding:1.2rem;margin-bottom:1.5rem;">
+        <h6 style="color:var(--primary);font-weight:700;margin-bottom:1rem;">Thông tin yêu cầu</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+              <strong style="color:var(--text-primary);">Mã đơn hàng:</strong>
+              <a th:href="@{/staff/orders/{id}(id=${request.bill.id})}"
+                 th:text="${request.bill.id}" style="color:var(--primary);">HD001</a>
+            </p>
+            <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+              <strong style="color:var(--text-primary);">Lý do:</strong>
+              <span th:text="${request.reason}">Lý do</span>
+            </p>
+            <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+              <strong style="color:var(--text-primary);">Mô tả:</strong>
+              <span th:text="${request.description ?: '—'}">Mô tả</span>
+            </p>
+          </div>
+
+          <div class="col-md-6">
+            <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+              <strong style="color:var(--text-primary);">Trạng thái:</strong>
+              <span class="badge-sky"
+                    th:classappend="${request.status == 1 ? 'warning' : (request.status == 2 ? 'success' : (request.status == 3 ? 'danger' : 'info'))}">
+                <span th:switch="${request.status}">
+                  <span th:case="1">Chờ duyệt</span>
+                  <span th:case="2">Đã duyệt</span>
+                  <span th:case="3">Từ chối</span>
+                  <span th:case="4">Đã hoàn tiền</span>
+                </span>
+              </span>
+            </p>
+
+            <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+              <strong style="color:var(--text-primary);">Ngày tạo:</strong>
+              <span th:text="${#temporals.format(request.createDate, 'dd/MM/yyyy HH:mm')}">—</span>
+            </p>
+
+            <p th:if="${request.evidenceUrl != null}" style="color:var(--text-secondary);margin-bottom:.5rem;">
+              <strong style="color:var(--text-primary);">Hình ảnh:</strong>
+              <a th:href="${request.evidenceUrl}" target="_blank" style="color:var(--primary);">Xem ảnh</a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sản phẩm hoàn trả -->
+      <h6 style="color:var(--primary);font-weight:700;margin-bottom:1rem;">Sản phẩm hoàn trả</h6>
+      <table class="table-sky" style="margin-bottom:1.5rem;">
+        <thead>
+        <tr>
+          <th>Sản phẩm</th>
+          <th>Size</th>
+          <th>Màu</th>
+          <th>Số lượng</th>
+          <th>Lý do</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="d : ${details}">
+          <td th:text="${d.productDetail?.product?.name ?: '—'}">Áo thun</td>
+          <td th:text="${d.productDetail?.size?.name ?: '—'}">M</td>
+          <td th:text="${d.productDetail?.color?.name ?: '—'}">Đen</td>
+          <td th:text="${d.quantity}">1</td>
+          <td th:text="${d.reason ?: '—'}">Lý do</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <!-- Action buttons -->
+      <div th:if="${request.status == 1}" style="display:flex;gap:.75rem;flex-wrap:wrap;">
+        <form th:action="@{/staff/returns/{id}/approve(id=${request.id})}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit" class="btn-sky btn-sky-success" onclick="return confirm('Duyệt yêu cầu hoàn trả này?')">
+            <i class="fas fa-check"></i> Duyệt
+          </button>
+        </form>
+
+        <form th:action="@{/staff/returns/{id}/reject(id=${request.id})}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit" class="btn-sky btn-sky-danger" onclick="return confirm('Từ chối yêu cầu này?')">
+            <i class="fas fa-times"></i> Từ chối
+          </button>
+        </form>
+      </div>
+
+      <div th:if="${request.status == 2}">
+        <form th:action="@{/staff/returns/{id}/confirm-refund(id=${request.id})}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <button type="submit" class="btn-sky btn-sky-primary" onclick="return confirm('Xác nhận đã hoàn tiền?')">
+            <i class="fas fa-money-bill"></i> Xác nhận hoàn tiền
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

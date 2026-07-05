@@ -15,14 +15,17 @@
                 </a>
             </div>
         </div>
+
         <form th:action="@{/admin/customers/update}" th:object="${customer}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
             <div class="card-body">
                 <div th:if="${errors}" class="alert alert-danger">
                     <ul style="margin-bottom:0;">
                         <li th:each="err : ${errors}" th:text="${err.defaultMessage}"></li>
                     </ul>
                 </div>
+
                 <input type="hidden" name="id" th:value="${customer.id}">
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -31,17 +34,20 @@
                             <input type="text" class="form-sky" id="fullName" name="fullName"
                                    th:value="${customer.fullName}" required>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-sky-label required">Số điện thoại</label>
                             <input type="text" class="form-sky" id="phone" name="phone"
                                    th:value="${customer.phone}" required>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-sky-label">Email</label>
                             <input type="email" class="form-sky" id="email" name="email"
                                    th:value="${customer.email}">
                         </div>
                     </div>
+
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-sky-label">Giới tính</label>
@@ -51,11 +57,13 @@
                                 <option value="false" th:selected="${customer.gender == false}">Nữ</option>
                             </select>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-sky-label">Ngày sinh</label>
                             <input type="date" class="form-sky" id="dob" name="dob"
                                    th:value="${customer.dob}">
                         </div>
+
                         <div class="mb-3">
                             <label class="form-sky-label">Trạng thái</label>
                             <select class="form-sky" id="status" name="status">
@@ -66,6 +74,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="card-footer" style="border-top:1px solid var(--border-color); padding:1.2rem 1.5rem; display:flex; gap:.75rem;">
                 <button type="submit" class="btn-sky btn-sky-primary">
                     <i class="fas fa-save"></i> Cập nhật
@@ -75,5 +84,7 @@
         </form>
     </div>
 </div>
+
+<th:block th:fragment="scripts"></th:block>
 </body>
 </html>

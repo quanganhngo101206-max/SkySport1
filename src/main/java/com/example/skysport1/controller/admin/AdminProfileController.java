@@ -29,7 +29,7 @@ public class AdminProfileController {
     public String profile(Authentication auth, Model model) {
         try {
             Staff staff = staffService.findByAccountUsername(auth.getName());
-            Account account = accountService.findByUsername(auth.getName());
+            Account account = accountService.findByUsernameWithRole(auth.getName());
             model.addAttribute("staff", staff);
             model.addAttribute("account", account);
         } catch (Exception e) {

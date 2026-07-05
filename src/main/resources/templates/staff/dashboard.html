@@ -102,7 +102,7 @@
                 </tr>
                 <tr th:each="b : ${recentBills}">
                     <td th:text="${b.id}">HD001</td>
-                    <td th:text="${b.customer != null ? b.customer.fullName : (b.guestName ?: '—')}">—</td>
+                    <td th:text="${b.customer != null ? b.customer.fullName : (b.receiverName ?: '—')}">—</td>
                     <td>
                         <span class="badge-sky"
                               th:classappend="${b.status == 1 ? 'warning' :
@@ -173,5 +173,7 @@
         </div>
     </div>
 </div>
+<th:block th:replace="~{${pageContent} :: scripts}"></th:block>
+<th:block th:fragment="scripts"></th:block>
 </body>
 </html>

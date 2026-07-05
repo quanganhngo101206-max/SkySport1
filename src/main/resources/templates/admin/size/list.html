@@ -29,10 +29,9 @@
                         </span>
                     </td>
                     <td>
-                        <button class="action-btn warning" style="color:#ffc107;" data-bs-toggle="modal" data-bs-target="#sizeModal"
-                                th:data-id="${size.id}" th:data-name="${size.name}" th:data-status="${size.status}">
+                        <a th:href="@{/admin/sizes/edit/{id}(id=${size.id})}" class="action-btn warning" style="color:#ffc107;">
                             <i class="fas fa-edit"></i>
-                        </button>
+                        </a>
                         <form th:action="@{/admin/sizes/delete/{id}(id=${size.id})}" method="post" style="display:inline;">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="action-btn danger" style="color:#e63030;" onclick="return confirm('Bạn có chắc muốn xóa?')">
@@ -80,23 +79,6 @@
     </div>
 </div>
 <script>
-    document.getElementById('sizeModal').addEventListener('show.bs.modal', function(e) {
-        var btn = e.relatedTarget, id = btn.getAttribute('data-id'), m = this;
-        if (id) {
-            m.querySelector('.modal-title').textContent = 'Sửa kích cỡ';
-            m.querySelector('#sizeId').value = id;
-            m.querySelector('#sizeName').value = btn.getAttribute('data-name');
-            m.querySelector('#sizeStatus').value = btn.getAttribute('data-status');
-            m.querySelector('#sizeForm').action = '/admin/sizes/update';
-        } else {
-            m.querySelector('.modal-title').textContent = 'Thêm kích cỡ';
-            m.querySelector('#sizeId').value = '';
-            m.querySelector('#sizeName').value = '';
-            m.querySelector('#sizeStatus').value = '1';
-            m.querySelector('#sizeForm').action = '/admin/sizes/save';
-        }
-    });
-
     document.addEventListener('DOMContentLoaded', function() {
         initDataTable('#sizeTable');
     });

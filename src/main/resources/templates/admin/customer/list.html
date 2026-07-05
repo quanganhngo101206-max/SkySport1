@@ -48,10 +48,14 @@
         </div>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        initDataTable('#customerTable');
-    });
-</script>
+
+<th:block th:fragment="scripts">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initDataTable('#customerTable');
+        });
+    </script>
+</th:block>
+
 </body>
 </html>

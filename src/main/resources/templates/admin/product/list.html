@@ -92,8 +92,10 @@
                         </form>
                     </td>
                 </tr>
-                <tr th:if="${products.isEmpty()}">
-                    <td colspan="7" class="text-center text-muted py-4">Không có sản phẩm nào.</td>
+                <tr th:if="${#lists.isEmpty(requests)}">
+                    <td colspan="7" class="dataTables_empty" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                        Không có sản phẩm nào.
+                    </td>
                 </tr>
                 </tbody>
             </table>

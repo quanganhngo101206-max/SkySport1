@@ -54,9 +54,10 @@
                         </a>
                     </td>
                 </tr>
-
                 <tr th:if="${#lists.isEmpty(bills)}">
-                    <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">Không có đơn hàng nào</td>
+                    <td colspan="6" class="dataTables_empty" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                        Không có đơn hàng nào.
+                    </td>
                 </tr>
                 </tbody>
             </table>
@@ -78,4 +79,6 @@
             </div>
         </div>
     </div>
+    <th:block th:replace="~{${pageContent} :: scripts}"></th:block>
 </div>
+<th:block th:fragment="scripts"></th:block>

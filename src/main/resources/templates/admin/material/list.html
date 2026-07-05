@@ -30,11 +30,9 @@
                         </span>
                     </td>
                     <td>
-                        <button class="action-btn warning" style="color:#ffc107;" data-bs-toggle="modal" data-bs-target="#materialModal"
-                                th:data-id="${material.id}" th:data-name="${material.name}"
-                                th:data-description="${material.description}" th:data-status="${material.status}">
+                        <a th:href="@{/admin/materials/edit/{id}(id=${material.id})}" class="action-btn warning" style="color:#ffc107;">
                             <i class="fas fa-edit"></i>
-                        </button>
+                        </a>
                         <form th:action="@{/admin/materials/delete/{id}(id=${material.id})}" method="post" style="display:inline;">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="action-btn danger" style="color:#e63030;" onclick="return confirm('Bạn có chắc muốn xóa?')">
@@ -86,25 +84,6 @@
     </div>
 </div>
 <script>
-    document.getElementById('materialModal').addEventListener('show.bs.modal', function(e) {
-        var btn = e.relatedTarget, id = btn.getAttribute('data-id'), m = this;
-        if (id) {
-            m.querySelector('.modal-title').textContent = 'Sửa chất liệu';
-            m.querySelector('#materialId').value = id;
-            m.querySelector('#materialName').value = btn.getAttribute('data-name');
-            m.querySelector('#materialDescription').value = btn.getAttribute('data-description') || '';
-            m.querySelector('#materialStatus').value = btn.getAttribute('data-status');
-            m.querySelector('#materialForm').action = '/admin/materials/update';
-        } else {
-            m.querySelector('.modal-title').textContent = 'Thêm chất liệu';
-            m.querySelector('#materialId').value = '';
-            m.querySelector('#materialName').value = '';
-            m.querySelector('#materialDescription').value = '';
-            m.querySelector('#materialStatus').value = '1';
-            m.querySelector('#materialForm').action = '/admin/materials/save';
-        }
-    });
-
     document.addEventListener('DOMContentLoaded', function() {
         initDataTable('#materialTable');
     });

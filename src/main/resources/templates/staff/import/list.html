@@ -44,7 +44,9 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(orders)}">
-                    <td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">Không có phiếu nhập nào</td>
+                    <td colspan="6" class="dataTables_empty" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                        Không có phiếu nhập nào.
+                    </td>
                 </tr>
                 </tbody>
             </table>
@@ -55,4 +57,6 @@
             initDataTable('#importTable');
         });
     </script>
+    <th:block th:replace="~{${pageContent} :: scripts}"></th:block>
 </div>
+<th:block th:fragment="scripts"></th:block>

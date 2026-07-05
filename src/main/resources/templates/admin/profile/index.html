@@ -35,12 +35,12 @@
 
           <div class="col-md-6">
             <div class="form-sky-label">Họ và tên</div>
-            <div class="form-control-plaintext" th:text="${account.fullName != null ? account.fullName : '-'}">-</div>
+            <div class="form-control-plaintext" th:text="${staff != null ? staff.fullName : '-'}">-</div>
           </div>
 
           <div class="col-md-6">
             <div class="form-sky-label">Vai trò</div>
-            <div class="form-control-plaintext" th:text="${account.role != null ? account.role : '-'}">-</div>
+            <div class="form-control-plaintext" th:text="${account.role.name != null ? account.role.name : '-'}">-</div>
           </div>
         </div>
       </div>

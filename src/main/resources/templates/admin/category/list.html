@@ -45,14 +45,9 @@
                                     </span>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                                data-bs-target="#categoryModal"
-                                th:data-id="${category.id}"
-                                th:data-name="${category.name}"
-                                th:data-description="${category.description}"
-                                th:data-status="${category.status}">
+                        <a th:href="@{/admin/categories/edit/{id}(id=${category.id})}" class="btn btn-sm btn-warning">
                             <i class="fas fa-edit"></i>
-                        </button>
+                        </a>
                         <form th:action="@{/admin/categories/delete/{id}(id=${category.id})}"
                               method="post" style="display:inline;">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -103,28 +98,6 @@
         </div>
     </div>
 </div>
-<script>
-    document.getElementById('categoryModal').addEventListener('show.bs.modal', function(event) {
-        var btn = event.relatedTarget;
-        var id = btn.getAttribute('data-id');
-        var modal = this;
-        if (id) {
-            modal.querySelector('.modal-title').textContent = 'Sửa danh mục';
-            modal.querySelector('#categoryId').value = id;
-            modal.querySelector('#categoryName').value = btn.getAttribute('data-name');
-            modal.querySelector('#categoryDescription').value = btn.getAttribute('data-description') || '';
-            modal.querySelector('#categoryStatus').value = btn.getAttribute('data-status');
-            modal.querySelector('#categoryForm').action = '/admin/categories/update';
-        } else {
-            modal.querySelector('.modal-title').textContent = 'Thêm danh mục';
-            modal.querySelector('#categoryId').value = '';
-            modal.querySelector('#categoryName').value = '';
-            modal.querySelector('#categoryDescription').value = '';
-            modal.querySelector('#categoryStatus').value = '1';
-            modal.querySelector('#categoryForm').action = '/admin/categories/save';
-        }
-    });
-</script>
 <th:block th:fragment="scripts"></th:block>
 </body>
 </html>

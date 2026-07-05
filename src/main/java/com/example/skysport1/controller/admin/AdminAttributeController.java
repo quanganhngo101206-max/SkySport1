@@ -43,6 +43,14 @@ public class AdminAttributeController {
         return "layouts/adminlte/layout";
     }
 
+    @GetMapping("/brands/edit/{id}")
+    public String brandEditForm(@PathVariable String id, Model model) {
+        model.addAttribute("brand", brandService.findById(id));
+        model.addAttribute("pageContent", "admin/brand/edit");
+        model.addAttribute("title", "Sửa thương hiệu");
+        return "layouts/adminlte/layout";
+    }
+
     @PostMapping("/brands/save")
     public String brandSave(@Valid @ModelAttribute Brand brand,
                             BindingResult bindingResult,
@@ -110,6 +118,14 @@ public class AdminAttributeController {
         model.addAttribute("category", new Category());
         model.addAttribute("pageContent", "admin/category/list");
         model.addAttribute("title", "Danh mục");
+        return "layouts/adminlte/layout";
+    }
+
+    @GetMapping("/categories/edit/{id}")
+    public String categoryEditForm(@PathVariable String id, Model model) {
+        model.addAttribute("category", categoryService.findById(id));
+        model.addAttribute("pageContent", "admin/category/edit");
+        model.addAttribute("title", "Sửa danh mục");
         return "layouts/adminlte/layout";
     }
 
@@ -183,6 +199,14 @@ public class AdminAttributeController {
         return "layouts/adminlte/layout";
     }
 
+    @GetMapping("/materials/edit/{id}")
+    public String materialEditForm(@PathVariable String id, Model model) {
+        model.addAttribute("material", materialService.findById(id));
+        model.addAttribute("pageContent", "admin/material/edit");
+        model.addAttribute("title", "Sửa chất liệu");
+        return "layouts/adminlte/layout";
+    }
+
     @PostMapping("/materials/save")
     public String materialSave(@Valid @ModelAttribute Material material,
                                BindingResult bindingResult,
@@ -253,6 +277,14 @@ public class AdminAttributeController {
         return "layouts/adminlte/layout";
     }
 
+    @GetMapping("/sizes/edit/{id}")
+    public String sizeEditForm(@PathVariable String id, Model model) {
+        model.addAttribute("size", sizeService.findById(id));
+        model.addAttribute("pageContent", "admin/size/edit");
+        model.addAttribute("title", "Sửa kích cỡ");
+        return "layouts/adminlte/layout";
+    }
+
     @PostMapping("/sizes/save")
     public String sizeSave(@Valid @ModelAttribute Size size,
                            BindingResult bindingResult,
@@ -316,6 +348,14 @@ public class AdminAttributeController {
         model.addAttribute("color", new Color());
         model.addAttribute("pageContent", "admin/color/list");
         model.addAttribute("title", "Màu sắc");
+        return "layouts/adminlte/layout";
+    }
+
+    @GetMapping("/colors/edit/{id}")
+    public String colorEditForm(@PathVariable String id, Model model) {
+        model.addAttribute("color", colorService.findById(id));
+        model.addAttribute("pageContent", "admin/color/edit");
+        model.addAttribute("title", "Sửa màu sắc");
         return "layouts/adminlte/layout";
     }
 

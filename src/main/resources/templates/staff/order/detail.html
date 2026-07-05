@@ -22,7 +22,7 @@
                         </h6>
                         <p style="color:var(--text-secondary);margin-bottom:.5rem;">
                             <strong style="color:var(--text-primary);">Tên:</strong>
-                            <span th:text="${bill.customer != null ? bill.customer.fullName : bill.guestName}">—</span>
+                            <span th:text="${bill.customer != null ? bill.customer.fullName : bill.receiverName}">—</span>
                         </p>
                         <p style="color:var(--text-secondary);margin-bottom:.5rem;">
                             <strong style="color:var(--text-primary);">Email:</strong>
@@ -163,4 +163,6 @@
             </div>
         </div>
     </div>
+    <th:block th:replace="~{${pageContent} :: scripts}"></th:block>
 </div>
+<th:block th:fragment="scripts"></th:block>

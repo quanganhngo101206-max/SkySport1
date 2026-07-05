@@ -43,7 +43,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     @Override
     public List<ReturnRequest> findAll() {
-        return returnRequestRepository.findAll();
+        return returnRequestRepository.findAllWithBillAndCustomer();
     }
 
     @Override

@@ -118,14 +118,13 @@ public class AdminImportOrderController {
                           @RequestParam(required = false) String note,
                           Authentication auth,
                           RedirectAttributes ra) {
+        String staffId = null;
         try {
-            Staff staff = staffService.findByAccountUsername(auth.getName());
-            importOrderService.approve(id, staff.getId(), note);
-            ra.addFlashAttribute("success", "Đã duyệt phiếu nhập " + id + " — tồn kho đã được cập nhật");
+            staffId = staffService.findByAccountUsername(auth.getName()).getId();
         } catch (Exception e) {
-            log.error("Error approving import order {}: {}", id, e.getMessage());
-            ra.addFlashAttribute("error", e.getMessage());
+            log.warn("Admin {} không có Staff record, ghi log bằng username", auth.getName());
         }
+        importOrderService.approve(id, staffId, note);
         return "redirect:/admin/import-orders/" + id;
     }
 
@@ -136,14 +135,13 @@ public class AdminImportOrderController {
                          @RequestParam(required = false) String note,
                          Authentication auth,
                          RedirectAttributes ra) {
+        String staffId = null;
         try {
-            Staff staff = staffService.findByAccountUsername(auth.getName());
-            importOrderService.reject(id, staff.getId(), note);
-            ra.addFlashAttribute("success", "Đã từ chối phiếu nhập " + id);
+            staffId = staffService.findByAccountUsername(auth.getName()).getId();
         } catch (Exception e) {
-            log.error("Error rejecting import order {}: {}", id, e.getMessage());
-            ra.addFlashAttribute("error", e.getMessage());
+            log.warn("Admin {} không có Staff record, ghi log bằng username", auth.getName());
         }
+        importOrderService.reject(id, staffId, note);
         return "redirect:/admin/import-orders/" + id;
     }
 }

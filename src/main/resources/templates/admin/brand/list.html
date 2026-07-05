@@ -30,11 +30,9 @@
                         </span>
                     </td>
                     <td>
-                        <button class="action-btn warning" style="color:#ffc107;" data-bs-toggle="modal" data-bs-target="#brandModal"
-                                th:data-id="${brand.id}" th:data-name="${brand.name}"
-                                th:data-description="${brand.description}" th:data-status="${brand.status}">
+                        <a th:href="@{/admin/brands/edit/{id}(id=${brand.id})}" class="action-btn warning" style="color:#ffc107;">
                             <i class="fas fa-edit"></i>
-                        </button>
+                        </a>
                         <form th:action="@{/admin/brands/delete/{id}(id=${brand.id})}" method="post" style="display:inline;">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="action-btn danger" style="color:#e63030;" onclick="return confirm('Bạn có chắc muốn xóa?')">
@@ -87,27 +85,6 @@
 </div>
 
 <script>
-    document.getElementById('brandModal').addEventListener('show.bs.modal', function(event) {
-        var btn = event.relatedTarget;
-        var id = btn.getAttribute('data-id');
-        var modal = this;
-        if (id) {
-            modal.querySelector('.modal-title').textContent = 'Sửa thương hiệu';
-            modal.querySelector('#brandId').value = id;
-            modal.querySelector('#brandName').value = btn.getAttribute('data-name');
-            modal.querySelector('#brandDescription').value = btn.getAttribute('data-description') || '';
-            modal.querySelector('#brandStatus').value = btn.getAttribute('data-status');
-            modal.querySelector('#brandForm').action = '/admin/brands/update';
-        } else {
-            modal.querySelector('.modal-title').textContent = 'Thêm thương hiệu';
-            modal.querySelector('#brandId').value = '';
-            modal.querySelector('#brandName').value = '';
-            modal.querySelector('#brandDescription').value = '';
-            modal.querySelector('#brandStatus').value = '1';
-            modal.querySelector('#brandForm').action = '/admin/brands/save';
-        }
-    });
-
     document.addEventListener('DOMContentLoaded', function() {
         initDataTable('#brandTable');
     });

@@ -103,4 +103,11 @@ public class AccountServiceImpl implements AccountService {
         accountRepository.save(account);
         log.info("Password updated for account: {}", username);
     }
+
+    @Override
+    @Transactional
+    public Account findByUsernameWithRole(String username) {
+        return accountRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new AppException("Không tìm thấy tài khoản: " + username));
+    }
 }

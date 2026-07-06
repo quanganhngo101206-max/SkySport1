@@ -26,14 +26,14 @@ public class SecurityConfig {
     }
 
     /**
-     * CHAIN 1: ADMIN ONLY
-     * URL: /admin/**
+     * CHAIN 1: ADMIN ONLY — TẮT CSRF
      */
     @Bean
     @Order(1)
     public SecurityFilterChain adminChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher(new AntPathRequestMatcher("/admin/**"))
+                .csrf(csrf -> csrf.disable())  // ✅ TẮT CSRF CHO ADMIN
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/login").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -63,21 +63,20 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .accessDeniedPage("/403")
-                )
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
+                );
 
         return http.build();
     }
 
     /**
-     * CHAIN 2: STAFF + ADMIN
-     * URL: /staff/**
+     * CHAIN 2: STAFF + ADMIN — TẮT CSRF
      */
     @Bean
     @Order(2)
     public SecurityFilterChain staffChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher(new AntPathRequestMatcher("/staff/**"))
+                .csrf(csrf -> csrf.disable())  // ✅ TẮT CSRF CHO STAFF
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/staff/login").permitAll()
                         .requestMatchers("/staff/**").hasAnyRole("STAFF", "ADMIN")
@@ -107,35 +106,29 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .accessDeniedPage("/403")
-                )
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
+                );
 
         return http.build();
     }
 
     /**
-     * CHAIN 3: CUSTOMER + PUBLIC
-     * URL: tất cả còn lại
+     * CHAIN 3: CUSTOMER + PUBLIC — GIỮ CSRF
      */
     @Bean
     @Order(3)
     public SecurityFilterChain customerChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ PUBLIC
                         .requestMatchers(
                                 "/", "/home",
                                 "/san-pham", "/san-pham/**",
                                 "/login", "/dang-ky",
                                 "/403", "/404",
                                 "/css/**", "/js/**", "/images/**", "/dist/**", "/plugins/**",
-                                // ✅ GUEST CHECKOUT + TRACKING
                                 "/guest/**",
                                 "/customer/cart", "/customer/cart/**",
                                 "/customer/checkout", "/customer/checkout/**"
                         ).permitAll()
-
-                        // ✅ CUSTOMER ONLY (cần đăng nhập)
                         .requestMatchers(
                                 "/customer/profile/**",
                                 "/customer/address/**",
@@ -144,7 +137,6 @@ public class SecurityConfig {
                                 "/customer/reviews/**",
                                 "/customer/notifications/**"
                         ).hasRole("CUSTOMER")
-
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -172,7 +164,7 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .accessDeniedPage("/403")
                 )
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()));
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())); // ✅ GIỮ CSRF CHO CUSTOMER
 
         return http.build();
     }

@@ -384,7 +384,7 @@ public class BillServiceImpl implements BillService {
     // ── Helper ────────────────────────────────────────────────────────────
 
     // ✅ CHỈ GIỮ METHOD NÀY - XÓA METHOD CÙNG TÊN Ở TRÊN
-    private Bill changeStatus(Bill bill, int newStatus, String actorId, String note) {
+    private Bill changeStatus(Bill bill, int newStatus, String staffId, String note) {
         int oldStatus = bill.getStatus();
 
         if (!AllowedTransition.isAllowed(oldStatus, newStatus)) {
@@ -402,9 +402,10 @@ public class BillServiceImpl implements BillService {
         }
 
         bill.setStatus(newStatus);
-        bill.setUpdatedBy(actorId);
+        bill.setUpdatedBy(staffId);
         bill = billRepository.save(bill);
-        logHistory(bill, oldStatus, newStatus, note, actorId);
+
+        logHistory(bill, oldStatus, newStatus, note, staffId); // ✅ staffId hợp lệ
         return bill;
     }
 
@@ -415,8 +416,11 @@ public class BillServiceImpl implements BillService {
                 .oldStatus(oldStatus)
                 .newStatus(newStatus)
                 .note(note)
-                .staff(staffId != null ? Staff.builder().id(staffId).build() : null)
                 .build();
+
+        // Không set staff để tránh lỗi TransientPropertyValueException
+        // staffId đã được lưu trong bill.updatedBy
+
         orderStatusHistoryRepository.save(history);
     }
 

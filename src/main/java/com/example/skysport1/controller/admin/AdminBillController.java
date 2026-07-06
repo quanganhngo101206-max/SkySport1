@@ -7,14 +7,13 @@ import com.example.skysport1.service.BillService;
 import com.example.skysport1.service.StaffService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -28,9 +27,9 @@ public class AdminBillController {
 
 	@GetMapping
 	public String list(@RequestParam(defaultValue = "0") int page,
-					   @RequestParam(defaultValue = "10") int size,
-					   @RequestParam(required = false) Integer status,
-					   Model model) {
+						@RequestParam(defaultValue = "10") int size,
+						@RequestParam(required = false) Integer status,
+						Model model) {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<Bill> pageResult;
 		if (status != null) {
@@ -65,45 +64,52 @@ public class AdminBillController {
 		}
 	}
 
+	@GetMapping("/{id}/confirm")
+	public String confirmForm(@PathVariable String id) {
+		return "redirect:/admin/bills/" + id;
+	}
+
 	@PostMapping("/{id}/confirm")
 	public String confirm(@PathVariable String id,
-						  @RequestParam(required = false) String note,
-						  Authentication auth,
-						  RedirectAttributes ra) {
+						   @RequestParam(required = false) String note,
+						   Authentication auth,
+						   RedirectAttributes ra) {
 		try {
+			log.info("AdminBillController.confirm (POST) called id={}, auth={}",
+					id, auth != null ? auth.getName() : "null");
 			Staff staff = staffService.findByAccountUsername(auth.getName());
 			billService.confirm(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
-			// Admin không có Staff record → dùng null hoặc username trực tiếp
+			log.warn("AdminBillController.confirm ResourceNotFound id={}, auth={}",
+					id, auth != null ? auth.getName() : "null");
 			billService.confirm(id, null, note);
 		} catch (Exception e) {
+			log.error("AdminBillController.confirm failed id={}, err={}", id, e.getMessage(), e);
 			ra.addFlashAttribute("error", e.getMessage());
 		}
 		return "redirect:/admin/bills/" + id;
 	}
 
-	/**
-	 * Hỗ trợ gọi confirm bằng GET để tránh lỗi
-	 * "Request method 'POST' is not supported" trong trường hợp UI/đường dẫn bị gọi nhầm method.
-	 */
-	@GetMapping("/{id}/confirm")
-	public String confirmGet(@PathVariable String id,
-							   @RequestParam(required = false) String note,
-							   Authentication auth,
-							   RedirectAttributes ra) {
+	// handle trailing slash variant: /admin/bills/{id}/confirm/
+	@PostMapping("/{id}/confirm/")
+	public String confirmTrailingSlash(@PathVariable String id,
+										 @RequestParam(required = false) String note,
+										 Authentication auth,
+										 RedirectAttributes ra) {
+		log.info("AdminBillController.confirm (POST trailing slash) called id={}, auth={}",
+				id, auth != null ? auth.getName() : "null");
 		return confirm(id, note, auth, ra);
 	}
 
 	@PostMapping("/{id}/ship")
 	public String ship(@PathVariable String id,
-					   @RequestParam(required = false) String note,
-					   Authentication auth,
-					   RedirectAttributes ra) {
+						@RequestParam(required = false) String note,
+						Authentication auth,
+						RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
 			billService.startShipping(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
-			// Admin không có Staff record → dùng null hoặc username trực tiếp
 			billService.startShipping(id, null, note);
 		} catch (Exception e) {
 			ra.addFlashAttribute("error", e.getMessage());
@@ -113,14 +119,13 @@ public class AdminBillController {
 
 	@PostMapping("/{id}/deliver")
 	public String deliver(@PathVariable String id,
-						  @RequestParam(required = false) String note,
-						  Authentication auth,
-						  RedirectAttributes ra) {
+						   @RequestParam(required = false) String note,
+						   Authentication auth,
+						   RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
 			billService.markDelivered(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
-			// Admin không có Staff record → dùng null hoặc username trực tiếp
 			billService.markDelivered(id, null, note);
 		} catch (Exception e) {
 			ra.addFlashAttribute("error", e.getMessage());
@@ -130,14 +135,13 @@ public class AdminBillController {
 
 	@PostMapping("/{id}/cancel")
 	public String cancel(@PathVariable String id,
-						 @RequestParam(required = false) String note,
-						 Authentication auth,
-						 RedirectAttributes ra) {
+						  @RequestParam(required = false) String note,
+						  Authentication auth,
+						  RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
 			billService.cancel(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
-			// Admin không có Staff record → dùng null hoặc username trực tiếp
 			billService.cancel(id, null, note);
 		} catch (Exception e) {
 			ra.addFlashAttribute("error", e.getMessage());
@@ -147,14 +151,13 @@ public class AdminBillController {
 
 	@PostMapping("/{id}/complete")
 	public String complete(@PathVariable String id,
-						   @RequestParam(required = false) String note,
-						   Authentication auth,
-						   RedirectAttributes ra) {
+							@RequestParam(required = false) String note,
+							Authentication auth,
+							RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
 			billService.complete(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
-			// Admin không có Staff record → dùng null hoặc username trực tiếp
 			billService.complete(id, null, note);
 		} catch (Exception e) {
 			ra.addFlashAttribute("error", e.getMessage());

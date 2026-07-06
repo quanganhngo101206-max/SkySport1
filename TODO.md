@@ -1,6 +1,4 @@
-- [ ] Rà soát toàn bộ templates trong `src/main/resources/templates/admin/**` để đảm bảo mỗi page có đúng fragment:
-  - `th:fragment="content"` (bọc nội dung page)
-  - `th:block th:fragment="scripts"` (đặt đúng vị trí để layout chèn `~{${pageContent} :: scripts}`)
-- [ ] So sánh style/bố cục với `admin/product/*.html` để chỉnh cho “dễ nhìn giống product”
-- [ ] Sửa các file lệch chuẩn (cụ thể: chỉnh fragment + scripts + bố cục card/alert/form/table theo mẫu product)
-- [ ] Build/test lại để chắc chắn Thymeleaf không còn lỗi fragment, frontend render ổn định
+- [ ] Kiểm tra lại `src/main/resources/templates/customer/checkout/checkout.html` xem trong form `/customer/checkout` có bị gửi nhiều trường `discountCode` cùng lúc gây ra chuỗi kiểu `GIAM50K,GIAM50K`.
+- [ ] Sửa `checkout.html` để đảm bảo chỉ **1** input/hidden `name="discountCode"` tồn tại trong form `/customer/checkout` (logged-in), và nút “Xác nhận đặt hàng” submit đúng giá trị đó.
+- [ ] (Tuỳ chọn) Thêm debug hiển thị `discountCode` đang được gửi trước khi submit (tạm thời) hoặc log trong controller.
+- [ ] Chạy lại flow: chọn mã bất kỳ trong dropdown → bấm “Áp dụng” → bấm “Xác nhận đặt hàng” → đảm bảo không còn lỗi `Không tìm thấy mã giảm giá với id: X,X`.

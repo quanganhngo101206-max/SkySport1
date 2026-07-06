@@ -16,6 +16,8 @@ public interface ImportOrderDetailRepository extends JpaRepository<ImportOrderDe
            from ImportOrderDetail d
            left join fetch d.productDetail pd
            left join fetch pd.product p
+           left join fetch pd.size s
+           left join fetch pd.color c
            where d.importOrder.id = :importOrderId
            """)
     List<ImportOrderDetail> findByImportOrderId(@Param("importOrderId") String importOrderId);
@@ -25,6 +27,8 @@ public interface ImportOrderDetailRepository extends JpaRepository<ImportOrderDe
            from ImportOrderDetail d
            left join fetch d.productDetail pd
            left join fetch pd.product p
+           left join fetch pd.size s
+           left join fetch pd.color c
            where d.productDetail.id = :productDetailId
            """)
     List<ImportOrderDetail> findByProductDetailId(@Param("productDetailId") Integer productDetailId);

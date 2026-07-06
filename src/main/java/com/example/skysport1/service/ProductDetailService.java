@@ -18,7 +18,7 @@ public class ProductDetailService {
 
     public List<ProductDetail> findByProductId(String productId) {
         return productDetailRepository
-                .findByProductIdAndDeleteFlagFalse(productId);
+                .findByProductIdAndDeleteFlagFalseWithSizeAndColor(productId);
     }
 
     // Dùng cho dropdown chọn biến thể khi tạo phiếu nhập kho (admin)

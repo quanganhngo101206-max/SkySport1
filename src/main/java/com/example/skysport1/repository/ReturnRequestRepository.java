@@ -48,4 +48,13 @@ public interface ReturnRequestRepository extends JpaRepository<ReturnRequest, St
            order by r.createDate desc
            """)
     List<ReturnRequest> findByStatus(@Param("status") Integer status);
+
+    @Query("""
+           select r
+           from ReturnRequest r
+           left join fetch r.bill b
+           left join fetch b.customer c
+           where r.id = :id
+           """)
+    java.util.Optional<ReturnRequest> findByIdWithBillAndCustomer(@Param("id") String id);
 }

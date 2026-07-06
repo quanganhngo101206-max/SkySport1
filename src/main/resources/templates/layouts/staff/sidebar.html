@@ -34,6 +34,13 @@
 
         <div class="nav-label">Quản lý</div>
         <li class="nav-item">
+            <a th:href="@{/staff/counter-sale}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'staff/counter-sale')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-cash-register"></i></span>
+                <span>Bán hàng tại quầy</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a th:href="@{/staff/orders}" class="nav-link"
                th:classappend="${#strings.contains(pageContent, 'staff/order')} ? 'active' : ''">
                 <span class="icon"><i class="fas fa-file-invoice"></i></span>

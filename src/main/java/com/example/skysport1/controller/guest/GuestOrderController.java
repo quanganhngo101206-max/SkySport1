@@ -39,11 +39,11 @@ public class GuestOrderController {
      * Xử lý tra cứu đơn hàng
      */
     @PostMapping("/track")
-    public String trackOrder(@Valid @ModelAttribute ("trackRequest") TrackOrderRequest request,
+    public String trackOrder(@Valid @ModelAttribute("trackRequest") TrackOrderRequest request,
                              BindingResult bindingResult,
                              Model model,
                              RedirectAttributes ra
-                             ) {
+    ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("title", "Tra cứu đơn hàng");
             return "guest/track";

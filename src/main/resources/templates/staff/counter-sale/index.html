@@ -1,0 +1,288 @@
+<div th:fragment="content">
+    <div class="card-sky" style="margin-bottom:1rem;">
+        <div class="card-header">
+            <h3 class="card-title"><span class="icon"><i class="fas fa-cash-register"></i></span>Bán hàng tại quầy</h3>
+        </div>
+        <div class="card-body">
+            <div id="csAlert" style="display:none;margin-bottom:1rem;"></div>
+
+            <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:1.5rem;">
+
+                <!-- CỘT TRÁI: tìm sản phẩm + giỏ hàng -->
+                <div>
+                    <div class="form-group">
+                        <label>Tìm sản phẩm (theo SKU hoặc tên)</label>
+                        <input type="text" id="productSearch" class="form-sky" placeholder="Nhập SKU hoặc tên sản phẩm rồi Enter..." autocomplete="off">
+                        <div id="productSearchResults" style="position:relative;">
+                            <div id="productSearchList"
+                                 style="display:none;position:absolute;z-index:20;width:100%;background:var(--bg-card,#fff);
+                                        border:1px solid var(--border-color,#ddd);border-radius:var(--radius-sm,8px);
+                                        max-height:280px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <table class="table-sky" style="margin-top:1rem;">
+                        <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th style="width:90px;">SL</th>
+                            <th style="width:120px;">Đơn giá</th>
+                            <th style="width:130px;">Thành tiền</th>
+                            <th style="width:50px;"></th>
+                        </tr>
+                        </thead>
+                        <tbody id="cartBody">
+                        <tr id="cartEmptyRow">
+                            <td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                                Chưa có sản phẩm nào trong giỏ
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- CỘT PHẢI: khách hàng + thanh toán -->
+                <div>
+                    <div class="form-group">
+                        <label>Số điện thoại khách hàng (bỏ trống nếu khách vãng lai)</label>
+                        <div style="display:flex;gap:.5rem;">
+                            <input type="text" id="customerPhone" class="form-sky" placeholder="09xxxxxxxx" style="flex:1;">
+                            <button type="button" id="btnFindCustomer" class="btn-sky btn-sky-secondary">Tìm</button>
+                        </div>
+                        <div id="customerInfo" style="margin-top:.5rem;font-size:.9rem;color:var(--text-muted);">
+                            Khách vãng lai
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Phương thức thanh toán</label>
+                        <select id="paymentId" class="form-sky">
+                            <option th:each="p : ${payments}" th:value="${p.id}" th:text="${p.name}"></option>
+                        </select>
+                    </div>
+
+                    <div style="margin-top:1.5rem;padding:1rem 1.2rem;background:var(--bg-hover);border-radius:var(--radius-sm);">
+                        <div style="display:flex;justify-content:space-between;font-size:1.1rem;font-weight:700;">
+                            <span>Tổng cộng</span>
+                            <span id="cartTotal">0đ</span>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnCheckout" class="btn-sky btn-sky-primary" style="width:100%;margin-top:1rem;padding:.8rem;font-size:1rem;">
+                        <i class="fas fa-check-circle"></i> Thanh toán
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:inline="javascript">
+        (function() {
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+            let cart = [];       // { productDetailId, sku, productName, sizeName, colorName, price, quantity, quantityAvailable }
+            let selectedCustomer = null; // { id, fullName, phone } hoặc null = khách vãng lai
+
+            const money = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n)) + 'đ';
+
+            function showAlert(message, type) {
+                const el = document.getElementById('csAlert');
+                el.className = 'alert alert-' + (type === 'error' ? 'danger' : 'success');
+                el.textContent = message;
+                el.style.display = 'block';
+                setTimeout(() => { el.style.display = 'none'; }, 4000);
+            }
+
+            // ===== TÌM SẢN PHẨM =====
+            const searchInput = document.getElementById('productSearch');
+            const resultList = document.getElementById('productSearchList');
+            let searchTimer = null;
+
+            searchInput.addEventListener('input', function() {
+                const keyword = this.value.trim();
+                clearTimeout(searchTimer);
+                if (keyword.length < 2) {
+                    resultList.style.display = 'none';
+                    return;
+                }
+                searchTimer = setTimeout(() => doSearch(keyword), 300);
+            });
+
+            function doSearch(keyword) {
+                fetch('/staff/counter-sale/search-product?keyword=' + encodeURIComponent(keyword))
+                    .then(r => r.json())
+                    .then(items => {
+                        if (!items.length) {
+                            resultList.innerHTML = '<div style="padding:.7rem;color:var(--text-muted);">Không tìm thấy sản phẩm</div>';
+                            resultList.style.display = 'block';
+                            return;
+                        }
+                        resultList.innerHTML = items.map(it => `
+                    <div class="cs-search-item" style="padding:.6rem .8rem;cursor:pointer;border-bottom:1px solid var(--border-color,#eee);"
+                         data-item='${JSON.stringify(it)}'>
+                        <strong>${it.productName}</strong> ${it.sizeName ? '- ' + it.sizeName : ''} ${it.colorName ? '- ' + it.colorName : ''}
+                        <div style="font-size:.85rem;color:var(--text-muted);">
+                            SKU: ${it.sku} · Tồn: ${it.quantityAvailable} · ${money(it.price)}
+                        </div>
+                    </div>`).join('');
+                        resultList.style.display = 'block';
+
+                        resultList.querySelectorAll('.cs-search-item').forEach(el => {
+                            el.addEventListener('click', function() {
+                                addToCart(JSON.parse(this.getAttribute('data-item')));
+                                resultList.style.display = 'none';
+                                searchInput.value = '';
+                                searchInput.focus();
+                            });
+                        });
+                    });
+            }
+
+            document.addEventListener('click', function(e) {
+                if (!resultList.contains(e.target) && e.target !== searchInput) {
+                    resultList.style.display = 'none';
+                }
+            });
+
+            // ===== GIỎ HÀNG =====
+            function addToCart(item) {
+                const existing = cart.find(c => c.productDetailId === item.productDetailId);
+                if (existing) {
+                    if (existing.quantity + 1 > item.quantityAvailable) {
+                        showAlert('Sản phẩm "' + item.productName + '" không đủ tồn kho', 'error');
+                        return;
+                    }
+                    existing.quantity += 1;
+                } else {
+                    cart.push(Object.assign({}, item, { quantity: 1 }));
+                }
+                renderCart();
+            }
+
+            function renderCart() {
+                const body = document.getElementById('cartBody');
+                if (cart.length === 0) {
+                    body.innerHTML = '<tr id="cartEmptyRow"><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">Chưa có sản phẩm nào trong giỏ</td></tr>';
+                } else {
+                    body.innerHTML = cart.map((c, idx) => `
+                <tr>
+                    <td>
+                        <strong>${c.productName}</strong><br>
+                        <span style="font-size:.8rem;color:var(--text-muted);">
+                            ${c.sku} ${c.sizeName ? '- ' + c.sizeName : ''} ${c.colorName ? '- ' + c.colorName : ''}
+                        </span>
+                    </td>
+                    <td>
+                        <input type="number" min="1" max="${c.quantityAvailable}" value="${c.quantity}"
+                               class="form-sky cs-qty" data-idx="${idx}" style="width:70px;padding:.3rem;">
+                    </td>
+                    <td>${money(c.price)}</td>
+                    <td>${money(c.price * c.quantity)}</td>
+                    <td>
+                        <button type="button" class="action-btn cs-remove" data-idx="${idx}" style="color:#dc3545;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`).join('');
+                }
+
+                body.querySelectorAll('.cs-qty').forEach(inp => {
+                    inp.addEventListener('change', function() {
+                        const idx = parseInt(this.getAttribute('data-idx'));
+                        let val = parseInt(this.value) || 1;
+                        if (val > cart[idx].quantityAvailable) {
+                            showAlert('Chỉ còn ' + cart[idx].quantityAvailable + ' sản phẩm trong kho', 'error');
+                            val = cart[idx].quantityAvailable;
+                        }
+                        cart[idx].quantity = Math.max(1, val);
+                        renderCart();
+                    });
+                });
+                body.querySelectorAll('.cs-remove').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        cart.splice(parseInt(this.getAttribute('data-idx')), 1);
+                        renderCart();
+                    });
+                });
+
+                const total = cart.reduce((sum, c) => sum + c.price * c.quantity, 0);
+                document.getElementById('cartTotal').textContent = money(total);
+            }
+
+            // ===== TÌM KHÁCH HÀNG =====
+            document.getElementById('btnFindCustomer').addEventListener('click', function() {
+                const phone = document.getElementById('customerPhone').value.trim();
+                const info = document.getElementById('customerInfo');
+                if (!phone) {
+                    selectedCustomer = null;
+                    info.textContent = 'Khách vãng lai';
+                    return;
+                }
+                fetch('/staff/counter-sale/search-customer?phone=' + encodeURIComponent(phone))
+                    .then(r => {
+                        if (r.status === 404) { return null; }
+                        return r.json();
+                    })
+                    .then(customer => {
+                        if (customer) {
+                            selectedCustomer = customer;
+                            info.innerHTML = 'Khách hàng: <strong>' + customer.fullName + '</strong> (' + customer.phone + ')';
+                        } else {
+                            selectedCustomer = null;
+                            info.textContent = 'Không tìm thấy khách hàng, sẽ tạo đơn cho khách vãng lai';
+                        }
+                    });
+            });
+
+            // ===== THANH TOÁN =====
+            document.getElementById('btnCheckout').addEventListener('click', function() {
+                if (cart.length === 0) {
+                    showAlert('Giỏ hàng đang trống', 'error');
+                    return;
+                }
+                const payload = {
+                    customerId: selectedCustomer ? selectedCustomer.id : null,
+                    paymentId: document.getElementById('paymentId').value,
+                    items: cart.map(c => ({ productDetailId: c.productDetailId, quantity: c.quantity }))
+                };
+
+                const btn = this;
+                btn.disabled = true;
+                btn.textContent = 'Đang xử lý...';
+
+                const headers = { 'Content-Type': 'application/json' };
+                headers[csrfHeader] = csrfToken;
+
+                fetch('/staff/counter-sale/checkout', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                })
+                    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+                    .then(({ ok, data }) => {
+                        if (ok && data.success) {
+                            showAlert('Tạo đơn thành công! Mã đơn: ' + data.billId, 'success');
+                            cart = [];
+                            selectedCustomer = null;
+                            document.getElementById('customerPhone').value = '';
+                            document.getElementById('customerInfo').textContent = 'Khách vãng lai';
+                            renderCart();
+                        } else {
+                            showAlert(data.message || 'Có lỗi xảy ra', 'error');
+                        }
+                    })
+                    .catch(() => showAlert('Không thể kết nối tới máy chủ', 'error'))
+                    .finally(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check-circle"></i> Thanh toán';
+                    });
+            });
+
+            renderCart();
+        })();
+    </script>
+</th:block>

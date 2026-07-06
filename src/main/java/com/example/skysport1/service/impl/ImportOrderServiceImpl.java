@@ -33,7 +33,7 @@ public class ImportOrderServiceImpl implements ImportOrderService {
 
     @Override
     public ImportOrder findById(String id) {
-        return importOrderRepository.findById(id)
+        return importOrderRepository.findByIdWithSupplier(id)
                 .orElseThrow(() -> new ResourceNotFoundException("phiếu nhập", id));
     }
 

@@ -37,7 +37,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     @Override
     public ReturnRequest findById(String id) {
-        return returnRequestRepository.findById(id)
+        return returnRequestRepository.findByIdWithBillAndCustomer(id)
                 .orElseThrow(() -> new ResourceNotFoundException("yêu cầu hoàn trả", id));
     }
 
@@ -58,7 +58,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     @Override
     public List<ReturnRequestDetail> findDetails(String returnRequestId) {
-        return returnRequestDetailRepository.findByReturnRequestId(returnRequestId);
+        return returnRequestDetailRepository.findByReturnRequestIdWithProductSizeColor(returnRequestId);
     }
 
     // ── Tạo yêu cầu ───────────────────────────────────────────────────────

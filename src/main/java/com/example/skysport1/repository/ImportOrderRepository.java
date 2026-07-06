@@ -21,4 +21,7 @@ public interface ImportOrderRepository extends JpaRepository<ImportOrder, String
 
     @Query("SELECT o FROM ImportOrder o LEFT JOIN FETCH o.supplier WHERE o.status = :status")
     List<ImportOrder> findByStatusWithSupplier(@Param("status") Integer status);
+
+    @Query("SELECT o FROM ImportOrder o LEFT JOIN FETCH o.supplier WHERE o.id = :id")
+    java.util.Optional<ImportOrder> findByIdWithSupplier(@Param("id") String id);
 }

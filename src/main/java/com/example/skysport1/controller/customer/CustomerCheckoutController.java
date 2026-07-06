@@ -1,14 +1,18 @@
 package com.example.skysport1.controller.customer;
 
+import com.example.skysport1.entity.AddressShipping;
 import com.example.skysport1.entity.Bill;
 import com.example.skysport1.entity.BillDetail;
 import com.example.skysport1.entity.CartDetail;
+import com.example.skysport1.entity.DiscountCode;
 import com.example.skysport1.entity.ProductDetail;
+import com.example.skysport1.repository.AddressShippingRepository;
 import com.example.skysport1.repository.ProductDetailRepository;
 import com.example.skysport1.service.AccountService;
 import com.example.skysport1.service.BillService;
 import com.example.skysport1.service.CartService;
 import com.example.skysport1.service.CustomerService;
+import com.example.skysport1.service.DiscountCodeService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +26,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/customer/checkout")
@@ -42,8 +47,10 @@ public class CustomerCheckoutController {
     private final AccountService accountService;
     private final CustomerService customerService;
 
-    // ===== HIỂN THỊ FORM CHECKOUT =====
+    private final DiscountCodeService discountCodeService;
+    private final AddressShippingRepository addressShippingRepository;
 
+    // ===== HIỂN THỊ FORM CHECKOUT =====
     @GetMapping
     public String checkoutPage(Model model, HttpSession session) {
         String customerId = getCurrentCustomerId().orElse(null);
@@ -56,14 +63,14 @@ public class CustomerCheckoutController {
             Map<Integer, Integer> guestCart = getGuestCart(session);
             for (Map.Entry<Integer, Integer> e : guestCart.entrySet()) {
                 try {
-                    ProductDetail pd = productDetailRepository
-                            .findByIdWithProductSizeColor(e.getKey()).orElseThrow();
+                    ProductDetail pd = productDetailRepository.findByIdWithProductSizeColor(e.getKey())
+                            .orElseThrow();
                     CartDetail cd = CartDetail.builder()
                             .productDetail(pd)
                             .quantity(e.getValue())
                             .build();
                     cartItems.add(cd);
-                } catch (Exception ex) {
+                } catch (Exception ignored) {
                     // sản phẩm không còn tồn tại -> bỏ qua
                 }
             }
@@ -71,26 +78,167 @@ public class CustomerCheckoutController {
 
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("title", "Thanh toán");
+
         // Tính subtotal
         BigDecimal subtotal = cartItems.stream()
                 .filter(i -> i.getProductDetail() != null && i.getProductDetail().getPrice() != null)
-                .map(i -> i.getProductDetail().getPrice()
-                        .multiply(BigDecimal.valueOf(i.getQuantity())))
+                .map(i -> i.getProductDetail().getPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal shippingFee = subtotal.compareTo(BigDecimal.valueOf(500_000)) < 0
-                ? BigDecimal.valueOf(30_000) : BigDecimal.ZERO;
+                ? BigDecimal.valueOf(30_000)
+                : BigDecimal.ZERO;
+
+        // Best voucher (chỉ áp dụng cho khách đăng nhập)
+        BigDecimal bestDiscountAmount = BigDecimal.ZERO;
+        DiscountCode bestDiscountCode = null;
+
+        List<DiscountCode> discountCodes = Collections.emptyList();
+        if (customerId != null) {
+            discountCodes = discountCodeService.findAll();
+
+            for (DiscountCode dc : discountCodes) {
+                try {
+                    BigDecimal current = discountCodeService.validate(dc.getCode(), customerId, subtotal);
+                    if (current != null && current.compareTo(bestDiscountAmount) > 0) {
+                        bestDiscountAmount = current;
+                        bestDiscountCode = dc;
+                    }
+                } catch (Exception ignored) {
+                    // voucher không hợp lệ -> bỏ qua
+                }
+            }
+        }
+
+        BigDecimal totalAmount = subtotal.add(shippingFee).subtract(bestDiscountAmount);
 
         model.addAttribute("subtotal", subtotal);
         model.addAttribute("shippingFee", shippingFee);
-        model.addAttribute("discountAmount", BigDecimal.ZERO);
-        model.addAttribute("totalAmount", subtotal.add(shippingFee));
+        model.addAttribute("discountAmount", bestDiscountAmount);
+        model.addAttribute("totalAmount", totalAmount);
+
+        model.addAttribute("discountCodes", discountCodes);
+        model.addAttribute("bestDiscountCode", bestDiscountCode != null ? bestDiscountCode.getCode() : null);
+
+        // Auto-fill thông tin nhận hàng cho khách đăng nhập
+        if (customerId != null) {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : null;
+
+            if (username != null && !username.isBlank()) {
+                var account = accountService.findByUsername(username);
+                var customer = customerService.findByAccountId(account.getId());
+                if (customer != null) {
+                    model.addAttribute("receiverName", customer.getFullName());
+                    model.addAttribute("receiverPhone", customer.getPhone());
+                }
+            }
+
+            Optional<AddressShipping> defaultAddressOpt =
+                    addressShippingRepository.findByCustomerIdAndIsDefault(customerId, true);
+
+            AddressShipping addr = defaultAddressOpt.orElseGet(() ->
+                    addressShippingRepository.findByCustomerId(customerId).stream().findFirst().orElse(null)
+            );
+
+            if (addr != null) {
+                model.addAttribute("shippingAddress", addr.getAddress());
+            }
+        }
+
         return "customer/checkout/checkout";
     }
 
     @GetMapping("/guest")
     public String guestCheckoutPage(Model model) {
         model.addAttribute("title", "Thanh toán - Khách");
+        return "customer/checkout/checkout";
+    }
+
+    /**
+     * Khi user bấm "Áp dụng", reload checkout và cập nhật preview discount/total.
+     * Chỉ áp dụng cho khách đăng nhập.
+     */
+    @PostMapping("/apply-discount")
+    public String applyDiscount(
+            @RequestParam(value = "applyDiscountCode", required = false) String discountCode,
+            Model model,
+            HttpSession session,
+            RedirectAttributes ra
+    ) {
+        String customerId = getCurrentCustomerId().orElse(null);
+
+        // guest: không support preview theo best voucher trong bước này
+        if (customerId == null) {
+            return "redirect:/customer/checkout/guest";
+        }
+
+        // Lấy giỏ hàng
+        List<CartDetail> cartItems = cartService.getCartDetails(customerId);
+        model.addAttribute("cartItems", cartItems);
+        model.addAttribute("title", "Thanh toán");
+
+        BigDecimal subtotal = cartItems.stream()
+                .filter(i -> i.getProductDetail() != null && i.getProductDetail().getPrice() != null)
+                .map(i -> i.getProductDetail().getPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal shippingFee = subtotal.compareTo(BigDecimal.valueOf(500_000)) < 0
+                ? BigDecimal.valueOf(30_000)
+                : BigDecimal.ZERO;
+
+        BigDecimal discountAmount = BigDecimal.ZERO;
+
+        String normalizedCode = (discountCode != null && !discountCode.isBlank())
+                ? discountCode.trim()
+                : null;
+
+        if (normalizedCode != null) {
+            try {
+                discountAmount = discountCodeService.validate(normalizedCode, customerId, subtotal);
+            } catch (Exception e) {
+                ra.addFlashAttribute("error", e.getMessage());
+                discountAmount = BigDecimal.ZERO;
+                normalizedCode = null;
+            }
+        }
+
+        BigDecimal totalAmount = subtotal.add(shippingFee).subtract(discountAmount);
+
+        List<DiscountCode> discountCodes = discountCodeService.findAll();
+
+        model.addAttribute("subtotal", subtotal);
+        model.addAttribute("shippingFee", shippingFee);
+        model.addAttribute("discountAmount", discountAmount);
+        model.addAttribute("totalAmount", totalAmount);
+
+        model.addAttribute("discountCodes", discountCodes);
+        model.addAttribute("bestDiscountCode", normalizedCode);
+
+        // Auto-fill thông tin nhận hàng
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth != null ? auth.getName() : null;
+
+        if (username != null && !username.isBlank()) {
+            var account = accountService.findByUsername(username);
+            var customer = customerService.findByAccountId(account.getId());
+            if (customer != null) {
+                model.addAttribute("receiverName", customer.getFullName());
+                model.addAttribute("receiverPhone", customer.getPhone());
+            }
+        }
+
+        Optional<AddressShipping> defaultAddressOpt =
+                addressShippingRepository.findByCustomerIdAndIsDefault(customerId, true);
+
+        AddressShipping addr = defaultAddressOpt.orElseGet(() ->
+                addressShippingRepository.findByCustomerId(customerId).stream().findFirst().orElse(null)
+        );
+
+        if (addr != null) {
+            model.addAttribute("shippingAddress", addr.getAddress());
+        }
+
         return "customer/checkout/checkout";
     }
 
@@ -140,7 +288,7 @@ public class CustomerCheckoutController {
 
             session.removeAttribute(SESSION_GUEST_CART);
             ra.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + created.getId());
-            return "redirect:/customer/bill/detail/" + created.getId();
+            return "redirect:/customer/orders/" + created.getId();
 
         } catch (Exception e) {
             log.error("Guest checkout error: {}", e.getMessage(), e);
@@ -189,7 +337,7 @@ public class CustomerCheckoutController {
 
             cartService.clearCart(customerId);
             ra.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + created.getId());
-            return "redirect:/customer/bill/detail/" + created.getId();
+            return "redirect:/customer/orders/" + created.getId();
 
         } catch (Exception e) {
             log.error("Checkout error: {}", e.getMessage(), e);
@@ -206,26 +354,26 @@ public class CustomerCheckoutController {
             Map<Integer, Integer> result = (Map<Integer, Integer>) map;
             return result;
         }
-        return java.util.Collections.emptyMap();
+        return Collections.emptyMap();
     }
 
-    private java.util.Optional<String> getCurrentCustomerId() {
+    private Optional<String> getCurrentCustomerId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
 
         String username = auth.getName();
         if (username == null || username.isBlank()) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
 
         try {
             var account = accountService.findByUsername(username);
             var customer = customerService.findByAccountId(account.getId());
-            return java.util.Optional.ofNullable(customer.getId());
+            return Optional.ofNullable(customer.getId());
         } catch (Exception e) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
     }
 }

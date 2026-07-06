@@ -1,25 +1,22 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/layout :: head(${product.name} + ' | SkySport')}"></head>
+<head th:replace="~{fragments/layout :: head(${product.name})}"></head>
 <body>
 
 <div th:replace="~{fragments/layout :: navbar}"></div>
 
-<!-- ============================================================ -->
-<!-- CONTENT -->
-<!-- ============================================================ -->
 <div th:fragment="content">
 
     <!-- ===== BREADCRUMB ===== -->
-    <section style="background:#111;padding:1.5rem 0;border-bottom:1px solid #222;">
+    <section class="ss-crumbs">
         <div class="container">
-            <nav style="display:flex;gap:8px;font-size:.85rem;color:#888;">
-                <a href="/" style="color:#888;">Trang chủ</a>
+            <nav>
+                <a href="/">Trang chủ</a>
                 <span>/</span>
-                <a href="/san-pham" style="color:#888;">Sản phẩm</a>
+                <a href="/san-pham">Sản phẩm</a>
                 <span>/</span>
-                <span style="color:#e63030;font-weight:600;" th:text="${product.name}">Chi tiết</span>
+                <span class="current" th:text="${product.name}">Chi tiết</span>
             </nav>
         </div>
     </section>
@@ -27,12 +24,11 @@
     <!-- ===== PRODUCT DETAIL ===== -->
     <section style="padding:3rem 0;">
         <div class="container">
-
             <div class="row g-4">
 
                 <!-- ===== LEFT: IMAGE ===== -->
                 <div class="col-md-5">
-                    <div style="background:#1a1a1a;border:1px solid #222;border-radius:16px;padding:2rem;text-align:center;min-height:350px;display:flex;align-items:center;justify-content:center;">
+                    <div class="ss-card" style="padding:2rem;text-align:center;min-height:350px;display:flex;align-items:center;justify-content:center;">
                         <i class="fas fa-tshirt" style="font-size:8rem;color:#333;"></i>
                     </div>
                 </div>
@@ -40,23 +36,20 @@
                 <!-- ===== RIGHT: INFO ===== -->
                 <div class="col-md-7">
 
-                    <!-- Brand + Category -->
-                    <p style="color:#888;font-size:.85rem;margin-bottom:.3rem;">
+                    <p style="color:var(--muted);font-size:.85rem;margin-bottom:.3rem;">
                         <span th:text="${product.brand != null ? product.brand.name : ''}">Nike</span>
-                        <span th:if="${product.category != null}" style="color:#333;"> · </span>
+                        <span th:if="${product.category != null}" style="color:var(--line);"> · </span>
                         <span th:text="${product.category != null ? product.category.name : ''}">Thể thao</span>
                     </p>
 
-                    <!-- Product name -->
-                    <h1 style="font-size:2.2rem;font-weight:900;color:#f5f5f5;margin-bottom:.5rem;" th:text="${product.name}">
+                    <h1 style="font-size:2rem;color:var(--paper);margin-bottom:.6rem;" th:text="${product.name}">
                         Tên sản phẩm
                     </h1>
 
-                    <!-- Giá -->
                     <div th:with="firstDetail=${productDetails != null and !#lists.isEmpty(productDetails) ? productDetails[0] : null}">
-                        <div style="font-size:2rem;font-weight:900;color:#e63030;margin-bottom:1.5rem;"
+                        <div class="display" style="font-size:1.9rem;color:var(--flare);margin-bottom:1.5rem;"
                              th:text="${firstDetail != null ? #numbers.formatDecimal(firstDetail.price, 0, 'COMMA', 0, 'POINT') + 'đ' : 'Liên hệ'}">
-                            250,000đ
+                            250.000đ
                         </div>
                     </div>
 
@@ -67,72 +60,63 @@
 
                         <!-- Màu sắc -->
                         <div class="mb-3" th:if="${#lists.size(productDetails) > 0}">
-                            <label style="color:#f5f5f5;font-weight:600;font-size:.9rem;display:block;margin-bottom:6px;">Màu sắc</label>
+                            <label style="color:var(--paper);font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Màu sắc</label>
                             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                                 <span th:each="detail : ${productDetails}" th:if="${detail.color != null}">
                                     <span class="color-swatch"
-                                          style="display:inline-block;width:32px;height:32px;border-radius:50%;border:2px solid #444;cursor:pointer;transition:.2s;"
+                                          style="display:inline-block;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);cursor:pointer;transition:.2s;"
                                           th:style="'background-color:' + ${detail.color.hexCode}"
                                           th:title="${detail.color.name}"
                                           th:data-detail-id="${detail.id}"
-                                          th:onclick="'selectColor(this, ' + ${detail.id} + ')'"
-                                          onmouseover="this.style.borderColor='#e63030'"
-                                          onmouseout="this.style.borderColor='#444'"></span>
+                                          th:onclick="'selectColor(this, ' + ${detail.id} + ')'"></span>
                                 </span>
                             </div>
-                            <span style="color:#888;font-size:.8rem;display:block;margin-top:4px;" id="selectedColorText">Chọn màu</span>
+                            <span style="color:var(--muted);font-size:.8rem;display:block;margin-top:6px;" id="selectedColorText">Chọn màu</span>
                         </div>
 
                         <!-- Size -->
                         <div class="mb-3" th:if="${#lists.size(productDetails) > 0}">
-                            <label style="color:#f5f5f5;font-weight:600;font-size:.9rem;display:block;margin-bottom:6px;">Kích cỡ</label>
+                            <label style="color:var(--paper);font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Kích cỡ</label>
                             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                                 <span th:each="detail : ${productDetails}" th:if="${detail.size != null}">
-                                    <button type="button" class="size-btn"
-                                            style="padding:6px 18px;background:transparent;border:1px solid #444;border-radius:8px;color:#888;font-weight:600;font-size:.85rem;cursor:pointer;transition:.2s;"
+                                    <button type="button" class="size-btn btn-ss btn-ss-ghost btn-ss-sm"
                                             th:text="${detail.size.name}"
                                             th:data-detail-id="${detail.id}"
                                             th:disabled="${detail.quantity <= 0}"
-                                            th:classappend="${detail.quantity <= 0} ? 'opacity-50' : ''"
-                                            th:onclick="'selectSize(this, ' + ${detail.id} + ')'"
-                                            onmouseover="if(!this.disabled){this.style.borderColor='#e63030';this.style.color='#f5f5f5'}"
-                                            onmouseout="if(!this.disabled){this.style.borderColor='#444';this.style.color='#888'}">M</button>
+                                            th:style="${detail.quantity <= 0} ? 'opacity:.4;cursor:not-allowed;' : ''"
+                                            th:onclick="'selectSize(this, ' + ${detail.id} + ')'">M</button>
                                 </span>
                             </div>
-                            <span style="color:#888;font-size:.8rem;display:block;margin-top:4px;" id="selectedSizeText">Chọn size</span>
+                            <span style="color:var(--muted);font-size:.8rem;display:block;margin-top:6px;" id="selectedSizeText">Chọn size</span>
                         </div>
 
                         <!-- Số lượng -->
                         <div class="mb-3">
-                            <label style="color:#f5f5f5;font-weight:600;font-size:.9rem;display:block;margin-bottom:6px;">Số lượng</label>
+                            <label style="color:var(--paper);font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Số lượng</label>
                             <div style="display:flex;gap:8px;align-items:center;">
-                                <button type="button" style="padding:6px 14px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#888;cursor:pointer;font-size:1.2rem;" onclick="changeQty(-1)">−</button>
+                                <button type="button" class="btn-ss btn-ss-ghost btn-ss-sm" style="padding:.5rem .9rem;font-size:1.1rem;" onclick="changeQty(-1)">−</button>
                                 <input type="number" name="quantity" id="qty" value="1" min="1"
-                                       style="width:60px;text-align:center;background:#0a0a0a;border:1px solid #333;border-radius:8px;color:#f5f5f5;padding:6px 0;font-size:1rem;"/>
-                                <button type="button" style="padding:6px 14px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#888;cursor:pointer;font-size:1.2rem;" onclick="changeQty(1)">+</button>
+                                       style="width:60px;text-align:center;background:var(--ink);border:1px solid var(--line);border-radius:8px;color:var(--paper);padding:.5rem 0;font-size:1rem;"/>
+                                <button type="button" class="btn-ss btn-ss-ghost btn-ss-sm" style="padding:.5rem .9rem;font-size:1.1rem;" onclick="changeQty(1)">+</button>
                             </div>
                         </div>
 
-                        <!-- Submit -->
-                        <button type="submit" class="btn btn-red"
-                                style="width:100%;padding:.9rem;border:none;border-radius:10px;background:#e63030;color:#fff;font-weight:700;font-size:1rem;cursor:pointer;transition:.3s;"
-                                onmouseover="this.style.background='#c82020'"
-                                onmouseout="this.style.background='#e63030'">
-                            <i class="fas fa-cart-plus me-2"></i>
+                        <button type="submit" class="btn-ss btn-ss-primary btn-ss-block" style="padding:1rem;font-size:1rem;">
+                            <i class="fas fa-cart-plus"></i>
                             <span id="btnText">Thêm vào giỏ hàng</span>
                         </button>
                     </form>
 
                     <!-- Mô tả -->
-                    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #222;">
-                        <h5 style="color:#f5f5f5;font-weight:700;font-size:1rem;margin-bottom:.5rem;">Mô tả sản phẩm</h5>
-                        <p style="color:#888;line-height:1.7;" th:utext="${product.description}">Mô tả sản phẩm...</p>
-                        <p style="color:#888;font-size:.85rem;margin-top:.5rem;">
-                            <strong>Chất liệu:</strong>
+                    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--line);">
+                        <h5 style="text-transform:none;font-family:'Inter';color:var(--paper);font-weight:700;font-size:1rem;margin-bottom:.5rem;">Mô tả sản phẩm</h5>
+                        <p style="color:var(--muted);line-height:1.7;" th:utext="${product.description}">Mô tả sản phẩm...</p>
+                        <p style="color:var(--muted);font-size:.85rem;margin-top:.5rem;">
+                            <strong style="color:var(--paper);">Chất liệu:</strong>
                             <span th:text="${product.material != null ? product.material.name : 'N/A'}">Cotton</span>
                         </p>
-                        <p style="color:#888;font-size:.85rem;">
-                            <strong>Giới tính:</strong>
+                        <p style="color:var(--muted);font-size:.85rem;">
+                            <strong style="color:var(--paper);">Giới tính:</strong>
                             <span th:if="${product.gender == 1}">Nam</span>
                             <span th:if="${product.gender == 2}">Nữ</span>
                             <span th:if="${product.gender == 3 or product.gender == null}">Unisex</span>
@@ -141,38 +125,32 @@
 
                 </div>
             </div>
-
         </div>
     </section>
 
 </div>
-<!-- ===== END CONTENT ===== -->
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 
 <script>
-    var selectedDetailId = null;
-
     function selectColor(el, detailId) {
-        document.querySelectorAll('.color-swatch').forEach(s => { s.style.borderColor = '#444'; });
-        el.style.borderColor = '#e63030';
-        el.style.boxShadow = '0 0 0 2px #e63030';
-        selectedDetailId = detailId;
+        document.querySelectorAll('.color-swatch').forEach(s => { s.style.borderColor = 'var(--line)'; s.style.boxShadow = 'none'; });
+        el.style.borderColor = 'var(--flare)';
+        el.style.boxShadow = '0 0 0 2px var(--flare)';
         document.getElementById('productDetailId').value = detailId;
-        document.getElementById('selectedColorText').textContent = '✅ Đã chọn: ' + el.getAttribute('title');
+        document.getElementById('selectedColorText').textContent = 'Đã chọn: ' + el.getAttribute('title');
         updateButtonText();
     }
 
     function selectSize(el, detailId) {
         document.querySelectorAll('.size-btn').forEach(b => {
-            b.style.borderColor = '#444'; b.style.background = 'transparent'; b.style.color = '#888';
+            b.style.borderColor = 'var(--line)'; b.style.background = 'var(--panel-2)'; b.style.color = 'var(--muted)';
         });
-        el.style.borderColor = '#e63030';
-        el.style.background = '#e63030';
+        el.style.borderColor = 'var(--flare)';
+        el.style.background = 'var(--flare)';
         el.style.color = '#fff';
-        selectedDetailId = detailId;
         document.getElementById('productDetailId').value = detailId;
-        document.getElementById('selectedSizeText').textContent = '✅ Đã chọn: ' + el.textContent;
+        document.getElementById('selectedSizeText').textContent = 'Đã chọn: ' + el.textContent;
         updateButtonText();
     }
 
@@ -184,7 +162,7 @@
 
     function updateButtonText() {
         var detailId = document.getElementById('productDetailId').value;
-        document.getElementById('btnText').textContent = (detailId && detailId !== '') ? 'Thêm vào giỏ hàng' : '⚠️ Vui lòng chọn màu hoặc size';
+        document.getElementById('btnText').textContent = (detailId && detailId !== '') ? 'Thêm vào giỏ hàng' : 'Vui lòng chọn màu hoặc size';
     }
 
     document.querySelector('form').addEventListener('submit', function(e) {
@@ -198,13 +176,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         var firstDetail = document.querySelector('.color-swatch');
         if (firstDetail) {
-            var detailId = firstDetail.getAttribute('data-detail-id');
-            selectColor(firstDetail, parseInt(detailId));
+            selectColor(firstDetail, parseInt(firstDetail.getAttribute('data-detail-id')));
         } else {
             var firstSize = document.querySelector('.size-btn:not([disabled])');
             if (firstSize) {
-                var detailId = firstSize.getAttribute('data-detail-id');
-                selectSize(firstSize, parseInt(detailId));
+                selectSize(firstSize, parseInt(firstSize.getAttribute('data-detail-id')));
             }
         }
     });

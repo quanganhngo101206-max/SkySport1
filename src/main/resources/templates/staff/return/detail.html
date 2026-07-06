@@ -69,7 +69,7 @@
           <th>Size</th>
           <th>Màu</th>
           <th>Số lượng</th>
-          <th>Lý do</th>
+          <th>Số tiền hoàn</th>
         </tr>
         </thead>
         <tbody>
@@ -77,8 +77,8 @@
           <td th:text="${d.productDetail?.product?.name ?: '—'}">Áo thun</td>
           <td th:text="${d.productDetail?.size?.name ?: '—'}">M</td>
           <td th:text="${d.productDetail?.color?.name ?: '—'}">Đen</td>
-          <td th:text="${d.quantity}">1</td>
-          <td th:text="${d.reason ?: '—'}">Lý do</td>
+          <td th:text="${d.quantityReturn}">1</td>
+          <td th:text="${d.refundPrice != null ? #numbers.formatDecimal(d.refundPrice, 0, 'COMMA', 0, 'POINT') + 'đ' : '—'}">—</td>
         </tr>
         </tbody>
       </table>

@@ -88,7 +88,7 @@ public class BillServiceImpl implements BillService {
 
     @Override
     public Page<Bill> findByStatusPaged(Integer status, Pageable pageable) {
-        return billRepository.findByStatus(status, pageable);
+        return billRepository.findByStatusWithCustomer(status, pageable);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class BillServiceImpl implements BillService {
 
     @Override
     public Page<Bill> findAllPaged(Pageable pageable) {
-        return billRepository.findAll(pageable);
+        return billRepository.findAllWithCustomer(pageable);
     }
 
     // ── Tạo đơn ───────────────────────────────────────────────────────────

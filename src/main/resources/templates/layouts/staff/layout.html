@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title th:text="${title} + ' | SkySport Staff'">SkySport Staff</title>
 
     <!-- Google Fonts -->
@@ -261,6 +263,7 @@
                 info: "Hiển thị _START_ đến _END_ của _TOTAL_ bản ghi",
                 infoEmpty: "Không có dữ liệu",
                 zeroRecords: "Không tìm thấy kết quả",
+                emptyTable: "Không có dữ liệu",
                 paginate: { first:"Đầu", last:"Cuối", next:"Sau", previous:"Trước" }
             }
         };
@@ -273,4 +276,3 @@
 
 </body>
 </html>
-]]>

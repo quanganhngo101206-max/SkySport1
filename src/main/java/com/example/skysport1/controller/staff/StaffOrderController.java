@@ -66,12 +66,12 @@ public class StaffOrderController {
 
     @PostMapping("/{id}/confirm")
     public String confirm(@PathVariable String id,
-                           @RequestParam(required = false) String note,
-                           Authentication auth,
-                           RedirectAttributes ra) {
+                          @RequestParam(required = false) String note,
+                          Authentication auth,
+                          RedirectAttributes ra) {
         try {
             Staff staff = staffService.findByAccountUsername(auth.getName());
-            billService.confirm(id, staff.getAccount().getId(), note);
+            billService.confirm(id, staff.getId(), note);
             ra.addFlashAttribute("success", "Đã xác nhận đơn hàng " + id);
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
@@ -86,7 +86,7 @@ public class StaffOrderController {
                        RedirectAttributes ra) {
         try {
             Staff staff = staffService.findByAccountUsername(auth.getName());
-            billService.startShipping(id, staff.getAccount().getId(), note);
+            billService.startShipping(id, staff.getId(), note);
             ra.addFlashAttribute("success", "Đã bắt đầu giao hàng " + id);
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
@@ -96,12 +96,12 @@ public class StaffOrderController {
 
     @PostMapping("/{id}/deliver")
     public String deliver(@PathVariable String id,
-                           @RequestParam(required = false) String note,
-                           Authentication auth,
-                           RedirectAttributes ra) {
+                          @RequestParam(required = false) String note,
+                          Authentication auth,
+                          RedirectAttributes ra) {
         try {
             Staff staff = staffService.findByAccountUsername(auth.getName());
-            billService.markDelivered(id, staff.getAccount().getId(), note);
+            billService.markDelivered(id, staff.getId(), note);
             ra.addFlashAttribute("success", "Đã xác nhận giao thành công " + id);
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
@@ -111,12 +111,12 @@ public class StaffOrderController {
 
     @PostMapping("/{id}/cancel")
     public String cancel(@PathVariable String id,
-                          @RequestParam(required = false) String note,
-                          Authentication auth,
-                          RedirectAttributes ra) {
+                         @RequestParam(required = false) String note,
+                         Authentication auth,
+                         RedirectAttributes ra) {
         try {
             Staff staff = staffService.findByAccountUsername(auth.getName());
-            billService.cancel(id, staff.getAccount().getId(), note);
+            billService.cancel(id, staff.getId(), note);
             ra.addFlashAttribute("success", "Đã hủy đơn hàng " + id);
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
@@ -131,7 +131,7 @@ public class StaffOrderController {
                            RedirectAttributes ra) {
         try {
             Staff staff = staffService.findByAccountUsername(auth.getName());
-            billService.complete(id, staff.getAccount().getId(), note);
+            billService.complete(id, staff.getId(), note);
             ra.addFlashAttribute("success", "Đã hoàn thành đơn hàng " + id);
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());

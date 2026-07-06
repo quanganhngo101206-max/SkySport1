@@ -72,7 +72,7 @@ public class AdminBillController {
 						  RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
-			billService.confirm(id, staff.getId(), note);
+			billService.confirm(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
 			// Admin không có Staff record → dùng null hoặc username trực tiếp
 			billService.confirm(id, null, note);
@@ -89,10 +89,10 @@ public class AdminBillController {
 					   RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
-			billService.confirm(id, staff.getId(), note);
+			billService.startShipping(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
 			// Admin không có Staff record → dùng null hoặc username trực tiếp
-			billService.confirm(id, null, note);
+			billService.startShipping(id, null, note);
 		} catch (Exception e) {
 			ra.addFlashAttribute("error", e.getMessage());
 		}
@@ -106,10 +106,10 @@ public class AdminBillController {
 						  RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
-			billService.confirm(id, staff.getId(), note);
+			billService.markDelivered(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
 			// Admin không có Staff record → dùng null hoặc username trực tiếp
-			billService.confirm(id, null, note);
+			billService.markDelivered(id, null, note);
 		} catch (Exception e) {
 			ra.addFlashAttribute("error", e.getMessage());
 		}
@@ -123,10 +123,10 @@ public class AdminBillController {
 						 RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
-			billService.confirm(id, staff.getId(), note);
+			billService.cancel(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
 			// Admin không có Staff record → dùng null hoặc username trực tiếp
-			billService.confirm(id, null, note);
+			billService.cancel(id, null, note);
 		} catch (Exception e) {
 			ra.addFlashAttribute("error", e.getMessage());
 		}
@@ -140,10 +140,10 @@ public class AdminBillController {
 						   RedirectAttributes ra) {
 		try {
 			Staff staff = staffService.findByAccountUsername(auth.getName());
-			billService.confirm(id, staff.getId(), note);
+			billService.complete(id, staff.getAccount().getId(), note);
 		} catch (ResourceNotFoundException e) {
 			// Admin không có Staff record → dùng null hoặc username trực tiếp
-			billService.confirm(id, null, note);
+			billService.complete(id, null, note);
 		} catch (Exception e) {
 			ra.addFlashAttribute("error", e.getMessage());
 		}

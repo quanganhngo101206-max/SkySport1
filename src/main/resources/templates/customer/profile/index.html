@@ -20,13 +20,13 @@
           <div class="col-md-6">
             <label class="ss-label">Họ tên <span style="color:var(--flare);">*</span></label>
             <input class="ss-input" type="text" name="fullName" required
-                   th:value="${customer.fullName != null ? customer.fullName : account.fullName}"/>
+                   th:value="${customer.fullName}"/>
           </div>
 
           <div class="col-md-6">
             <label class="ss-label">Số điện thoại <span style="color:var(--flare);">*</span></label>
             <input class="ss-input" type="text" name="phone" required
-                   th:value="${customer.phone != null ? customer.phone : account.phone}"/>
+                   th:value="${customer.phone}"/>
           </div>
 
           <div class="col-md-6">

@@ -43,9 +43,6 @@ public class InventoryTransaction {
     @Column(name = "create_date", updatable = false)
     private LocalDateTime createDate;
 
-    @Column(name = "create_by", length = 20)
-    private String createBy;
-
     @PrePersist
     protected void onCreate() {
         createDate = LocalDateTime.now();

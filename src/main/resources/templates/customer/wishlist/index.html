@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <title th:text="${title}">Sản phẩm yêu thích</title>
+</head>
+
+<body>
+<div th:replace="~{layouts/customer/layout :: content}">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 th:text="${title}">Sản phẩm yêu thích</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+            <li class="breadcrumb-item active" th:text="${title}">Yêu thích</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+      <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-striped projects">
+                  <thead>
+                  <tr>
+                    <th style="width: 160px;">Sản phẩm</th>
+                    <th>Tên</th>
+                    <th style="width: 160px;">Giá</th>
+                    <th style="width: 160px;">Trạng thái</th>
+                    <th style="width: 220px;" class="text-right">Thao tác</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr th:if="${#lists.isEmpty(items)}">
+                    <td colspan="5" class="text-center py-4">
+                      Chưa có sản phẩm nào trong danh sách yêu thích.
+                    </td>
+                  </tr>
+
+                  <tr th:each="item : ${items}">
+                    <td>
+                      <img th:if="${item.imageUrl != null}" th:src="${item.imageUrl}" alt="product"
+                           style="width: 140px; height: auto; object-fit: cover;"/>
+                      <img th:unless="${item.imageUrl != null}" alt="product"
+                           src="https://via.placeholder.com/140x100?text=No+Image"
+                           style="width: 140px; height: auto; object-fit: cover;"/>
+                    </td>
+
+                    <td>
+                      <a th:if="${item.productSlug != null}"
+                         th:href="@{/customer/product/{slug}(slug=${item.productSlug})}"
+                         th:text="${item.productName != null ? item.productName : item.productId}">Sản phẩm</a>
+
+                      <span th:unless="${item.productSlug != null}"
+                            th:text="${item.productName != null ? item.productName : item.productId}">Sản phẩm</span>
+                    </td>
+
+                    <td>
+                      <span th:text="${item.price != null ? #numbers.formatDecimal(item.price,1,'COMMA',0,'POINT') : '-'}"></span>
+                    </td>
+
+                    <td th:text="${item.productStatus != null ? item.productStatus : '—'}">—</td>
+
+                    <td class="text-right">
+                      <form th:action="@{/customer/wishlist/remove}" method="post" style="display:inline;">
+                        <input type="hidden" name="productId" th:value="${item.productId}"/>
+                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                      </form>
+
+                      <a th:if="${item.productSlug != null}"
+                         th:href="@{/customer/product/{slug}(slug=${item.productSlug})}"
+                         class="btn btn-sm btn-primary ml-2">Xem</a>
+
+                      <span th:unless="${item.productSlug != null}" class="btn btn-sm btn-primary disabled ml-2">Xem</span>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

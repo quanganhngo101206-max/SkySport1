@@ -1,0 +1,86 @@
+<div th:fragment="content">
+  <!--
+    Page content for layouts/customer/layout
+    Expected model attributes:
+      - customer
+      - account
+      - success/error/ errors (optional)
+  -->
+  <section>
+    <div class="ss-card" style="padding:1.5rem;margin-bottom:1.5rem;">
+      <h3 style="font-size:1.05rem;font-weight:800;color:var(--paper);margin-bottom:1rem;">
+        <i class="fas fa-user-circle" style="color:var(--flare);margin-right:10px;"></i>
+        Thông tin cá nhân
+      </h3>
+
+      <form th:action="@{/customer/profile/update}" method="post" th:object="${customer}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="ss-label">Họ tên <span style="color:var(--flare);">*</span></label>
+            <input class="ss-input" type="text" name="fullName" required
+                   th:value="${customer.fullName != null ? customer.fullName : account.fullName}"/>
+          </div>
+
+          <div class="col-md-6">
+            <label class="ss-label">Số điện thoại <span style="color:var(--flare);">*</span></label>
+            <input class="ss-input" type="text" name="phone" required
+                   th:value="${customer.phone != null ? customer.phone : account.phone}"/>
+          </div>
+
+          <div class="col-md-6">
+            <label class="ss-label">Email <span style="color:var(--flare);">*</span></label>
+            <input class="ss-input" type="email" name="email" required
+                   th:value="${customer.email != null ? customer.email : account.email}"/>
+          </div>
+
+          <div class="col-md-6">
+            <label class="ss-label">Giới tính</label>
+            <select class="ss-input" name="gender">
+              <option th:value="1" th:selected="${customer.gender == 1}">Nam</option>
+              <option th:value="0" th:selected="${customer.gender == 0}">Nữ</option>
+              <option th:value="" th:selected="${customer.gender == null}">Chọn</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="ss-label">Ngày sinh</label>
+            <input class="ss-input" type="date" name="dob"
+                   th:value="${customer.dob != null ? customer.dob : ''}"/>
+          </div>
+
+          <div class="col-md-6">
+            <label class="ss-label">Trạng thái</label>
+            <input class="ss-input" type="text" value="Khách hàng" disabled />
+          </div>
+
+          <div class="col-12" th:if="${errors != null}">
+            <div class="alert alert-danger" style="margin:0;">
+              <ul style="margin:0;padding-left:18px;">
+                <li th:each="e : ${errors}" th:text="${e}"></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="col-12" style="margin-top:0.5rem;">
+            <button type="submit" class="btn-ss btn-ss-primary">
+              <i class="fas fa-save" style="margin-right:8px;"></i>
+              Lưu thay đổi
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <style>
+    .ss-label{
+      display:block;
+      color:var(--muted);
+      font-size:.8rem;
+      font-weight:600;
+      margin-bottom:4px;
+    }
+  </style>
+</div>

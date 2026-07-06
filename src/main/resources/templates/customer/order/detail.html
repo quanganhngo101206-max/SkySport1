@@ -1,0 +1,157 @@
+<div th:fragment="content">
+    <div class="card-sky">
+        <div class="card-header">
+            <h3 class="card-title">
+                <span class="icon"><i class="fas fa-file-invoice"></i></span>
+                Chi tiết đơn hàng: <strong th:text="${bill.id}">HD001</strong>
+            </h3>
+            <div class="card-actions">
+                <a th:href="@{/customer/orders}" class="btn-sky btn-sky-secondary btn-sky-sm">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-4">
+                <!-- Thông tin khách hàng -->
+                <div class="col-md-6">
+                    <div style="background:var(--bg-hover);border-radius:var(--radius-sm);padding:1.2rem;">
+                        <h6 style="color:var(--primary);font-weight:700;margin-bottom:1rem;">
+                            <i class="fas fa-user me-2"></i>Thông tin khách hàng
+                        </h6>
+                        <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+                            <strong style="color:var(--text-primary);">Tên:</strong>
+                            <span th:text="${bill.customer != null ? bill.customer.fullName : bill.receiverName}">—</span>
+                        </p>
+                        <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+                            <strong style="color:var(--text-primary);">Email:</strong>
+                            <span th:text="${bill.customer != null ? bill.customer.email : bill.guestEmail}">—</span>
+                        </p>
+                        <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+                            <strong style="color:var(--text-primary);">SĐT:</strong>
+                            <span th:text="${bill.customer != null ? bill.customer.phone : bill.receiverPhone}">—</span>
+                        </p>
+                        <p style="color:var(--text-secondary);margin-bottom:0;">
+                            <strong style="color:var(--text-primary);">Địa chỉ:</strong>
+                            <span th:text="${bill.shippingAddress}">—</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Thông tin đơn hàng -->
+                <div class="col-md-6">
+                    <div style="background:var(--bg-hover);border-radius:var(--radius-sm);padding:1.2rem;">
+                        <h6 style="color:var(--primary);font-weight:700;margin-bottom:1rem;">
+                            <i class="fas fa-info-circle me-2"></i>Thông tin đơn hàng
+                        </h6>
+                        <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+                            <strong style="color:var(--text-primary);">Ngày tạo:</strong>
+                            <span th:text="${#temporals.format(bill.createDate, 'dd/MM/yyyy HH:mm')}">—</span>
+                        </p>
+                        <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+                            <strong style="color:var(--text-primary);">Trạng thái:</strong>
+                            <span class="badge-sky"
+                                  th:classappend="${bill.status == 1 ? 'warning' : (bill.status == 2 ? 'info' : (bill.status == 3 ? 'primary' : (bill.status == 4 ? 'success' : (bill.status == 5 ? 'danger' : 'secondary'))))}">
+                                <span th:switch="${bill.status}">
+                                    <span th:case="1">Chờ xác nhận</span>
+                                    <span th:case="2">Đã xác nhận</span>
+                                    <span th:case="3">Đang giao</span>
+                                    <span th:case="4">Đã giao</span>
+                                    <span th:case="5">Đã hủy</span>
+                                    <span th:case="7">Hoàn thành</span>
+                                </span>
+                            </span>
+                        </p>
+                        <p style="color:var(--text-secondary);margin-bottom:0;">
+                            <strong style="color:var(--text-primary);">Ghi chú:</strong>
+                            <span th:text="${bill.note ?: '—'}">—</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline trạng thái -->
+            <div style="margin-top:1.5rem;padding:1.2rem;background:var(--bg-hover);border-radius:var(--radius-sm);">
+                <h6 style="color:var(--primary);font-weight:700;margin-bottom:1rem;">
+                    <i class="fas fa-history me-2"></i>Lịch sử trạng thái
+                </h6>
+
+                <div style="display:flex;flex-direction:column;gap:.75rem;">
+                    <div th:if="${timeline == null or #lists.isEmpty(timeline)}" style="color:var(--text-secondary);">
+                        Chưa có lịch sử trạng thái.
+                    </div>
+
+                    <div th:each="h : ${timeline}"
+                         style="border:1px solid var(--border-color);border-radius:12px;padding:.85rem 1rem;">
+                        <div style="display:flex;justify-content:space-between;gap:12px;">
+                            <div style="font-weight:700;color:var(--text-primary);">
+                                <span th:text="${h.note != null ? h.note : '—'}">—</span>
+                            </div>
+                            <div style="color:var(--text-secondary);font-size:.85rem;">
+                                <span th:text="${h.createDate != null ? #temporals.format(h.createDate, 'dd/MM/yyyy HH:mm') : ''}">—</span>
+                            </div>
+                        </div>
+                        <div style="color:var(--text-secondary);margin-top:.25rem;font-size:.9rem;">
+                            <span th:text="'Từ ' + (h.oldStatus) + ' → ' + (h.newStatus)">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách sản phẩm -->
+            <div style="margin-top:1.5rem;">
+                <h6 style="color:var(--primary);font-weight:700;margin-bottom:1rem;">
+                    <i class="fas fa-list me-2"></i>Sản phẩm
+                </h6>
+                <table class="table-sky">
+                    <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>Giá</th>
+                        <th>SL</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="d : ${bill.billDetails}">
+                        <td th:text="${d.productNameSnapshot}">Áo thun</td>
+                        <td th:text="${#numbers.formatDecimal(d.priceSnapshot, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                        <td th:text="${d.quantity}">1</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(d.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!-- Tổng -->
+                <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
+                    <table style="min-width:280px;">
+                        <tr>
+                            <td style="color:var(--text-secondary);padding:.3rem .5rem;">Tạm tính</td>
+                            <td class="text-end" style="color:var(--text-primary);padding:.3rem .5rem;"
+                                th:text="${#numbers.formatDecimal(bill.subtotal, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                        </tr>
+                        <tr>
+                            <td style="color:var(--text-secondary);padding:.3rem .5rem;">Phí ship</td>
+                            <td class="text-end" style="color:var(--text-primary);padding:.3rem .5rem;"
+                                th:text="${#numbers.formatDecimal(bill.shippingFee, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                        </tr>
+                        <tr>
+                            <td style="color:var(--text-secondary);padding:.3rem .5rem;">Giảm giá</td>
+                            <td class="text-end" style="color:var(--text-primary);padding:.3rem .5rem;"
+                                th:text="${#numbers.formatDecimal(bill.discountAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                        </tr>
+                        <tr style="border-top:1px solid var(--border-color);">
+                            <td style="color:var(--primary);font-weight:700;padding:.5rem .5rem;">Tổng cộng</td>
+                            <td class="text-end fw-bold" style="color:var(--primary);font-size:1.1rem;padding:.5rem .5rem;"
+                                th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <th:block th:replace="~{${pageContent} :: scripts}"></th:block>
+    </div>
+</div>
+
+<th:block th:fragment="scripts"></th:block>

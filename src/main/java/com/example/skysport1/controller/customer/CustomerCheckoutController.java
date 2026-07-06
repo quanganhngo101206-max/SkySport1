@@ -196,6 +196,10 @@ public class CustomerCheckoutController {
         if (normalizedCode != null) {
             try {
                 discountAmount = discountCodeService.validate(normalizedCode, customerId, subtotal);
+
+                // ✅ Thông báo xác nhận khi đổi mã khuyến mại thành công
+                ra.addFlashAttribute("discountConfirmCode", normalizedCode);
+
             } catch (Exception e) {
                 ra.addFlashAttribute("error", e.getMessage());
                 discountAmount = BigDecimal.ZERO;

@@ -82,6 +82,18 @@ public class AdminBillController {
 		return "redirect:/admin/bills/" + id;
 	}
 
+	/**
+	 * Hỗ trợ gọi confirm bằng GET để tránh lỗi
+	 * "Request method 'POST' is not supported" trong trường hợp UI/đường dẫn bị gọi nhầm method.
+	 */
+	@GetMapping("/{id}/confirm")
+	public String confirmGet(@PathVariable String id,
+							   @RequestParam(required = false) String note,
+							   Authentication auth,
+							   RedirectAttributes ra) {
+		return confirm(id, note, auth, ra);
+	}
+
 	@PostMapping("/{id}/ship")
 	public String ship(@PathVariable String id,
 					   @RequestParam(required = false) String note,

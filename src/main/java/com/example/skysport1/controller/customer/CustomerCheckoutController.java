@@ -29,6 +29,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,7 +47,6 @@ public class CustomerCheckoutController {
     private final CartService cartService;
     private final AccountService accountService;
     private final CustomerService customerService;
-
     private final DiscountCodeService discountCodeService;
     private final AddressShippingRepository addressShippingRepository;
 
@@ -55,28 +55,58 @@ public class CustomerCheckoutController {
     public String checkoutPage(Model model, HttpSession session) {
         String customerId = getCurrentCustomerId().orElse(null);
 
+        log.info("🔍 checkoutPage - customerId: {}", customerId);
+
+        // ✅ DEBUG: In ra tất cả session attributes
+        log.info("📋 All session attributes:");
+        Enumeration<String> attrNames = session.getAttributeNames();
+        while (attrNames.hasMoreElements()) {
+            String name = attrNames.nextElement();
+            log.info("   {} = {}", name, session.getAttribute(name));
+        }
+
         // Lấy giỏ hàng
         List<CartDetail> cartItems = new ArrayList<>();
         if (customerId != null) {
             cartItems = cartService.getCartDetails(customerId);
+            log.info("🟢 Customer {} có {} sản phẩm trong giỏ", customerId, cartItems.size());
         } else {
             Map<Integer, Integer> guestCart = getGuestCart(session);
+            log.info("🟡 Guest có {} sản phẩm trong session cart", guestCart.size());
+            log.info("🟡 Session cart content: {}", guestCart);
+
             for (Map.Entry<Integer, Integer> e : guestCart.entrySet()) {
+                Integer productDetailId = e.getKey();
+                Integer qty = e.getValue();
+
+                if (productDetailId == null || productDetailId <= 0) {
+                    log.warn("⚠️ ProductDetailId invalid: {}", productDetailId);
+                    continue;
+                }
+                if (qty == null || qty <= 0) {
+                    log.warn("⚠️ Quantity invalid for productDetailId {}: {}", productDetailId, qty);
+                    continue;
+                }
+
                 try {
-                    ProductDetail pd = productDetailRepository.findByIdWithProductSizeColor(e.getKey())
-                            .orElseThrow();
+                    ProductDetail pd = productDetailRepository.findByIdWithProductSizeColor(productDetailId)
+                            .orElseThrow(() -> new RuntimeException("ProductDetail not found: " + productDetailId));
                     CartDetail cd = CartDetail.builder()
                             .productDetail(pd)
-                            .quantity(e.getValue())
+                            .quantity(qty)
                             .build();
                     cartItems.add(cd);
-                } catch (Exception ignored) {
-                    // sản phẩm không còn tồn tại -> bỏ qua
+                    log.info("   ✅ Added product: {} - SL: {}", pd.getProduct().getName(), qty);
+                } catch (Exception ex) {
+                    log.error("   ❌ Không tìm thấy sản phẩm với id: {}, error: {}", productDetailId, ex.getMessage());
                 }
             }
         }
 
+        log.info("📦 Total cart items after processing: {}", cartItems.size());
+
         model.addAttribute("cartItems", cartItems);
+        model.addAttribute("cartItemsCount", cartItems.size());
         model.addAttribute("title", "Thanh toán");
 
         // Tính subtotal
@@ -89,20 +119,20 @@ public class CustomerCheckoutController {
                 ? BigDecimal.valueOf(30_000)
                 : BigDecimal.ZERO;
 
-        // Best voucher (chỉ áp dụng cho khách đăng nhập)
+        // Luôn lấy danh sách discount codes để hiển thị
+        List<DiscountCode> discountCodes = discountCodeService.findAll();
+        model.addAttribute("discountCodes", discountCodes);
+
+        // Chỉ tính best discount cho customer đã login
         BigDecimal bestDiscountAmount = BigDecimal.ZERO;
-        DiscountCode bestDiscountCode = null;
-
-        List<DiscountCode> discountCodes = Collections.emptyList();
+        String bestDiscountCode = null;
         if (customerId != null) {
-            discountCodes = discountCodeService.findAll();
-
             for (DiscountCode dc : discountCodes) {
                 try {
                     BigDecimal current = discountCodeService.validate(dc.getCode(), customerId, subtotal);
                     if (current != null && current.compareTo(bestDiscountAmount) > 0) {
                         bestDiscountAmount = current;
-                        bestDiscountCode = dc;
+                        bestDiscountCode = dc.getCode();
                     }
                 } catch (Exception ignored) {
                     // voucher không hợp lệ -> bỏ qua
@@ -116,49 +146,82 @@ public class CustomerCheckoutController {
         model.addAttribute("shippingFee", shippingFee);
         model.addAttribute("discountAmount", bestDiscountAmount);
         model.addAttribute("totalAmount", totalAmount);
-
-        model.addAttribute("discountCodes", discountCodes);
-        model.addAttribute("bestDiscountCode", bestDiscountCode != null ? bestDiscountCode.getCode() : null);
+        model.addAttribute("bestDiscountCode", bestDiscountCode);
 
         // Auto-fill thông tin nhận hàng cho khách đăng nhập
         if (customerId != null) {
-            var auth = SecurityContextHolder.getContext().getAuthentication();
-            String username = auth != null ? auth.getName() : null;
-
-            if (username != null && !username.isBlank()) {
-                var account = accountService.findByUsername(username);
-                var customer = customerService.findByAccountId(account.getId());
-                if (customer != null) {
-                    model.addAttribute("receiverName", customer.getFullName());
-                    model.addAttribute("receiverPhone", customer.getPhone());
-                }
-            }
-
-            Optional<AddressShipping> defaultAddressOpt =
-                    addressShippingRepository.findByCustomerIdAndIsDefault(customerId, true);
-
-            AddressShipping addr = defaultAddressOpt.orElseGet(() ->
-                    addressShippingRepository.findByCustomerId(customerId).stream().findFirst().orElse(null)
-            );
-
-            if (addr != null) {
-                model.addAttribute("shippingAddress", addr.getAddress());
-            }
+            fillCustomerInfo(model, customerId);
         }
 
         return "customer/checkout/checkout";
     }
 
     @GetMapping("/guest")
-    public String guestCheckoutPage(Model model) {
+    public String guestCheckoutPage(Model model, HttpSession session) {
+        // Load cart items and compute totals for guest, so template can render order summary.
+        Map<Integer, Integer> guestCart = getGuestCart(session);
+
+        List<CartDetail> cartItems = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> e : guestCart.entrySet()) {
+            Integer productDetailId = e.getKey();
+            Integer qty = e.getValue();
+
+            if (productDetailId == null || productDetailId <= 0) continue;
+            if (qty == null || qty <= 0) continue;
+
+            try {
+                ProductDetail pd = productDetailRepository.findByIdWithProductSizeColor(productDetailId)
+                        .orElseThrow(() -> new RuntimeException("ProductDetail not found: " + productDetailId));
+
+                CartDetail cd = CartDetail.builder()
+                        .productDetail(pd)
+                        .quantity(qty)
+                        .build();
+
+                cartItems.add(cd);
+                log.info("✅ [GUEST] Added cartItems -> productDetailId={}, product={}, qty={}",
+                        productDetailId, pd.getProduct() != null ? pd.getProduct().getName() : null, qty);
+            } catch (Exception ex) {
+                log.error("Guest checkoutPage - cannot load productDetailId={}: {}", productDetailId, ex.getMessage());
+            }
+        }
+
+        log.info("📦 [GUEST] cartItems.size() after processing: {}", cartItems.size());
+
+        model.addAttribute("cartItems", cartItems);
+        model.addAttribute("cartItemsCount", cartItems.size());
         model.addAttribute("title", "Thanh toán - Khách");
+
+        BigDecimal subtotal = cartItems.stream()
+                .filter(i -> i.getProductDetail() != null && i.getProductDetail().getPrice() != null)
+                .map(i -> i.getProductDetail().getPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        log.info("💰 [GUEST] subtotal computed: {}", subtotal);
+
+        BigDecimal shippingFee = subtotal.compareTo(BigDecimal.valueOf(500_000)) < 0
+                ? BigDecimal.valueOf(30_000)
+                : BigDecimal.ZERO;
+
+        // Guest không tính best discount theo customerId, chỉ hiển thị danh sách.
+        List<DiscountCode> discountCodes = discountCodeService.findAll();
+        model.addAttribute("discountCodes", discountCodes);
+
+        BigDecimal bestDiscountAmount = BigDecimal.ZERO;
+        String bestDiscountCode = null;
+
+        BigDecimal totalAmount = subtotal.add(shippingFee).subtract(bestDiscountAmount);
+
+        model.addAttribute("subtotal", subtotal);
+        model.addAttribute("shippingFee", shippingFee);
+        model.addAttribute("discountAmount", bestDiscountAmount);
+        model.addAttribute("totalAmount", totalAmount);
+        model.addAttribute("bestDiscountCode", bestDiscountCode);
+
         return "customer/checkout/checkout";
     }
 
-    /**
-     * Khi user bấm "Áp dụng", reload checkout và cập nhật preview discount/total.
-     * Chỉ áp dụng cho khách đăng nhập.
-     */
+    // ===== ÁP DỤNG MÃ GIẢM GIÁ =====
     @PostMapping("/apply-discount")
     public String applyDiscount(
             @RequestParam(value = "applyDiscountCode", required = false) String discountCode,
@@ -168,7 +231,6 @@ public class CustomerCheckoutController {
     ) {
         String customerId = getCurrentCustomerId().orElse(null);
 
-        // guest: không support preview theo best voucher trong bước này
         if (customerId == null) {
             return "redirect:/customer/checkout/guest";
         }
@@ -188,6 +250,7 @@ public class CustomerCheckoutController {
                 : BigDecimal.ZERO;
 
         BigDecimal discountAmount = BigDecimal.ZERO;
+        String finalCode = null;
 
         String normalizedCode = (discountCode != null && !discountCode.isBlank())
                 ? discountCode.trim()
@@ -196,14 +259,14 @@ public class CustomerCheckoutController {
         if (normalizedCode != null) {
             try {
                 discountAmount = discountCodeService.validate(normalizedCode, customerId, subtotal);
-
-                // ✅ Thông báo xác nhận khi đổi mã khuyến mại thành công
+                finalCode = normalizedCode;
                 ra.addFlashAttribute("discountConfirmCode", normalizedCode);
-
+                log.info("✅ Áp dụng mã thành công: {} - giảm: {}", normalizedCode, discountAmount);
             } catch (Exception e) {
+                log.error("❌ Lỗi áp dụng mã {}: {}", normalizedCode, e.getMessage());
                 ra.addFlashAttribute("error", e.getMessage());
                 discountAmount = BigDecimal.ZERO;
-                normalizedCode = null;
+                finalCode = null;
             }
         }
 
@@ -215,38 +278,18 @@ public class CustomerCheckoutController {
         model.addAttribute("shippingFee", shippingFee);
         model.addAttribute("discountAmount", discountAmount);
         model.addAttribute("totalAmount", totalAmount);
-
         model.addAttribute("discountCodes", discountCodes);
-        model.addAttribute("bestDiscountCode", normalizedCode);
+        model.addAttribute("bestDiscountCode", finalCode);
 
         // Auto-fill thông tin nhận hàng
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth != null ? auth.getName() : null;
-
-        if (username != null && !username.isBlank()) {
-            var account = accountService.findByUsername(username);
-            var customer = customerService.findByAccountId(account.getId());
-            if (customer != null) {
-                model.addAttribute("receiverName", customer.getFullName());
-                model.addAttribute("receiverPhone", customer.getPhone());
-            }
-        }
-
-        Optional<AddressShipping> defaultAddressOpt =
-                addressShippingRepository.findByCustomerIdAndIsDefault(customerId, true);
-
-        AddressShipping addr = defaultAddressOpt.orElseGet(() ->
-                addressShippingRepository.findByCustomerId(customerId).stream().findFirst().orElse(null)
-        );
-
-        if (addr != null) {
-            model.addAttribute("shippingAddress", addr.getAddress());
+        if (customerId != null) {
+            fillCustomerInfo(model, customerId);
         }
 
         return "customer/checkout/checkout";
     }
 
-    // ===== GUEST CHECKOUT - KHÔNG CẦN ĐĂNG NHẬP =====
+    // ===== GUEST CHECKOUT =====
     @PostMapping("/guest")
     public String createGuestBill(
             @RequestParam("guestEmail") String guestEmail,
@@ -260,6 +303,12 @@ public class CustomerCheckoutController {
     ) {
         try {
             Map<Integer, Integer> guestCart = getGuestCart(session);
+            log.info("🟡 Guest checkout - cart content: {}", guestCart);
+
+            if (guestCart == null || guestCart.isEmpty()) {
+                ra.addFlashAttribute("error", "Giỏ hàng trống! Vui lòng thêm sản phẩm trước khi thanh toán.");
+                return "redirect:/customer/cart";
+            }
 
             List<BillDetail> items = new ArrayList<>();
             for (Map.Entry<Integer, Integer> e : guestCart.entrySet()) {
@@ -270,7 +319,7 @@ public class CustomerCheckoutController {
                 if (qty == null || qty <= 0) continue;
 
                 items.add(BillDetail.builder()
-                        .productDetail(com.example.skysport1.entity.ProductDetail.builder().id(productDetailId).build())
+                        .productDetail(ProductDetail.builder().id(productDetailId).build())
                         .quantity(qty)
                         .build());
             }
@@ -350,14 +399,18 @@ public class CustomerCheckoutController {
         }
     }
 
-    // ===== HELPER =====
+    // ===== HELPER METHODS =====
     private Map<Integer, Integer> getGuestCart(HttpSession session) {
         Object raw = session.getAttribute(SESSION_GUEST_CART);
+        log.info("🔍 Raw guest cart from session: {}", raw);
+
         if (raw instanceof Map<?, ?> map) {
             @SuppressWarnings("unchecked")
             Map<Integer, Integer> result = (Map<Integer, Integer>) map;
+            log.info("✅ Guest cart has {} items: {}", result.size(), result);
             return result;
         }
+        log.warn("⚠️ No guest cart found in session or invalid type");
         return Collections.emptyMap();
     }
 
@@ -377,7 +430,33 @@ public class CustomerCheckoutController {
             var customer = customerService.findByAccountId(account.getId());
             return Optional.ofNullable(customer.getId());
         } catch (Exception e) {
+            log.error("Error getting customer id: {}", e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    private void fillCustomerInfo(Model model, String customerId) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth != null ? auth.getName() : null;
+
+        if (username != null && !username.isBlank()) {
+            var account = accountService.findByUsername(username);
+            var customer = customerService.findByAccountId(account.getId());
+            if (customer != null) {
+                model.addAttribute("receiverName", customer.getFullName());
+                model.addAttribute("receiverPhone", customer.getPhone());
+            }
+        }
+
+        Optional<AddressShipping> defaultAddressOpt =
+                addressShippingRepository.findByCustomerIdAndIsDefault(customerId, true);
+
+        AddressShipping addr = defaultAddressOpt.orElseGet(() ->
+                addressShippingRepository.findByCustomerId(customerId).stream().findFirst().orElse(null)
+        );
+
+        if (addr != null) {
+            model.addAttribute("shippingAddress", addr.getAddress());
         }
     }
 }

@@ -1,86 +1,223 @@
-<div th:fragment="content">
-  <!--
-    Page content for layouts/customer/layout
-    Expected model attributes:
-      - customer
-      - account
-      - success/error/ errors (optional)
-  -->
-  <section>
-    <div class="ss-card" style="padding:1.5rem;margin-bottom:1.5rem;">
-      <h3 style="font-size:1.05rem;font-weight:800;color:var(--paper);margin-bottom:1rem;">
-        <i class="fas fa-user-circle" style="color:var(--flare);margin-right:10px;"></i>
-        Thông tin cá nhân
-      </h3>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/customer/layout :: head('Hồ sơ cá nhân')}"></head>
+<body>
+  <div th:replace="~{layouts/customer/layout :: body}">
+    <div th:fragment="content">
+      <div th:if="${success != null}" class="alert alert-success mb-3" th:text="${success}"></div>
+      <div th:if="${error != null}" class="alert alert-danger mb-3" th:text="${error}"></div>
 
-      <form th:action="@{/customer/profile/update}" method="post" th:object="${customer}">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+      <!-- Profile -->
+      <div class="cus-card">
+        <div class="cus-card-header">
+          <h5><i class="fas fa-user me-2"></i>Hồ sơ cá nhân</h5>
+        </div>
+        <div class="cus-card-body">
+          <form th:action="@{/customer/profile/update}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="ss-label">Họ tên <span style="color:var(--flare);">*</span></label>
-            <input class="ss-input" type="text" name="fullName" required
-                   th:value="${customer.fullName}"/>
-          </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="cus-form-group">
+                  <label class="cus-label required">Họ tên</label>
+                  <input type="text" class="cus-input" name="fullName" th:value="${customer.fullName}" required>
+                </div>
+              </div>
 
-          <div class="col-md-6">
-            <label class="ss-label">Số điện thoại <span style="color:var(--flare);">*</span></label>
-            <input class="ss-input" type="text" name="phone" required
-                   th:value="${customer.phone}"/>
-          </div>
+              <div class="col-md-6">
+                <div class="cus-form-group">
+                  <label class="cus-label required">Số điện thoại</label>
+                  <input type="text" class="cus-input" name="phone" th:value="${customer.phone}" required>
+                </div>
+              </div>
 
-          <div class="col-md-6">
-            <label class="ss-label">Email <span style="color:var(--flare);">*</span></label>
-            <input class="ss-input" type="email" name="email" required
-                   th:value="${customer.email != null ? customer.email : account.email}"/>
-          </div>
+              <div class="col-md-6">
+                <div class="cus-form-group">
+                  <label class="cus-label">Email</label>
+                  <input type="email" class="cus-input" name="email" th:value="${customer.email}">
+                </div>
+              </div>
 
-          <div class="col-md-6">
-            <label class="ss-label">Giới tính</label>
-            <select class="ss-input" name="gender">
-              <option th:value="1" th:selected="${customer.gender == 1}">Nam</option>
-              <option th:value="0" th:selected="${customer.gender == 0}">Nữ</option>
-              <option th:value="" th:selected="${customer.gender == null}">Chọn</option>
-            </select>
-          </div>
+              <div class="col-md-6">
+                <div class="cus-form-group">
+                  <label class="cus-label">Giới tính</label>
+                  <select class="cus-input" name="gender">
+                    <option value="">Chưa xác định</option>
+                    <option value="true" th:selected="${customer.gender == true}">Nam</option>
+                    <option value="false" th:selected="${customer.gender == false}">Nữ</option>
+                  </select>
+                </div>
+              </div>
 
-          <div class="col-md-6">
-            <label class="ss-label">Ngày sinh</label>
-            <input class="ss-input" type="date" name="dob"
-                   th:value="${customer.dob != null ? customer.dob : ''}"/>
-          </div>
+              <div class="col-md-6">
+                <div class="cus-form-group">
+                  <label class="cus-label">Ngày sinh</label>
+                  <input type="date" class="cus-input" name="dob" th:value="${customer.dob}">
+                </div>
+              </div>
 
-          <div class="col-md-6">
-            <label class="ss-label">Trạng thái</label>
-            <input class="ss-input" type="text" value="Khách hàng" disabled />
-          </div>
+              <div class="col-12">
+                <button type="submit" class="cus-btn cus-btn-primary">
+                  <i class="fas fa-save"></i> Cập nhật
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
 
-          <div class="col-12" th:if="${errors != null}">
-            <div class="alert alert-danger" style="margin:0;">
-              <ul style="margin:0;padding-left:18px;">
-                <li th:each="e : ${errors}" th:text="${e}"></li>
-              </ul>
+      <!-- Addresses -->
+      <div class="cus-card mt-4">
+        <div class="cus-card-header">
+          <h5><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ giao hàng</h5>
+        </div>
+
+        <div class="cus-card-body">
+          <div class="row g-4">
+            <!-- List -->
+            <div class="col-lg-6">
+              <div class="mb-3">
+                <h6 class="mb-2">Danh sách địa chỉ</h6>
+              </div>
+
+              <div th:if="${addresses == null || #lists.isEmpty(addresses)}" class="text-muted">
+                Chưa có địa chỉ nào.
+              </div>
+
+              <div th:if="${addresses != null && !#lists.isEmpty(addresses)}" class="d-flex flex-column gap-3">
+                <div th:each="addr : ${addresses}" class="cus-border p-3 rounded">
+                  <div class="d-flex align-items-start justify-content-between gap-3">
+                    <div>
+                      <div class="fw-semibold" th:text="${addr.receiverName}">Tên</div>
+                      <div class="text-muted" th:text="${addr.receiverPhone}">SĐT</div>
+                      <div class="mt-2" th:text="${addr.address}">Địa chỉ</div>
+                    </div>
+
+                    <div class="text-end">
+                      <span th:if="${addr.isDefault}" class="badge bg-success">Mặc định</span>
+                      <span th:if="${!addr.isDefault}" class="badge bg-secondary">Tạm thời</span>
+                    </div>
+                  </div>
+
+                  <div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+                    <!-- Set default via update -->
+                    <form th:action="@{/customer/profile/address/update}" method="post" class="m-0">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                      <input type="hidden" name="id" th:value="${addr.id}"/>
+                      <input type="hidden" name="receiverName" th:value="${addr.receiverName}"/>
+                      <input type="hidden" name="receiverPhone" th:value="${addr.receiverPhone}"/>
+                      <input type="hidden" name="address" th:value="${addr.address}"/>
+                      <input type="hidden" name="isDefault" value="true"/>
+                      <button type="submit" class="cus-btn cus-btn-secondary btn-sm">
+                        <i class="fas fa-star"></i> Đặt mặc định
+                      </button>
+                    </form>
+
+                    <!-- Delete -->
+                    <form th:action="@{/customer/profile/address/delete}" method="post" class="m-0"
+                          onsubmit="return confirm('Xóa địa chỉ này?')">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                      <input type="hidden" name="id" th:value="${addr.id}"/>
+                      <button type="submit" class="cus-btn cus-btn-danger btn-sm">
+                        <i class="fas fa-trash"></i> Xóa
+                      </button>
+                    </form>
+                  </div>
+
+                  <!-- Edit -->
+                  <div class="mt-3">
+                    <div class="fw-semibold mb-2">Sửa địa chỉ</div>
+
+                    <form th:action="@{/customer/profile/address/update}" method="post">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                      <input type="hidden" name="id" th:value="${addr.id}"/>
+
+                      <div class="row g-2">
+                        <div class="col-12">
+                          <label class="cus-label required">Người nhận</label>
+                          <input type="text" class="cus-input" name="receiverName" th:value="${addr.receiverName}" required>
+                        </div>
+
+                        <div class="col-12">
+                          <label class="cus-label required">Số điện thoại</label>
+                          <input type="text" class="cus-input" name="receiverPhone" th:value="${addr.receiverPhone}" required>
+                        </div>
+
+                        <div class="col-12">
+                          <label class="cus-label required">Địa chỉ</label>
+                          <input type="text" class="cus-input" name="address" th:value="${addr.address}" required>
+                        </div>
+
+                        <div class="col-12">
+                          <label class="cus-label">Đặt làm mặc định</label>
+                          <select class="cus-input" name="isDefault">
+                            <option th:value="false" th:selected="${!addr.isDefault}">Không</option>
+                            <option th:value="true" th:selected="${addr.isDefault}">Có</option>
+                          </select>
+                        </div>
+
+                        <div class="col-12">
+                          <button type="submit" class="cus-btn cus-btn-primary btn-sm">
+                            <i class="fas fa-save"></i> Lưu thay đổi
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add -->
+            <div class="col-lg-6">
+              <div class="mb-3">
+                <h6 class="mb-2">Thêm địa chỉ</h6>
+              </div>
+
+              <form th:action="@{/customer/profile/address/add}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="cus-label required">Người nhận</label>
+                    <input type="text" class="cus-input" name="receiverName" th:value="${addressRequest.receiverName}" required>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="cus-label required">Số điện thoại</label>
+                    <input type="text" class="cus-input" name="receiverPhone" th:value="${addressRequest.receiverPhone}" required>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="cus-label required">Địa chỉ</label>
+                    <input type="text" class="cus-input" name="address" th:value="${addressRequest.address}" required>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="cus-label">Đặt làm mặc định</label>
+                    <select class="cus-input" name="isDefault">
+                      <option value="false" selected>Không</option>
+                      <option value="true">Có</option>
+                    </select>
+                  </div>
+
+                  <div class="col-12">
+                    <button type="submit" class="cus-btn cus-btn-primary">
+                      <i class="fas fa-plus"></i> Thêm địa chỉ
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              <div class="text-muted mt-3" style="font-size: 0.9rem;">
+                Lưu ý: nếu địa chỉ được chọn làm “Mặc định”, hệ thống sẽ tự tắt mặc định ở các địa chỉ còn lại.
+              </div>
             </div>
           </div>
-
-          <div class="col-12" style="margin-top:0.5rem;">
-            <button type="submit" class="btn-ss btn-ss-primary">
-              <i class="fas fa-save" style="margin-right:8px;"></i>
-              Lưu thay đổi
-            </button>
-          </div>
         </div>
-      </form>
-    </div>
-  </section>
+      </div>
 
-  <style>
-    .ss-label{
-      display:block;
-      color:var(--muted);
-      font-size:.8rem;
-      font-weight:600;
-      margin-bottom:4px;
-    }
-  </style>
-</div>
+    </div>
+  </div>
+</body>
+</html>

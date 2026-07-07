@@ -11,6 +11,7 @@ import com.example.skysport1.repository.*;
 import com.example.skysport1.service.BillService;
 import com.example.skysport1.service.DiscountCodeService;
 import com.example.skysport1.service.NotificationService;
+import com.example.skysport1.service.StaffService;
 import com.example.skysport1.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class BillServiceImpl implements BillService {
     private final DiscountCodeRepository discountCodeRepository;
     private final DiscountCodeService discountCodeService;
     private final NotificationService notificationService;
+    private final StaffService staffService;
     private final IdGenerator idGenerator;
 
     // ── Enum quản lý chuyển trạng thái ────────────────────────────────────
@@ -111,12 +113,12 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public Bill createOnlineBill(String customerId,
-                                 String shippingAddress,
-                                 String receiverName,
-                                 String receiverPhone,
-                                 String paymentId,
-                                 String discountCode,
-                                 List<BillDetail> items) {
+                                  String shippingAddress,
+                                  String receiverName,
+                                  String receiverPhone,
+                                  String paymentId,
+                                  String discountCode,
+                                  List<BillDetail> items) {
         Bill bill = Bill.builder()
                 .id(idGenerator.generateBillId())
                 .customer(Customer.builder().id(customerId).build())
@@ -159,9 +161,9 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public Bill createCounterBill(String customerId,
-                                  String paymentId,
-                                  String staffId,
-                                  List<BillDetail> items) {
+                                   String paymentId,
+                                   String staffId,
+                                   List<BillDetail> items) {
         Bill bill = Bill.builder()
                 .id(idGenerator.generateBillId())
                 .customer(customerId != null ? Customer.builder().id(customerId).build() : null)
@@ -361,7 +363,7 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public void recordPayment(String billId, String transactionCode,
-                              String paymentMethod, String gatewayResponse) {
+                               String paymentMethod, String gatewayResponse) {
         Bill bill = findById(billId);
 
         PaymentTransaction tx = PaymentTransaction.builder()
@@ -381,7 +383,7 @@ public class BillServiceImpl implements BillService {
                 billId, paymentMethod, transactionCode);
     }
 
-    // ── Helper ────────────────────────────────────────────────────────────
+    // ── Helper ───────────────────────────────────────────────────────────
 
     // ✅ CHỈ GIỮ METHOD NÀY - XÓA METHOD CÙNG TÊN Ở TRÊN
     private Bill changeStatus(Bill bill, int newStatus, String staffId, String note) {
@@ -410,7 +412,7 @@ public class BillServiceImpl implements BillService {
     }
 
     private void logHistory(Bill bill, Integer oldStatus, int newStatus,
-                            String note, String staffId) {
+                             String note, String staffId) {
         OrderStatusHistory history = OrderStatusHistory.builder()
                 .bill(bill)
                 .oldStatus(oldStatus)
@@ -418,14 +420,18 @@ public class BillServiceImpl implements BillService {
                 .note(note)
                 .build();
 
-        // Không set staff để tránh lỗi TransientPropertyValueException
-        // staffId đã được lưu trong bill.updatedBy
+        // staffId truyền vào thực tế là Account.id (đến từ AdminBillController/staff controllers)
+        // Map sang Staff để ghi staff_id vào Order_status_history
+        if (staffId != null) {
+            Staff staff = staffService.findByAccountId(staffId);
+            history.setStaff(staff);
+        }
 
         orderStatusHistoryRepository.save(history);
     }
 
     private void logInventory(ProductDetail pd, InventoryActionType type,
-                              int change, int before, int after, String referenceId) {
+                               int change, int before, int after, String referenceId) {
         InventoryTransaction tx = InventoryTransaction.builder()
                 .productDetail(pd)
                 .type(type.getValue())

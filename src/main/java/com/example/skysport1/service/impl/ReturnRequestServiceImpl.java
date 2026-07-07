@@ -32,8 +32,9 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     private final InventoryTransactionRepository  inventoryTransactionRepository;
     private final NotificationService             notificationService;
     private final IdGenerator                     idGenerator;
+    private final StaffRepository                staffRepository;
 
-    // ── Query ──────────────────────────────────────────────────────────────
+    // ── Query ─────────────────────────────────────────────────────────────
 
     @Override
     public ReturnRequest findById(String id) {
@@ -66,10 +67,11 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     @Override
     @Transactional
     public ReturnRequest create(String billId,
-                                String reason,
-                                String description,
-                                String evidenceUrl,
-                                List<ReturnRequestDetail> details) {
+                                 String reason,
+                                 String description,
+                                 String evidenceUrl,
+                                 List<ReturnRequestDetail> details) {
+
         // Validate bill tồn tại
         Bill bill = billRepository.findById(billId)
                 .orElseThrow(() -> new ResourceNotFoundException("đơn hàng", billId));
@@ -176,9 +178,9 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
             ProductDetail pd = detail.getProductDetail();
             if (pd == null) continue;
 
-            // ✅ SỬA: Load fresh với ID từ detail
+            // Load fresh với ID từ detail
             ProductDetail freshPd = productDetailRepository
-                    .findById(pd.getId())  // Dùng pd.getId() chứ không phải pd1.getId()
+                    .findById(pd.getId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "sản phẩm", String.valueOf(pd.getId())));
 
@@ -199,7 +201,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
             // Cập nhật return_quantity trong BillDetail
             billDetailRepository.findByBillIdAndProductDetailId(
-                            bill.getId(), pd.getId())  // Dùng pd.getId()
+                            bill.getId(), pd.getId())
                     .ifPresent(bd -> {
                         bd.setReturnQuantity(
                                 bd.getReturnQuantity() + detail.getQuantityReturn());
@@ -309,7 +311,15 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         billReturnRepository.findByReturnRequestId(returnRequestId)
                 .ifPresent(br -> {
                     br.setReturnStatus(2); // Đã hoàn tiền
-                    br.setUpdatedBy(staffId);
+
+                    // updated_by của BillReturn đang FK tới Account(id) trên DB,
+                    // nên phải set bằng accountId tương ứng với staffId.
+                    Staff staff = staffRepository.findById(staffId)
+                            .orElseThrow(() -> new ResourceNotFoundException("staff", staffId));
+
+                    String accountId = staff.getAccount() != null ? staff.getAccount().getId() : null;
+                    br.setUpdatedBy(accountId);
+
                     billReturnRepository.save(br);
                 });
 
@@ -322,10 +332,10 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         return rr;
     }
 
-    // ── Helper ────────────────────────────────────────────────────────────
+    // ── Helper ───────────────────────────────────────────────────────────
 
     private void logHistory(ReturnRequest rr, Integer oldStatus,
-                            int newStatus, String note, String staffId) {
+                             int newStatus, String note, String staffId) {
         ReturnStatusHistory history = ReturnStatusHistory.builder()
                 .returnRequest(rr)
                 .oldStatus(oldStatus)
@@ -337,7 +347,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     }
 
     private void logInventory(ProductDetail pd, InventoryActionType type,
-                              int change, int before, int after, String referenceId) {
+                               int change, int before, int after, String referenceId) {
         InventoryTransaction tx = InventoryTransaction.builder()
                 .productDetail(pd)
                 .type(type.getValue())

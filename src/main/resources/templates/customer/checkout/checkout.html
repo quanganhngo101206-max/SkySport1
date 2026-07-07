@@ -8,383 +8,548 @@
 
 <!-- Bootstrap modal: xác nhận đổi mã khuyến mại -->
 <div class="modal fade" id="discountConfirmModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius:14px;">
-      <div class="modal-header">
-        <h5 class="modal-title" style="font-weight:700;">Thông báo</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="discountConfirmBody" style="color:var(--paper);">
-        <!-- nội dung render bằng thymeleaf -->
-        <div th:if="${discountConfirmCode != null}">
-          <div style="display:flex;gap:10px;align-items:flex-start;">
-            <i class="fas fa-check-circle" style="color:var(--good);font-size:1.25rem;"></i>
-            <div>
-              <div style="font-weight:700;margin-bottom:6px;">Bạn đã đổi mã khuyến mại thành công</div>
-              <div style="color:var(--muted);font-size:.95rem;">
-                Mã: <span th:text="${discountConfirmCode}"></span>
-              </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header">
+                <h5 class="modal-title" style="font-weight:700;">Thông báo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-          </div>
-        </div>
-
-        <div th:if="${discountConfirmCode == null and error != null}">
-          <div style="display:flex;gap:10px;align-items:flex-start;">
-            <i class="fas fa-exclamation-triangle" style="color:var(--flare);font-size:1.25rem;"></i>
-            <div>
-              <div style="font-weight:700;margin-bottom:6px;">Không áp dụng được mã khuyến mại</div>
-              <div style="color:var(--muted);font-size:.95rem;" th:text="${error}"></div>
+            <div class="modal-body" id="discountConfirmBody" style="color:var(--paper);">
+                <div th:if="${discountConfirmCode != null}">
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <i class="fas fa-check-circle" style="color:var(--good);font-size:1.25rem;"></i>
+                        <div>
+                            <div style="font-weight:700;margin-bottom:6px;">Bạn đã đổi mã khuyến mại thành công</div>
+                            <div style="color:var(--muted);font-size:.95rem;">
+                                Mã: <span th:text="${discountConfirmCode}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${discountConfirmCode == null and error != null}">
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <i class="fas fa-exclamation-triangle" style="color:var(--flare);font-size:1.25rem;"></i>
+                        <div>
+                            <div style="font-weight:700;margin-bottom:6px;">Không áp dụng được mã khuyến mại</div>
+                            <div style="color:var(--muted);font-size:.95rem;" th:text="${error}"></div>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${discountConfirmCode == null and error == null}">
+                    <div style="color:var(--muted);font-size:.95rem;">Không có thông báo.</div>
+                </div>
             </div>
-          </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-ss btn-ss-primary" data-bs-dismiss="modal">Đã hiểu</button>
+            </div>
         </div>
-
-        <div th:if="${discountConfirmCode == null and error == null}">
-          <div style="color:var(--muted);font-size:.95rem;">Không có thông báo.</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-ss btn-ss-primary" data-bs-dismiss="modal">Đã hiểu</button>
-      </div>
     </div>
-  </div>
 </div>
 
 <section class="ss-crumbs">
-  <div class="container">
-    <nav>
-      <a href="/">Trang chủ</a>
-      <span>/</span>
-      <a href="/customer/cart">Giỏ hàng</a>
-      <span>/</span>
-      <span class="current">Thanh toán</span>
-    </nav>
-  </div>
+    <div class="container">
+        <nav>
+            <a href="/">Trang chủ</a>
+            <span>/</span>
+            <a href="/customer/cart">Giỏ hàng</a>
+            <span>/</span>
+            <span class="current">Thanh toán</span>
+        </nav>
+    </div>
 </section>
 
 <section style="padding:3rem 0;">
-  <div class="container">
+    <div class="container">
 
-    <h1 style="font-size:1.9rem;color:var(--paper);margin-bottom:2rem;">
-      <i class="fas fa-credit-card" style="color:var(--flare);margin-right:12px;"></i>
-      Thanh toán
-    </h1>
+        <h1 style="font-size:1.9rem;color:var(--paper);margin-bottom:2rem;">
+            <i class="fas fa-credit-card" style="color:var(--flare);margin-right:12px;"></i>
+            Thanh toán
+        </h1>
 
-    <!-- Guest notice -->
-    <div sec:authorize="!isAuthenticated()" class="ss-card"
-         style="padding:1rem 1.5rem;margin-bottom:2rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <i class="fas fa-info-circle" style="color:var(--flare);font-size:1.2rem;"></i>
-      <span style="color:var(--muted);font-size:.9rem;">
-                Bạn đang thanh toán với tư cách khách.
-                <a href="/login" style="color:var(--flare);font-weight:700;">Đăng nhập</a>
-                để theo dõi đơn hàng dễ dàng hơn.
-            </span>
-    </div>
-
-    <div class="row g-4">
-
-      <!-- ===== LEFT: FORM ===== -->
-      <div class="col-lg-7">
-
-        <div class="ss-card ss-card-pad" style="margin-bottom:1.5rem;">
-          <h3 style="text-transform:none;font-family:'Inter';font-size:1rem;font-weight:700;color:var(--paper);margin-bottom:1.25rem;">
-            <i class="fas fa-truck" style="color:var(--flare);margin-right:8px;"></i>
-            Thông tin nhận hàng
-          </h3>
-
-          <!-- Guest checkout form -->
-          <form th:action="@{/customer/checkout/guest}" method="post" sec:authorize="!isAuthenticated()">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                  Họ tên <span style="color:var(--flare);">*</span>
-                </label>
-                <input type="text" name="receiverName" class="ss-input"
-                       placeholder="Nhập họ tên người nhận" required>
-              </div>
-
-              <div class="col-md-6">
-                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                  Số điện thoại <span style="color:var(--flare);">*</span>
-                </label>
-                <input type="tel" name="receiverPhone" class="ss-input"
-                       placeholder="Nhập số điện thoại" required>
-              </div>
-
-              <div class="col-12">
-                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                  Email <span style="color:var(--flare);">*</span>
-                </label>
-                <input type="email" name="guestEmail" class="ss-input"
-                       placeholder="Nhập email để nhận xác nhận đơn hàng" required>
-              </div>
-
-              <div class="col-12">
-                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                  Địa chỉ giao hàng <span style="color:var(--flare);">*</span>
-                </label>
-                <textarea name="shippingAddress" class="ss-input" style="min-height:80px;resize:vertical;"
-                          placeholder="Số nhà, tên đường, phường/xã, quận/huyện, thành phố" required></textarea>
-              </div>
+        <!-- ===== GUEST NOTICE + ĐĂNG KÝ NHẬN KHUYẾN MÃI ===== -->
+        <div sec:authorize="!isAuthenticated()">
+            <!-- Guest notice -->
+            <div class="ss-card"
+                 style="padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg, rgba(230,48,48,0.06), rgba(215,255,63,0.03));border:1px solid rgba(230,48,48,0.12);">
+                <i class="fas fa-info-circle" style="color:var(--flare);font-size:1.2rem;"></i>
+                <span style="color:var(--muted);font-size:.9rem;">
+                    Bạn đang thanh toán với tư cách khách.
+                    <a href="/login" style="color:var(--flare);font-weight:700;">Đăng nhập</a>
+                    để theo dõi đơn hàng dễ dàng hơn.
+                </span>
             </div>
 
-            <div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
-              <h4 style="font-size:.9rem;font-weight:600;color:var(--paper);margin-bottom:1rem;">Phương thức thanh toán</h4>
-              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;">
-                <label class="ss-pay-option">
-                  <input type="radio" name="paymentId" value="PM001" checked>
-                  <span><i class="fas fa-money-bill-wave" style="color:var(--good);"></i> Tiền mặt</span>
-                </label>
-                <label class="ss-pay-option">
-                  <input type="radio" name="paymentId" value="PM002">
-                  <span><i class="fas fa-university" style="color:#36a4eb;"></i> Chuyển khoản</span>
-                </label>
-                <label class="ss-pay-option">
-                  <input type="radio" name="paymentId" value="PM003">
-                  <span><i class="fas fa-credit-card" style="color:var(--flare);"></i> VNPay</span>
-                </label>
-                <label class="ss-pay-option">
-                  <input type="radio" name="paymentId" value="PM004">
-                  <span><i class="fas fa-mobile-alt" style="color:#a855f7;"></i> Momo</span>
-                </label>
-              </div>
-            </div>
-
-            <div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
-              <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                Mã giảm giá
-              </label>
-              <div style="display:flex;gap:8px;">
-                <input type="text" name="discountCode" class="ss-input" style="flex:1;"
-                       placeholder="Nhập mã giảm giá (nếu có)">
-                <button type="button" class="btn-ss btn-ss-ghost" style="white-space:nowrap;" disabled>
-                  <i class="fas fa-ticket-alt"></i> Áp dụng
-                </button>
-              </div>
-              <div style="margin-top:6px;color:var(--muted);font-size:.78rem;">
-                (Khách không có preview voucher, mã sẽ được áp dụng khi tạo đơn.)
-              </div>
-            </div>
-
-            <button type="submit" class="btn-ss btn-ss-primary btn-ss-block" style="padding:1rem;font-size:1rem;margin-top:1.5rem;">
-              <i class="fas fa-check-circle"></i> Xác nhận đặt hàng
-            </button>
-          </form>
-
-          <!-- Logged-in checkout form -->
-          <form th:action="@{/customer/checkout}" method="post" sec:authorize="isAuthenticated()">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                  Họ tên <span style="color:var(--flare);">*</span>
-                </label>
-                <input type="text" name="receiverName" required class="ss-input"
-                       placeholder="Nhập họ tên người nhận"
-                       th:value="${receiverName}">
-              </div>
-
-              <div class="col-md-6">
-                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                  Số điện thoại <span style="color:var(--flare);">*</span>
-                </label>
-                <input type="tel" name="receiverPhone" required class="ss-input"
-                       placeholder="Nhập số điện thoại"
-                       th:value="${receiverPhone}">
-              </div>
-
-              <div class="col-12">
-                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                  Địa chỉ giao hàng <span style="color:var(--flare);">*</span>
-                </label>
-                <textarea name="shippingAddress" required class="ss-input" style="min-height:80px;resize:vertical;"
-                          placeholder="Số nhà, tên đường, phường/xã, quận/huyện, thành phố"
-                          th:text="${shippingAddress}"></textarea>
-              </div>
-            </div>
-
-            <div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
-              <h4 style="font-size:.9rem;font-weight:600;color:var(--paper);margin-bottom:1rem;">Phương thức thanh toán</h4>
-              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;">
-                <label class="ss-pay-option">
-                  <input type="radio" name="paymentId" value="PM001" checked>
-                  <span><i class="fas fa-money-bill-wave" style="color:var(--good);"></i> Tiền mặt</span>
-                </label>
-                <label class="ss-pay-option">
-                  <input type="radio" name="paymentId" value="PM002">
-                  <span><i class="fas fa-university" style="color:#36a4eb;"></i> Chuyển khoản</span>
-                </label>
-                <label class="ss-pay-option">
-                  <input type="radio" name="paymentId" value="PM003">
-                  <span><i class="fas fa-credit-card" style="color:var(--flare);"></i> VNPay</span>
-                </label>
-                <label class="ss-pay-option">
-                  <input type="radio" name="paymentId" value="PM004">
-                  <span><i class="fas fa-mobile-alt" style="color:#a855f7;"></i> Momo</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Discount preview/apply -->
-            <div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
-              <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
-                Mã giảm giá
-              </label>
-
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <select name="discountCode" class="ss-input" style="flex:1; min-width: 220px;">
-                  <option value="" th:selected="${bestDiscountCode == null}">Không dùng mã</option>
-                  <option th:each="dc : ${discountCodes}"
-                          th:value="${dc.code}"
-                          th:selected="${bestDiscountCode != null and dc.code == bestDiscountCode}">
-                    <span th:text="${dc.code}">CODE</span>
-                  </option>
-                </select>
-
-                <!-- Apply discount -->
-                <form th:action="@{/customer/checkout/apply-discount}" method="post" style="margin:0;" sec:authorize="isAuthenticated()">
-                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                  <input type="hidden" name="applyDiscountCode" id="applyDiscountCode"/>
-                  <button type="submit" class="btn-ss btn-ss-ghost" style="white-space:nowrap;"
-                          onclick="document.getElementById('applyDiscountCode').value = document.querySelector('select[name=discountCode]').value;">
-                    <i class="fas fa-ticket-alt"></i> Áp dụng
-                  </button>
-                </form>
-              </div>
-
-              <div style="margin-top:6px;color:var(--muted);font-size:.78rem;">
-                Mã đang được chọn sẽ tự áp dụng để cập nhật giảm giá/ tổng tiền.
-              </div>
-            </div>
-
-            <button type="submit" class="btn-ss btn-ss-primary btn-ss-block" style="padding:1rem;font-size:1rem;margin-top:1.5rem;">
-              <i class="fas fa-check-circle"></i> Xác nhận đặt hàng
-            </button>
-          </form>
-        </div>
-
-      </div>
-
-      <!-- ===== RIGHT: ORDER SUMMARY ===== -->
-      <div class="col-lg-5">
-        <div class="ss-card" style="padding:1.5rem;position:sticky;top:100px;">
-
-          <h3 style="text-transform:none;font-family:'Inter';font-size:1rem;font-weight:700;color:var(--paper);margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--line);">
-            <i class="fas fa-receipt" style="color:var(--flare);margin-right:8px;"></i>
-            Đơn hàng của bạn
-          </h3>
-
-          <div style="max-height:300px;overflow-y:auto;margin-bottom:1rem;">
-            <div th:each="item : ${cartItems}" th:object="${item}">
-              <div th:with="
-                    productName='Sản phẩm',
-                    sizeName=${item.productDetail != null ? ' ' : null},
-                    colorName=${item.productDetail != null ? ' ' : null},
-                    price=${item.productDetail != null ? item.productDetail.price : 0}">
-                <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);">
-                  <div style="width:48px;height:48px;background:var(--panel-2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--line);">
-                    <i class="fas fa-tshirt" style="font-size:1.2rem;color:#333;"></i>
-                  </div>
-
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:.8rem;font-weight:600;color:var(--paper);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" th:text="${productName}">
-                      Tên sản phẩm
+            <!-- Gợi ý đăng ký nhận khuyến mãi -->
+            <div class="ss-card"
+                 style="padding:1.2rem 1.5rem;margin-bottom:2rem;display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg, rgba(215,255,63,0.06), rgba(230,48,48,0.04));border:1px solid rgba(215,255,63,0.15);">
+                <div style="display:flex;align-items:center;gap:12px;flex:1;">
+                    <i class="fas fa-gift" style="color:var(--volt);font-size:1.5rem;"></i>
+                    <div>
+                        <div style="color:var(--paper);font-weight:700;font-size:.95rem;">
+                            <i class="fas fa-star" style="color:var(--volt);font-size:.7rem;"></i>
+                            Nhận ngay ưu đãi khi đăng ký tài khoản!
+                        </div>
+                        <div style="color:var(--muted);font-size:.82rem;display:flex;flex-wrap:wrap;gap:4px 12px;">
+                            <span><span style="color:var(--good);">✓</span> Áp dụng mã giảm giá</span>
+                            <span><span style="color:var(--good);">✓</span> Theo dõi đơn hàng</span>
+                            <span><span style="color:var(--good);">✓</span> Tích điểm thành viên</span>
+                        </div>
                     </div>
-
-                    <div style="font-size:.7rem;color:var(--muted);">
-                      <span th:text="${sizeName != null ? sizeName : ''}">M</span>
-                      <span th:text="${colorName != null ? ' - ' + colorName : ''}">Đen</span>
-                      <span style="float:right;" th:text="'x' + ${item.quantity}">x2</span>
-                    </div>
-
-                    <div style="font-size:.75rem;color:var(--flare);font-weight:600;"
-                         th:text="${#numbers.formatDecimal(price, 0, 'COMMA', 0, 'POINT') + 'đ'}">
-                      250.000đ
-                    </div>
-                  </div>
                 </div>
-              </div>
+                <a href="/dang-ky" class="btn-ss btn-ss-primary btn-ss-sm" style="white-space:nowrap;">
+                    <i class="fas fa-user-plus"></i> Đăng ký ngay
+                </a>
             </div>
-          </div>
+        </div>
 
-          <div th:if="${cartItems == null or #lists.isEmpty(cartItems)}" style="text-align:center;padding:1.5rem 0;color:var(--muted);">
-            <i class="fas fa-shopping-basket" style="font-size:2rem;color:#333;display:block;margin-bottom:.5rem;"></i>
-            Không có sản phẩm
-          </div>
+        <div class="row g-4">
 
-          <div style="border-top:1px solid var(--line);margin:0 0 12px;"></div>
+            <!-- ===== LEFT: FORM ===== -->
+            <div class="col-lg-7">
 
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:var(--muted);font-size:.85rem;">
-            <span>Tạm tính</span>
-            <span style="color:var(--paper);" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</span>
-          </div>
+                <div class="ss-card ss-card-pad" style="margin-bottom:1.5rem;">
+                    <h3 style="text-transform:none;font-family:'Inter';font-size:1rem;font-weight:700;color:var(--paper);margin-bottom:1.25rem;">
+                        <i class="fas fa-truck" style="color:var(--flare);margin-right:8px;"></i>
+                        Thông tin nhận hàng
+                    </h3>
 
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:var(--muted);font-size:.85rem;">
-            <span>Phí vận chuyển</span>
-            <span style="color:var(--paper);" th:text="${shippingFee != null ? #numbers.formatDecimal(shippingFee, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">30.000đ</span>
-          </div>
+                    <!-- Guest checkout form -->
+                    <form th:action="@{/customer/checkout/guest}" method="post" id="guestCheckoutForm"
+                          sec:authorize="!isAuthenticated()">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-          <div style="display:flex;justify-content:space-between;margin-bottom:12px;color:var(--muted);font-size:.85rem;">
-            <span>Giảm giá</span>
-            <span style="color:var(--good);" th:text="${discountAmount != null ? '- ' + #numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">0đ</span>
-          </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                    Họ tên <span style="color:var(--flare);">*</span>
+                                </label>
+                                <input type="text" name="receiverName" class="ss-input"
+                                       placeholder="Nhập họ tên người nhận" required>
+                            </div>
 
-          <div style="border-top:1px solid var(--line);margin:8px 0 14px;"></div>
+                            <div class="col-md-6">
+                                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                    Số điện thoại <span style="color:var(--flare);">*</span>
+                                </label>
+                                <input type="tel" name="receiverPhone" class="ss-input"
+                                       placeholder="Nhập số điện thoại" required>
+                            </div>
 
-          <div style="display:flex;justify-content:space-between;align-items:baseline;">
-            <span style="color:var(--paper);font-weight:700;">Tổng cộng</span>
-            <span class="display" style="color:var(--flare);font-size:1.2rem;" th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</span>
-          </div>
+                            <div class="col-12">
+                                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                    Email <span style="color:var(--flare);">*</span>
+                                </label>
+                                <input type="email" name="guestEmail" class="ss-input"
+                                       placeholder="Nhập email để nhận xác nhận đơn hàng" required>
+                            </div>
 
-          <div style="text-align:center;margin-top:1rem;">
-            <a href="/customer/cart" style="color:var(--muted);font-size:.85rem;">
-              <i class="fas fa-arrow-left"></i> Quay lại giỏ hàng
-            </a>
-          </div>
+                            <div class="col-12">
+                                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                    Địa chỉ giao hàng <span style="color:var(--flare);">*</span>
+                                </label>
+                                <textarea name="shippingAddress" class="ss-input"
+                                          style="min-height:80px;resize:vertical;"
+                                          placeholder="Số nhà, tên đường, phường/xã, quận/huyện, thành phố"
+                                          required></textarea>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
+                            <h4 style="font-size:.9rem;font-weight:600;color:var(--paper);margin-bottom:1rem;">Phương
+                                thức thanh toán</h4>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;">
+                                <label class="ss-pay-option">
+                                    <input type="radio" name="paymentId" value="PM001" checked>
+                                    <span><i class="fas fa-money-bill-wave"
+                                             style="color:var(--good);"></i> Tiền mặt</span>
+                                </label>
+                                <label class="ss-pay-option">
+                                    <input type="radio" name="paymentId" value="PM002">
+                                    <span><i class="fas fa-university" style="color:#36a4eb;"></i> Chuyển khoản</span>
+                                </label>
+                                <label class="ss-pay-option">
+                                    <input type="radio" name="paymentId" value="PM003">
+                                    <span><i class="fas fa-credit-card" style="color:var(--flare);"></i> VNPay</span>
+                                </label>
+                                <label class="ss-pay-option">
+                                    <input type="radio" name="paymentId" value="PM004">
+                                    <span><i class="fas fa-mobile-alt" style="color:#a855f7;"></i> Momo</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Guest Discount - Hiển thị danh sách voucher -->
+                        <div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
+                            <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                <i class="fas fa-ticket-alt" style="color:var(--volt);"></i> Mã giảm giá
+                            </label>
+                            <div style="padding:1rem;background:var(--panel-2);border-radius:8px;border:1px dashed var(--line);">
+                                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                                    <i class="fas fa-lock" style="color:var(--muted);font-size:1.1rem;"></i>
+                                    <span style="color:var(--muted);font-size:.85rem;">
+                                        <strong style="color:var(--paper);">Đăng ký tài khoản</strong> để nhận voucher giảm giá cho đơn hàng này!
+                                    </span>
+                                    <a href="/dang-ky"
+                                       style="color:var(--flare);font-weight:600;font-size:.85rem;margin-left:auto;">
+                                        Đăng ký ngay <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                                <div th:if="${!#lists.isEmpty(discountCodes)}" style="margin-top:10px;">
+                                    <div style="color:var(--text-muted);font-size:.7rem;margin-bottom:4px;">
+                                        <i class="fas fa-tags"></i> Các mã giảm giá đang có:
+                                    </div>
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                        <span th:each="dc : ${discountCodes}"
+                                              style="font-size:.7rem;background:var(--ink);padding:3px 12px;border-radius:12px;color:var(--muted);border:1px solid var(--line);">
+                                            <span th:text="${dc.code}">CODE</span>
+                                            <span th:if="${dc.discountType == 2}"
+                                                  th:text="' - ' + ${dc.discountValue} + '%'">-10%</span>
+                                            <span th:if="${dc.discountType == 1}"
+                                                  th:with="formattedValue=${#numbers.formatDecimal(dc.discountValue, 0, 'COMMA', 0, 'POINT')}">
+                                                <span th:text="' - ' + ${formattedValue} + 'đ'">-50.000đ</span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div style="margin-top:4px;color:var(--text-muted);font-size:.65rem;">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span th:text="'Có ' + ${#lists.size(discountCodes)} + ' mã giảm giá đang áp dụng cho thành viên'"></span>
+                                    </div>
+                                </div>
+                                <div th:if="${#lists.isEmpty(discountCodes)}"
+                                     style="margin-top:6px;color:var(--text-muted);font-size:.7rem;">
+                                    <i class="fas fa-info-circle"></i> Chưa có mã giảm giá nào.
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-ss btn-ss-primary btn-ss-block"
+                                style="padding:1rem;font-size:1rem;margin-top:1.5rem;">
+                            <i class="fas fa-check-circle"></i> Xác nhận đặt hàng
+                        </button>
+                    </form>
+
+                    <!-- Logged-in checkout form -->
+                    <form th:action="@{/customer/checkout}" method="post" id="loggedInCheckoutForm"
+                          sec:authorize="isAuthenticated()">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                    Họ tên <span style="color:var(--flare);">*</span>
+                                </label>
+                                <input type="text" name="receiverName" required class="ss-input"
+                                       placeholder="Nhập họ tên người nhận"
+                                       th:value="${receiverName}">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                    Số điện thoại <span style="color:var(--flare);">*</span>
+                                </label>
+                                <input type="tel" name="receiverPhone" required class="ss-input"
+                                       placeholder="Nhập số điện thoại"
+                                       th:value="${receiverPhone}">
+                            </div>
+
+                            <div class="col-12">
+                                <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                    Địa chỉ giao hàng <span style="color:var(--flare);">*</span>
+                                </label>
+                                <textarea name="shippingAddress" required class="ss-input"
+                                          style="min-height:80px;resize:vertical;"
+                                          placeholder="Số nhà, tên đường, phường/xã, quận/huyện, thành phố"
+                                          th:text="${shippingAddress}"></textarea>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
+                            <h4 style="font-size:.9rem;font-weight:600;color:var(--paper);margin-bottom:1rem;">Phương
+                                thức thanh toán</h4>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;">
+                                <label class="ss-pay-option">
+                                    <input type="radio" name="paymentId" value="PM001" checked>
+                                    <span><i class="fas fa-money-bill-wave"
+                                             style="color:var(--good);"></i> Tiền mặt</span>
+                                </label>
+                                <label class="ss-pay-option">
+                                    <input type="radio" name="paymentId" value="PM002">
+                                    <span><i class="fas fa-university" style="color:#36a4eb;"></i> Chuyển khoản</span>
+                                </label>
+                                <label class="ss-pay-option">
+                                    <input type="radio" name="paymentId" value="PM003">
+                                    <span><i class="fas fa-credit-card" style="color:var(--flare);"></i> VNPay</span>
+                                </label>
+                                <label class="ss-pay-option">
+                                    <input type="radio" name="paymentId" value="PM004">
+                                    <span><i class="fas fa-mobile-alt" style="color:#a855f7;"></i> Momo</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Discount preview for logged-in user -->
+                        <div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
+                            <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
+                                Mã giảm giá
+                            </label>
+
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                <select name="discountCode" id="discountCodeSelect" class="ss-input"
+                                        style="flex:1; min-width: 220px;">
+                                    <option value="" th:selected="${bestDiscountCode == null}">Không dùng mã</option>
+                                    <option th:each="dc : ${discountCodes}"
+                                            th:value="${dc.code}"
+                                            th:selected="${bestDiscountCode != null and dc.code == bestDiscountCode}">
+                                        <span th:text="${dc.code} + ' (giảm ' + ${dc.discountValue} + '%' + ')'">CODE</span>
+                                    </option>
+                                </select>
+
+                                <button type="button" id="btnApplyDiscount" class="btn-ss btn-ss-ghost"
+                                        style="white-space:nowrap;">
+                                    <i class="fas fa-ticket-alt"></i> Áp dụng
+                                </button>
+                            </div>
+
+                            <div id="discountSameNotice"
+                                 style="display:none;margin-top:6px;color:var(--flare);font-size:.78rem;">
+                                <i class="fas fa-info-circle"></i> Mã này đang được áp dụng rồi, không có gì để đổi.
+                            </div>
+                            <div style="margin-top:6px;color:var(--muted);font-size:.78rem;">
+                                Chọn mã khác với mã đang áp dụng rồi bấm "Áp dụng" để cập nhật giảm giá/tổng tiền.
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-ss btn-ss-primary btn-ss-block"
+                                style="padding:1rem;font-size:1rem;margin-top:1.5rem;">
+                            <i class="fas fa-check-circle"></i> Xác nhận đặt hàng
+                        </button>
+                    </form>
+
+                    <!-- Form riêng để áp dụng mã giảm giá -->
+                    <form th:action="@{/customer/checkout/apply-discount}" method="post" id="applyDiscountForm"
+                          sec:authorize="isAuthenticated()" style="margin:0;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="applyDiscountCode" id="applyDiscountCode"/>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ===== RIGHT: ORDER SUMMARY ===== -->
+            <div class="col-lg-5">
+                <div class="ss-card" style="padding:1.5rem;position:sticky;top:100px;">
+
+                    <h3 style="text-transform:none;font-family:'Inter';font-size:1rem;font-weight:700;color:var(--paper);margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--line);">
+                        <i class="fas fa-receipt" style="color:var(--flare);margin-right:8px;"></i>
+                        Đơn hàng của bạn
+                    </h3>
+
+                    <div style="max-height:300px;overflow-y:auto;margin-bottom:1rem;">
+                        <div th:each="item : ${cartItems}" th:object="${item}">
+                            <div th:with="
+                      productName='Sản phẩm',
+                      sizeName=${item.productDetail != null ? ' ' : null},
+                      colorName=${item.productDetail != null ? ' ' : null},
+                      price=${item.productDetail != null ? item.productDetail.price : 0}">
+                                <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);">
+                                    <div style="width:48px;height:48px;background:var(--panel-2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--line);">
+                                        <i class="fas fa-tshirt" style="font-size:1.2rem;color:#333;"></i>
+                                    </div>
+
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-size:.8rem;font-weight:600;color:var(--paper);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                                             th:text="${productName}">
+                                            Tên sản phẩm
+                                        </div>
+
+                                        <div style="font-size:.7rem;color:var(--muted);">
+                                            <span th:text="${sizeName != null ? sizeName : ''}">M</span>
+                                            <span th:text="${colorName != null ? ' - ' + colorName : ''}">Đen</span>
+                                            <span style="float:right;" th:text="'x' + ${item.quantity}">x2</span>
+                                        </div>
+
+                                        <div style="font-size:.75rem;color:var(--flare);font-weight:600;"
+                                             th:text="${#numbers.formatDecimal(price, 0, 'COMMA', 0, 'POINT') + 'đ'}">
+                                            250.000đ
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${cartItems == null or #lists.isEmpty(cartItems)}"
+                         style="text-align:center;padding:1.5rem 0;color:var(--muted);">
+                        <i class="fas fa-shopping-basket"
+                           style="font-size:2rem;color:#333;display:block;margin-bottom:.5rem;"></i>
+                        Không có sản phẩm
+                    </div>
+
+                    <div style="border-top:1px solid var(--line);margin:0 0 12px;"></div>
+
+                    <!-- ✅ SỬA TẠM TÍNH -->
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:var(--muted);font-size:.85rem;">
+                        <span>Tạm tính</span>
+                        <span style="color:var(--paper);"
+                              th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">0đ</span>
+                    </div>
+
+                    <!-- ✅ SỬA PHÍ VẬN CHUYỂN -->
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:var(--muted);font-size:.85rem;">
+                        <span>Phí vận chuyển</span>
+                        <span style="color:var(--paper);"
+                              th:text="${shippingFee != null and shippingFee > 0 ? #numbers.formatDecimal(shippingFee, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">0đ</span>
+                    </div>
+
+                    <!-- ✅ SỬA GIẢM GIÁ -->
+                    <div style="display:flex;justify-content:space-between;margin-bottom:12px;color:var(--muted);font-size:.85rem;">
+                        <span>Giảm giá</span>
+                        <span style="color:var(--good);"
+                              th:text="${discountAmount != null and discountAmount > 0 ? '- ' + #numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">0đ</span>
+                    </div>
+
+                    <div style="border-top:1px solid var(--line);margin:8px 0 14px;"></div>
+
+                    <!-- ✅ SỬA TỔNG CỘNG -->
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                        <span style="color:var(--paper);font-weight:700;">Tổng cộng</span>
+                        <span class="display" style="color:var(--flare);font-size:1.2rem;"
+                              th:text="${totalAmount != null ? #numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT') + 'đ' : '0đ'}">0đ</span>
+                    </div>
+
+                    <div style="text-align:center;margin-top:1rem;">
+                        <a href="/customer/cart" style="color:var(--muted);font-size:.85rem;">
+                            <i class="fas fa-arrow-left"></i> Quay lại giỏ hàng
+                        </a>
+                    </div>
+
+                </div>
+            </div>
 
         </div>
-      </div>
-
     </div>
-  </div>
 </section>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 
 <style>
-  .ss-input {
-    width: 100%; padding: .65rem 1rem; background: var(--ink);
-    border: 1px solid var(--line); border-radius: 8px;
-    color: var(--paper); font-size: .9rem; transition: border-color .2s;
-  }
-  .ss-input:focus { outline: none; border-color: var(--flare); }
+    .ss-input {
+        width: 100%;
+        padding: .65rem 1rem;
+        background: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--paper);
+        font-size: .9rem;
+        transition: border-color .2s;
+    }
 
-  .ss-pay-option {
-    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
-    background: var(--ink); border: 1px solid var(--line); border-radius: 8px;
-    cursor: pointer; transition: border-color .2s; font-size: .88rem; color: var(--paper);
-  }
-  .ss-pay-option:has(input:checked) { border-color: var(--flare); }
+    .ss-input:focus {
+        outline: none;
+        border-color: var(--flare);
+    }
+
+    .ss-pay-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: border-color .2s;
+        font-size: .88rem;
+        color: var(--paper);
+    }
+
+    .ss-pay-option:has(input:checked) {
+        border-color: var(--flare);
+    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script th:inline="javascript">
-  (function () {
-    const modalEl = document.getElementById('discountConfirmModal');
-    if (!modalEl) return;
+    (function () {
+        const modalEl = document.getElementById('discountConfirmModal');
+        if (!modalEl) return;
 
-    // th:if trong body chỉ render nội dung, còn logic hiển thị dựa vào biến flash
-    const confirmCode = /*[[${discountConfirmCode}]]*/ null;
-    const errorMsg = /*[[${error}]]*/ null;
+        const confirmCode = /*[[${discountConfirmCode}]]*/ null;
+        const errorMsg = /*[[${error}]]*/ null;
 
-    if (confirmCode != null || errorMsg != null) {
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
-    }
-  })();
+        if (confirmCode != null || errorMsg != null) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+    })();
+</script>
+
+<script th:inline="javascript">
+    (function () {
+        const currentAppliedCode = /*[[${bestDiscountCode}]]*/ null;
+
+        const btnApply = document.getElementById('btnApplyDiscount');
+        const selectEl = document.getElementById('discountCodeSelect');
+        const sameNotice = document.getElementById('discountSameNotice');
+        const hiddenInput = document.getElementById('applyDiscountCode');
+        const applyForm = document.getElementById('applyDiscountForm');
+
+        if (btnApply && selectEl && hiddenInput && applyForm) {
+            btnApply.addEventListener('click', function () {
+                const selectedValue = selectEl.value;
+                const normalizedSelected = selectedValue === '' ? null : selectedValue;
+                const normalizedCurrent = currentAppliedCode === '' ? null : currentAppliedCode;
+
+                if (normalizedSelected === normalizedCurrent) {
+                    if (sameNotice) sameNotice.style.display = 'block';
+                    return;
+                }
+
+                if (sameNotice) sameNotice.style.display = 'none';
+                hiddenInput.value = selectedValue;
+                applyForm.submit();
+            });
+
+            selectEl.addEventListener('change', function () {
+                if (sameNotice) sameNotice.style.display = 'none';
+            });
+        }
+    })();
+</script>
+
+<script>
+    (function () {
+        function attachConfirmGuard(formId) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+
+            form.addEventListener('submit', function (e) {
+                // Kiểm tra giỏ hàng trống (chỉ áp dụng cho guest)
+                if (formId === 'guestCheckoutForm') {
+                    const cartItemsCount = /*[[${cartItemsCount}]]*/ 0;
+                    if (cartItemsCount == null || cartItemsCount <= 0) {
+                        e.preventDefault();
+                        alert('Giỏ hàng của bạn đang trống! Vui lòng thêm sản phẩm trước khi thanh toán.');
+                        return;
+                    }
+                }
+
+                if (form.dataset.confirmed === 'true') {
+                    return;
+                }
+                e.preventDefault();
+
+                const ok = window.confirm('Bạn có chắc chắn muốn đặt đơn hàng này không?\nSau khi xác nhận, đơn hàng sẽ được tạo và không thể tự huỷ.');
+                if (ok) {
+                    form.dataset.confirmed = 'true';
+                    form.submit();
+                }
+            });
+        }
+
+        attachConfirmGuard('guestCheckoutForm');
+        attachConfirmGuard('loggedInCheckoutForm');
+    })();
 </script>
 
 </body>

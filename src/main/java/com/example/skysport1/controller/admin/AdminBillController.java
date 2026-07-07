@@ -1,8 +1,10 @@
 package com.example.skysport1.controller.admin;
 
 import com.example.skysport1.entity.Bill;
+import com.example.skysport1.entity.OrderStatusHistory;
 import com.example.skysport1.entity.Staff;
 import com.example.skysport1.exception.ResourceNotFoundException;
+import com.example.skysport1.repository.OrderStatusHistoryRepository;
 import com.example.skysport1.service.BillService;
 import com.example.skysport1.service.StaffService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/admin/bills")
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class AdminBillController {
 
 	private final BillService billService;
 	private final StaffService staffService;
+	private final OrderStatusHistoryRepository orderStatusHistoryRepository;
 
 	@GetMapping
 	public String list(@RequestParam(defaultValue = "0") int page,
@@ -54,6 +59,11 @@ public class AdminBillController {
 		try {
 			Bill bill = billService.findById(id);
 			model.addAttribute("bill", bill);
+
+			List<OrderStatusHistory> statusHistories =
+					orderStatusHistoryRepository.findByBillIdOrderByCreateDateAsc(id);
+			model.addAttribute("statusHistories", statusHistories);
+
 			model.addAttribute("title", "Chi tiết đơn hàng");
 			model.addAttribute("pageContent", "admin/bill/detail");
 			return "layouts/adminlte/layout";

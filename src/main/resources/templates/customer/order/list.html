@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layouts/customer/layout :: head('Danh sách đơn hàng')}"></head>
+<body>
+<div th:replace="~{layouts/customer/layout :: body}">
+    <div th:fragment="content">
+        <div class="cus-card">
+            <div class="cus-card-header">
+                <h5><i class="fas fa-shopping-bag me-2"></i>Đơn hàng của tôi</h5>
+            </div>
+            <div class="cus-card-body">
+                <div th:if="${#lists.isEmpty(bills)}" style="text-align:center;padding:2rem 0;">
+                    <i class="fas fa-inbox" style="font-size:3rem;color:var(--gray);display:block;margin-bottom:1rem;"></i>
+                    <p style="color:var(--gray);">Bạn chưa có đơn hàng nào.</p>
+                    <a href="/san-pham" class="cus-btn cus-btn-primary" style="margin-top:.5rem;">Mua sắm ngay</a>
+                </div>
+                <div th:if="${!#lists.isEmpty(bills)}">
+                    <table class="cus-table">
+                        <thead>
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Ngày tạo</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="bill : ${bills}">
+                            <td th:text="${bill.id}">HD001</td>
+                            <td th:text="${#temporals.format(bill.createDate, 'dd/MM/yyyy HH:mm')}">01/01/2024</td>
+                            <td th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT') + 'đ'}">0đ</td>
+                            <td>
+                                    <span class="cus-badge"
+                                          th:classappend="${bill.status == 1} ? 'cus-badge-warning' :
+                                                          (${bill.status == 2} ? 'cus-badge-info' :
+                                                          (${bill.status == 3} ? 'cus-badge-info' :
+                                                          (${bill.status == 4} ? 'cus-badge-success' :
+                                                          (${bill.status == 5} ? 'cus-badge-danger' :
+                                                          (${bill.status == 7} ? 'cus-badge-success' : 'cus-badge-secondary')))))">
+                                        <span th:switch="${bill.status}">
+                                            <span th:case="1">Chờ xác nhận</span>
+                                            <span th:case="2">Đã xác nhận</span>
+                                            <span th:case="3">Đang giao</span>
+                                            <span th:case="4">Đã giao</span>
+                                            <span th:case="5">Đã hủy</span>
+                                            <span th:case="7">Hoàn thành</span>
+                                            <span th:case="*">Khác</span>
+                                        </span>
+                                    </span>
+                            </td>
+                            <td>
+                                <a th:href="@{/customer/orders/{id}(id=${bill.id})}" class="cus-btn cus-btn-secondary cus-btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

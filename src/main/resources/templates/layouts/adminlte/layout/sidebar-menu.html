@@ -122,6 +122,57 @@
         </li>
 
         <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Giám sát & Audit                                   -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <div class="nav-label">Giám sát & Audit</div>
+
+        <li class="nav-item">
+            <a href="#" class="nav-link has-sub"
+               th:classappend="${#strings.contains(pageContent, 'bill') or
+                                #strings.contains(pageContent, 'import-order') or
+                                #strings.contains(pageContent, 'return-request')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-clipboard-list"></i></span>
+                <span>Nhật ký nghiệp vụ</span>
+                <span class="arrow" th:classappend="${#strings.contains(pageContent, 'bill') or
+                                #strings.contains(pageContent, 'import-order') or
+                                #strings.contains(pageContent, 'return-request')} ? 'open' : ''">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+            </a>
+
+            <ul class="sub-menu"
+                th:classappend="${#strings.contains(pageContent, 'bill') or
+                                #strings.contains(pageContent, 'import-order') or
+                                #strings.contains(pageContent, 'return-request')} ? 'open' : ''">
+
+                <li class="nav-item">
+                    <a th:href="@{/admin/bills}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'bill')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-file-invoice"></i></span>
+                        <span>Bill</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a th:href="@{/admin/import-orders}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'import-order')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-truck-loading"></i></span>
+                        <span>Phiếu nhập</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a th:href="@{/admin/return-requests}" class="nav-link"
+                       th:classappend="${#strings.contains(pageContent, 'return-request')} ? 'active' : ''">
+                        <span class="icon"><i class="fas fa-undo-alt"></i></span>
+                        <span>Hoàn trả</span>
+                    </a>
+                </li>
+
+            </ul>
+        </li>
+
+        <!-- ═══════════════════════════════════════════════════ -->
         <!-- NGƯỜI DÙNG                                         -->
         <!-- ═══════════════════════════════════════════════════ -->
         <div class="nav-label">Người dùng</div>

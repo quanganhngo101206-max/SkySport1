@@ -1,4 +1,18 @@
-- [ ] Kiểm tra lại `src/main/resources/templates/customer/checkout/checkout.html` xem trong form `/customer/checkout` có bị gửi nhiều trường `discountCode` cùng lúc gây ra chuỗi kiểu `GIAM50K,GIAM50K`.
-- [ ] Sửa `checkout.html` để đảm bảo chỉ **1** input/hidden `name="discountCode"` tồn tại trong form `/customer/checkout` (logged-in), và nút “Xác nhận đặt hàng” submit đúng giá trị đó.
-- [ ] (Tuỳ chọn) Thêm debug hiển thị `discountCode` đang được gửi trước khi submit (tạm thời) hoặc log trong controller.
-- [ ] Chạy lại flow: chọn mã bất kỳ trong dropdown → bấm “Áp dụng” → bấm “Xác nhận đặt hàng” → đảm bảo không còn lỗi `Không tìm thấy mã giảm giá với id: X,X`.
+# TODO - SkySport1 (Customer Profile - Shipping Addresses)
+
+- [ ] Bước 1: Mở `CustomerProfileController.java` để xác định cấu trúc hiện tại và cách lấy `customerId` / truyền model.
+- [ ] Bước 2: Cập nhật `CustomerProfileController.java`
+  - [ ] Nạp `AddressShippingRepository`
+  - [ ] GET `/customer/profile`: add `addresses` (danh sách địa chỉ) + `defaultAddressId` (hoặc địa chỉ mặc định)
+  - [ ] POST `/customer/profile/address/add`: thêm địa chỉ
+  - [ ] POST `/customer/profile/address/update`: sửa địa chỉ
+  - [ ] POST `/customer/profile/address/delete`: xóa địa chỉ
+  - [ ] POST `/customer/profile/address/set-default`: đặt địa chỉ mặc định
+- [ ] Bước 3: Cập nhật `templates/customer/profile/index.html`
+  - [ ] Hiển thị danh sách địa chỉ (card/table)
+  - [ ] Form thêm địa chỉ
+  - [ ] Modal/inline form sửa địa chỉ
+  - [ ] Nút “Đặt mặc định”
+  - [ ] Nút “Xóa”
+  - [ ] Đảm bảo form gửi đúng URL action theo controller
+- [ ] Bước 4: Chạy/kiểm tra build hoặc chạy app để đảm bảo không lỗi Thymeleaf và thao tác CRUD hoạt động.

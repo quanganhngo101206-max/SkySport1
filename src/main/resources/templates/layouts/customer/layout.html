@@ -240,7 +240,17 @@
         </div>
 
         <!-- Page content -->
-        <div th:replace="~{${pageContent} :: content}"></div>
+        <div>
+            <!-- Chỉ render fragment khi pageContent != null -->
+            <div th:if="${pageContent != null}"
+                 th:replace="~{${pageContent} :: content}"></div>
+
+            <!-- Fallback khi template/fragment bị thiếu -->
+            <div th:unless="${pageContent != null}"
+                 style="color:var(--gray); padding:1rem; border:1px dashed var(--border); border-radius:10px;">
+                Không tìm thấy nội dung trang.
+            </div>
+        </div>
     </main>
 </div>
 

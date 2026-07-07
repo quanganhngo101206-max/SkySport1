@@ -19,6 +19,7 @@
             </h3>
             <a th:href="@{/admin/bills}" class="btn btn-secondary btn-sm">← Quay lại</a>
         </div>
+
         <div class="card-body">
 
             <!-- Thông tin đơn hàng -->
@@ -125,6 +126,45 @@
 
             <hr>
 
+            <!-- Lịch sử trạng thái (Audit trail) -->
+            <div class="mb-4">
+                <h5>Lịch sử trạng thái</h5>
+
+                <div th:if="${statusHistories == null or #lists.isEmpty(statusHistories)}"
+                     class="text-muted">
+                    Chưa có lịch sử trạng thái.
+                </div>
+
+                <div th:if="${statusHistories != null and !#lists.isEmpty(statusHistories)}">
+                    <table class="table table-bordered table-striped align-middle">
+                        <thead>
+                        <tr>
+                            <th>Thời điểm</th>
+                            <th>Nhân sự</th>
+                            <th>Từ trạng thái</th>
+                            <th>Đến trạng thái</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="history : ${statusHistories}">
+                            <td th:text="${history.createDate != null ? #temporals.format(history.createDate, 'dd/MM/yyyy HH:mm:ss') : ''}">
+                                24/06/2024 15:30:00
+                            </td>
+                            <td>
+                                <span th:if="${history.staff != null}"
+                                      th:text="${history.staff.fullName}">Nhân sự</span>
+                                <span th:if="${history.staff == null}">N/A</span>
+                            </td>
+                            <td th:text="${history.oldStatus}">1</td>
+                            <td th:text="${history.newStatus}">2</td>
+                            <td th:text="${history.note}">Ghi chú</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Danh sách sản phẩm -->
             <h5>Danh sách sản phẩm</h5>
             <table class="table table-bordered table-striped">
@@ -184,9 +224,11 @@
                     </table>
                 </div>
             </div>
+
         </div>
     </div>
+
+    <th:block th:fragment="scripts"></th:block>
 </div>
-<th:block th:fragment="scripts"></th:block>
 </body>
 </html>

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -137,12 +138,12 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public Bill createGuestBill(String guestEmail,
-                                String shippingAddress,
-                                String receiverName,
-                                String receiverPhone,
-                                String paymentId,
-                                String discountCode,
-                                List<BillDetail> items) {
+                                 String shippingAddress,
+                                 String receiverName,
+                                 String receiverPhone,
+                                 String paymentId,
+                                 String discountCode,
+                                 List<BillDetail> items) {
         Bill bill = Bill.builder()
                 .id(idGenerator.generateBillId())
                 .guestEmail(guestEmail)
@@ -183,7 +184,7 @@ public class BillServiceImpl implements BillService {
     }
 
     private Bill doCreateBill(Bill bill, List<BillDetail> items,
-                              String discountCode, String customerId) {
+                               String discountCode, String customerId) {
         if (items == null || items.isEmpty()) {
             throw new AppException("Đơn hàng phải có ít nhất 1 sản phẩm");
         }
@@ -358,7 +359,7 @@ public class BillServiceImpl implements BillService {
                 note != null ? note : "Hoàn thành đơn hàng");
     }
 
-    // ── Thanh toán ────────────────────────────────────────────────────────
+    // ── Thanh toán ───────────────────────────────────────────────────────
 
     @Override
     @Transactional
@@ -418,6 +419,7 @@ public class BillServiceImpl implements BillService {
                 .oldStatus(oldStatus)
                 .newStatus(newStatus)
                 .note(note)
+                .createDate(LocalDateTime.now())
                 .build();
 
         // staffId truyền vào thực tế là Account.id (đến từ AdminBillController/staff controllers)
@@ -428,6 +430,32 @@ public class BillServiceImpl implements BillService {
         }
 
         orderStatusHistoryRepository.save(history);
+    }
+
+    /**
+     * Dùng cho các luồng bên ngoài (vd: ReturnRequest) để cập nhật Bill.status
+     * và đồng thời log OrderStatusHistory.
+     */
+    @Transactional
+    public Bill changeBillStatusAndLogHistory(String billId, int newStatus,
+                                                String actorAccountId, String note) {
+        Bill bill = findById(billId);
+
+        int oldStatus = bill.getStatus();
+        if (!AllowedTransition.isAllowed(oldStatus, newStatus)) {
+            throw new AppException(String.format(
+                    "Không thể chuyển đơn hàng từ trạng thái '%s' sang '%s'",
+                    OrderStatus.of(oldStatus) != null ? OrderStatus.of(oldStatus).getLabel() : oldStatus,
+                    OrderStatus.of(newStatus) != null ? OrderStatus.of(newStatus).getLabel() : newStatus
+            ));
+        }
+
+        bill.setStatus(newStatus);
+        bill.setUpdatedBy(actorAccountId);
+        bill = billRepository.save(bill);
+
+        logHistory(bill, oldStatus, newStatus, note, actorAccountId);
+        return bill;
     }
 
     private void logInventory(ProductDetail pd, InventoryActionType type,

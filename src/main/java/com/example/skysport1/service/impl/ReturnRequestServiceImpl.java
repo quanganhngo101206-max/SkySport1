@@ -5,6 +5,7 @@ import com.example.skysport1.enums.*;
 import com.example.skysport1.exception.AppException;
 import com.example.skysport1.exception.ResourceNotFoundException;
 import com.example.skysport1.repository.*;
+import com.example.skysport1.service.BillService;
 import com.example.skysport1.service.NotificationService;
 import com.example.skysport1.service.ReturnRequestService;
 import com.example.skysport1.util.IdGenerator;
@@ -25,6 +26,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     private final ReturnRequestRepository         returnRequestRepository;
     private final ReturnRequestDetailRepository   returnRequestDetailRepository;
     private final ReturnStatusHistoryRepository   returnStatusHistoryRepository;
+    private final BillService                     billService;
     private final BillRepository                  billRepository;
     private final BillDetailRepository            billDetailRepository;
     private final BillReturnRepository            billReturnRepository;
@@ -149,9 +151,13 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         logHistory(savedRR, null, ReturnRequestStatus.PENDING.getValue(),
                 "Khách gửi yêu cầu hoàn trả", null);
 
-        // Cập nhật bill status → Hoàn trả (6)
-        bill.setStatus(OrderStatus.RETURNING.getValue());
-        billRepository.save(bill);
+        // Cập nhật bill status → Hoàn trả (RETURNING) + log OrderStatusHistory
+        billService.changeBillStatusAndLogHistory(
+                billId,
+                OrderStatus.RETURNING.getValue(),
+                null,
+                "Khách gửi yêu cầu hoàn trả"
+        );
 
         log.info("Tạo yêu cầu hoàn trả: {} | bill: {}", savedRR.getId(), billId);
         return savedRR;
@@ -159,6 +165,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     // ── Duyệt ─────────────────────────────────────────────────────────────
 
+    @Override
     @Transactional
     public ReturnRequest approve(String returnRequestId, String staffId, String note) {
         ReturnRequest rr = findById(returnRequestId);
@@ -217,6 +224,15 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         logHistory(rr, oldStatus, ReturnRequestStatus.APPROVED.getValue(),
                 note != null ? note : "Duyệt yêu cầu hoàn trả", staffId);
 
+        // Cập nhật bill status (giữ RETURNING) + log OrderStatusHistory
+        // (tùy yêu cầu UI; mục tiêu là không thiếu timeline cho admin)
+        billService.changeBillStatusAndLogHistory(
+                bill.getId(),
+                OrderStatus.RETURNING.getValue(),
+                staffId,
+                note != null ? note : "Duyệt yêu cầu hoàn trả"
+        );
+
         // Tạo BillReturn
         BillReturn billReturn = BillReturn.builder()
                 .id(idGenerator.generateBillReturnId())
@@ -267,10 +283,14 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         logHistory(rr, oldStatus, ReturnRequestStatus.REJECTED.getValue(),
                 note != null ? note : "Từ chối yêu cầu hoàn trả", staffId);
 
-        // Đổi bill về trạng thái trước (Đã giao)
+        // Đổi bill về trạng thái trước (Đã giao) + log OrderStatusHistory
         Bill bill = rr.getBill();
-        bill.setStatus(OrderStatus.DELIVERED.getValue());
-        billRepository.save(bill);
+        billService.changeBillStatusAndLogHistory(
+                bill.getId(),
+                OrderStatus.DELIVERED.getValue(),
+                staffId,
+                note != null ? note : "Từ chối yêu cầu hoàn trả"
+        );
 
         // Gửi thông báo cho customer
         if (bill.getCustomer() != null) {
@@ -324,10 +344,13 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
                 });
 
         // Cập nhật payment_status bill → REFUNDED
+        // (timeline UI hiện tại dựa trên OrderStatusHistory, nên giữ nguyên bill.status)
         Bill bill = rr.getBill();
         bill.setPaymentStatus(PaymentStatus.REFUNDED.getValue());
         billRepository.save(bill);
 
+        // Nếu bạn muốn timeline thể hiện bước "hoàn tiền", cần thêm mapping sang OrderStatusHistory theo PaymentStatus.
+        // Hiện tại chỉ đảm bảo không thiếu timeline do return process.
         log.info("Xác nhận hoàn tiền: {} | staff: {}", returnRequestId, staffId);
         return rr;
     }

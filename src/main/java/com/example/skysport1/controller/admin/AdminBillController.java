@@ -32,9 +32,9 @@ public class AdminBillController {
 
 	@GetMapping
 	public String list(@RequestParam(defaultValue = "0") int page,
-						@RequestParam(defaultValue = "10") int size,
-						@RequestParam(required = false) Integer status,
-						Model model) {
+							@RequestParam(defaultValue = "10") int size,
+							@RequestParam(required = false) Integer status,
+							Model model) {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<Bill> pageResult;
 		if (status != null) {
@@ -61,7 +61,7 @@ public class AdminBillController {
 			model.addAttribute("bill", bill);
 
 			List<OrderStatusHistory> statusHistories =
-					orderStatusHistoryRepository.findByBillIdOrderByCreateDateAsc(id);
+					orderStatusHistoryRepository.findByBillIdOrderByCreateDateAscIdAsc(id);
 			model.addAttribute("statusHistories", statusHistories);
 
 			model.addAttribute("title", "Chi tiết đơn hàng");

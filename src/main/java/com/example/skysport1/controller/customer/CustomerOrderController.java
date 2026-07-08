@@ -14,7 +14,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -59,8 +61,9 @@ public class CustomerOrderController {
                 return "redirect:/customer/orders";
             }
 
-            // Lấy timeline
-            List<OrderStatusHistory> timeline = orderStatusHistoryRepository.findByBillIdOrderByCreateDateAsc(id);
+            // Lấy timeline (sort ổn định theo createDate, secondary theo id)
+            List<OrderStatusHistory> timeline =
+                    orderStatusHistoryRepository.findByBillIdOrderByCreateDateAscIdAsc(id);
 
             model.addAttribute("bill", bill);
             model.addAttribute("timeline", timeline);
@@ -73,6 +76,34 @@ public class CustomerOrderController {
             ra.addFlashAttribute("error", "Không tìm thấy đơn hàng");
             return "redirect:/customer/orders";
         }
+    }
+
+    /**
+     * Hủy đơn (customer) - chỉ khi bill.status = 1 hoặc 2
+     */
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable String id,
+                          Authentication auth,
+                          @RequestParam(required = false) String note,
+                          RedirectAttributes ra) {
+        try {
+            String customerId = getCurrentCustomerId(auth);
+            Bill bill = billService.findById(id);
+
+            // Kiểm tra quyền: bill phải thuộc customer
+            if (bill.getCustomer() == null || !bill.getCustomer().getId().equals(customerId)) {
+                ra.addFlashAttribute("error", "Bạn không có quyền hủy đơn hàng này");
+                return "redirect:/customer/orders/" + id;
+            }
+
+            // actorId null vì BillServiceImpl.cancel chỉ validate theo trạng thái bill
+            billService.cancel(id, null, note);
+
+            ra.addFlashAttribute("success", "Đã hủy đơn hàng " + id);
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/customer/orders/" + id;
     }
 
     private String getCurrentCustomerId(Authentication auth) {

@@ -29,4 +29,11 @@ public class OrderStatusHistory {
     private Staff staff;
 
     private LocalDateTime createDate;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createDate == null) {
+            createDate = LocalDateTime.now();
+        }
+    }
 }

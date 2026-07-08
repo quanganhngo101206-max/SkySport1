@@ -9,6 +9,7 @@
                 <a th:href="@{/staff/orders(status=3)}" class="btn-sky btn-sky-sm" th:classappend="${status == 3 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đang giao</a>
                 <a th:href="@{/staff/orders(status=4)}" class="btn-sky btn-sky-sm" th:classappend="${status == 4 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã giao</a>
                 <a th:href="@{/staff/orders(status=5)}" class="btn-sky btn-sky-sm" th:classappend="${status == 5 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã hủy</a>
+                <a th:href="@{/staff/orders(status=6)}" class="btn-sky btn-sky-sm" th:classappend="${status == 6 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đang hoàn trả</a>
             </div>
         </div>
 
@@ -35,13 +36,15 @@
                                               (bill.status == 2 ? 'info' :
                                               (bill.status == 3 ? 'primary' :
                                               (bill.status == 4 ? 'success' :
-                                              (bill.status == 5 ? 'danger' : 'secondary'))))}">
+                                              (bill.status == 5 ? 'danger' :
+                                              (bill.status == 6 ? 'dark' : 'secondary')))))}">
                             <span th:switch="${bill.status}">
                                 <span th:case="1">Chờ xác nhận</span>
                                 <span th:case="2">Đã xác nhận</span>
                                 <span th:case="3">Đang giao</span>
                                 <span th:case="4">Đã giao</span>
                                 <span th:case="5">Đã hủy</span>
+                                <span th:case="6">Đang hoàn trả</span>
                                 <span th:case="7">Hoàn thành</span>
                                 <span th:case="*">Không rõ</span>
                             </span>

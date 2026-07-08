@@ -23,6 +23,7 @@
                     <option value="3" th:selected="${status == 3}">Đang giao</option>
                     <option value="4" th:selected="${status == 4}">Đã giao</option>
                     <option value="5" th:selected="${status == 5}">Đã hủy</option>
+                    <option value="6" th:selected="${status == 6}">Đang hoàn trả</option>
                     <option value="7" th:selected="${status == 7}">Hoàn thành</option>
                 </select>
                 <button type="submit" class="btn btn-primary">Lọc</button>
@@ -51,12 +52,14 @@
                                              (${bill.status == 2} ? 'bg-info text-white' :
                                              (${bill.status == 3} ? 'bg-primary' :
                                              (${bill.status == 4} ? 'bg-success' :
-                                             (${bill.status == 5} ? 'bg-danger' : 'bg-secondary'))))">
+                                             (${bill.status == 5} ? 'bg-danger' :
+                                             (${bill.status == 6} ? 'bg-dark' : 'bg-secondary')))))">
                             <span th:if="${bill.status == 1}">Chờ xác nhận</span>
                             <span th:if="${bill.status == 2}">Đã xác nhận</span>
                             <span th:if="${bill.status == 3}">Đang giao</span>
                             <span th:if="${bill.status == 4}">Đã giao</span>
                             <span th:if="${bill.status == 5}">Đã hủy</span>
+                            <span th:if="${bill.status == 6}">Đang hoàn trả</span>
                             <span th:if="${bill.status == 7}">Hoàn thành</span>
                         </span>
                     </td>

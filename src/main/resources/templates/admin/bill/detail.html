@@ -46,12 +46,14 @@
                                              (${bill.status == 2} ? 'bg-info text-white' :
                                              (${bill.status == 3} ? 'bg-primary' :
                                              (${bill.status == 4} ? 'bg-success' :
-                                             (${bill.status == 5} ? 'bg-danger' : 'bg-secondary'))))">
+                                             (${bill.status == 5} ? 'bg-danger' :
+                                             (${bill.status == 6} ? 'bg-dark' : 'bg-secondary')))))">
                             <span th:if="${bill.status == 1}">Chờ xác nhận</span>
                             <span th:if="${bill.status == 2}">Đã xác nhận</span>
                             <span th:if="${bill.status == 3}">Đang giao</span>
                             <span th:if="${bill.status == 4}">Đã giao</span>
                             <span th:if="${bill.status == 5}">Đã hủy</span>
+                            <span th:if="${bill.status == 6}">Đang hoàn trả</span>
                             <span th:if="${bill.status == 7}">Hoàn thành</span>
                         </span>
                     </p>
@@ -156,8 +158,43 @@
                                       th:text="${history.staff.fullName}">Nhân sự</span>
                                 <span th:if="${history.staff == null}">N/A</span>
                             </td>
-                            <td th:text="${history.oldStatus}">1</td>
-                            <td th:text="${history.newStatus}">2</td>
+
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${history.oldStatus == 1} ? 'bg-warning text-dark' :
+                                                     (${history.oldStatus == 2} ? 'bg-info text-white' :
+                                                     (${history.oldStatus == 3} ? 'bg-primary' :
+                                                     (${history.oldStatus == 4} ? 'bg-success' :
+                                                     (${history.oldStatus == 5} ? 'bg-danger' :
+                                                     (${history.oldStatus == 6} ? 'bg-dark' : 'bg-secondary')))))">
+                                    <span th:if="${history.oldStatus == 1}">Chờ xác nhận</span>
+                                    <span th:if="${history.oldStatus == 2}">Đã xác nhận</span>
+                                    <span th:if="${history.oldStatus == 3}">Đang giao</span>
+                                    <span th:if="${history.oldStatus == 4}">Đã giao</span>
+                                    <span th:if="${history.oldStatus == 5}">Đã hủy</span>
+                                    <span th:if="${history.oldStatus == 6}">Đang hoàn trả</span>
+                                    <span th:if="${history.oldStatus == 7}">Hoàn thành</span>
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${history.newStatus == 1} ? 'bg-warning text-dark' :
+                                                     (${history.newStatus == 2} ? 'bg-info text-white' :
+                                                     (${history.newStatus == 3} ? 'bg-primary' :
+                                                     (${history.newStatus == 4} ? 'bg-success' :
+                                                     (${history.newStatus == 5} ? 'bg-danger' :
+                                                     (${history.newStatus == 6} ? 'bg-dark' : 'bg-secondary')))))">
+                                    <span th:if="${history.newStatus == 1}">Chờ xác nhận</span>
+                                    <span th:if="${history.newStatus == 2}">Đã xác nhận</span>
+                                    <span th:if="${history.newStatus == 3}">Đang giao</span>
+                                    <span th:if="${history.newStatus == 4}">Đã giao</span>
+                                    <span th:if="${history.newStatus == 5}">Đã hủy</span>
+                                    <span th:if="${history.newStatus == 6}">Đang hoàn trả</span>
+                                    <span th:if="${history.newStatus == 7}">Hoàn thành</span>
+                                </span>
+                            </td>
+
                             <td th:text="${history.note}">Ghi chú</td>
                         </tr>
                         </tbody>

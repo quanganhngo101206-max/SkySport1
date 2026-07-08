@@ -151,13 +151,15 @@
                                                          (${bill.status == 2} ? 'info' :
                                                          (${bill.status == 3} ? 'primary' :
                                                          (${bill.status == 4} ? 'success' :
-                                                         (${bill.status == 5} ? 'danger' : 'secondary'))))">
+                                                         (${bill.status == 5} ? 'danger' :
+                                                         (${bill.status == 6} ? 'dark' : 'secondary')))))">
                                         <span th:switch="${bill.status}">
                                             <span th:case="1"><i class="fas fa-clock"></i> Chờ</span>
                                             <span th:case="2"><i class="fas fa-check"></i> Xác nhận</span>
                                             <span th:case="3"><i class="fas fa-truck"></i> Đang giao</span>
                                             <span th:case="4"><i class="fas fa-check-double"></i> Đã giao</span>
                                             <span th:case="5"><i class="fas fa-times"></i> Đã hủy</span>
+                                            <span th:case="6"><i class="fas fa-undo"></i> Đang hoàn trả</span>
                                             <span th:case="7"><i class="fas fa-trophy"></i> Hoàn thành</span>
                                         </span>
                                     </span>

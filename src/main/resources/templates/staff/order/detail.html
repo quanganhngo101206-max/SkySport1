@@ -52,13 +52,14 @@
                         <p style="color:var(--text-secondary);margin-bottom:.5rem;">
                             <strong style="color:var(--text-primary);">Trạng thái:</strong>
                             <span class="badge-sky"
-                                  th:classappend="${bill.status == 1 ? 'warning' : (bill.status == 2 ? 'info' : (bill.status == 3 ? 'primary' : (bill.status == 4 ? 'success' : (bill.status == 5 ? 'danger' : 'secondary'))))}">
+                                  th:classappend="${bill.status == 1 ? 'warning' : (bill.status == 2 ? 'info' : (bill.status == 3 ? 'primary' : (bill.status == 4 ? 'success' : (bill.status == 5 ? 'danger' : (bill.status == 6 ? 'dark' : 'secondary')))))}">
                                 <span th:switch="${bill.status}">
                                     <span th:case="1">Chờ xác nhận</span>
                                     <span th:case="2">Đã xác nhận</span>
                                     <span th:case="3">Đang giao</span>
                                     <span th:case="4">Đã giao</span>
                                     <span th:case="5">Đã hủy</span>
+                                    <span th:case="6">Đang hoàn trả</span>
                                     <span th:case="7">Hoàn thành</span>
                                 </span>
                             </span>

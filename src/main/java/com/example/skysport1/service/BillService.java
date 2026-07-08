@@ -2,11 +2,10 @@ package com.example.skysport1.service;
 
 import com.example.skysport1.entity.Bill;
 import com.example.skysport1.entity.BillDetail;
-
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface BillService {
 
@@ -34,23 +33,23 @@ public interface BillService {
      * validate + áp dụng voucher, log OrderStatusHistory.
      */
     Bill createOnlineBill(String customerId,
+                           String shippingAddress,
+                           String receiverName,
+                           String receiverPhone,
+                           String paymentId,
+                           String discountCode,
+                           List<BillDetail> items);
+
+    /**
+     * Tạo đơn hàng cho khách vãng lai (guest checkout).
+     */
+    Bill createGuestBill(String guestEmail,
                           String shippingAddress,
                           String receiverName,
                           String receiverPhone,
                           String paymentId,
                           String discountCode,
                           List<BillDetail> items);
-
-    /**
-     * Tạo đơn hàng cho khách vãng lai (guest checkout).
-     */
-    Bill createGuestBill(String guestEmail,
-                         String shippingAddress,
-                         String receiverName,
-                         String receiverPhone,
-                         String paymentId,
-                         String discountCode,
-                         List<BillDetail> items);
 
     /**
      * Tạo đơn hàng tại quầy (invoice_type = 2).
@@ -76,6 +75,13 @@ public interface BillService {
 
     void recordPayment(String billId, String transactionCode,
                        String paymentMethod, String gatewayResponse);
+
+    /**
+     * Dùng cho các luồng bên ngoài (vd: ReturnRequest) để cập nhật Bill.status
+     * và đồng thời log OrderStatusHistory.
+     */
+    Bill changeBillStatusAndLogHistory(String billId, int newStatus,
+                                         String actorAccountId, String note);
 
     Page<Bill> findAllWithCustomer(Pageable pageable);
 

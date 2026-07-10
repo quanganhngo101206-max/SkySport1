@@ -3,6 +3,9 @@
         <div class="card-header">
             <h3 class="card-title"><span class="icon"><i class="fas fa-truck-loading"></i></span>Danh sách phiếu nhập</h3>
             <div class="card-actions" style="display:flex;gap:.5rem;">
+                <a th:href="@{/staff/imports/create}" class="btn-sky btn-sky-primary btn-sky-sm">
+                    <i class="fas fa-plus"></i> Tạo phiếu nhập
+                </a>
                 <a th:href="@{/staff/imports}" class="btn-sky btn-sky-sm" th:classappend="${status == null ? 'btn-sky-primary' : 'btn-sky-secondary'}">Tất cả</a>
                 <a th:href="@{/staff/imports(status=1)}" class="btn-sky btn-sky-sm" th:classappend="${status == 1 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Chờ duyệt</a>
                 <a th:href="@{/staff/imports(status=2)}" class="btn-sky btn-sky-sm" th:classappend="${status == 2 ? 'btn-sky-primary' : 'btn-sky-secondary'}">Đã duyệt</a>

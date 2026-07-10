@@ -1,5 +1,9 @@
-# TODO - Admin bill history (timeline) fix
+# TODO - SkySport1
 
-- [ ] B1: Thêm method công khai trong `BillServiceImpl.java` để (1) cập nhật `Bill.status` và (2) tạo `OrderStatusHistory` tương ứng bằng `logHistory(...)`.
-- [ ] B2: Cập nhật `ReturnRequestServiceImpl.java` để khi tạo/approve/reject/confirmRefund cho `ReturnRequest` sẽ gọi method mới trong `BillServiceImpl` thay vì `billRepository.save(bill)` trực tiếp.
-- [ ] B3: Build + chạy tests/compile để đảm bảo không lỗi.
+- [ ] UI: Thêm nút 🗑️ “Hủy sản phẩm này” theo từng dòng BillDetail
+  - [ ] Sửa `src/main/resources/templates/customer/order/detail.html`
+  - [ ] Sửa `src/main/resources/templates/guest/order-detail.html`
+- [ ] (Nếu cần) kiểm tra hiển thị/disable theo `bill.status` và `billDetail.itemStatus`:
+  - `itemStatus == 1` (NORMAL) → hiển thị nút hủy
+  - `bill.status in {1,2}` (PENDING/CONFIRMED) → cho phép thao tác
+- [ ] Smoke test: bấm nút hủy từng dòng, xác nhận route đúng (customer/guest) và CSRF hoạt động

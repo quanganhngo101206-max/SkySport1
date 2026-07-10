@@ -6,7 +6,9 @@ import com.example.skysport1.entity.Staff;
 import com.example.skysport1.enums.ImportOrderStatus;
 import com.example.skysport1.repository.ImportOrderRepository;
 import com.example.skysport1.service.ImportOrderService;
+import com.example.skysport1.service.ProductDetailService;
 import com.example.skysport1.service.StaffService;
+import com.example.skysport1.service.SupplierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -15,6 +17,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -26,6 +30,8 @@ public class StaffImportController {
     private final ImportOrderService importOrderService;
     private final StaffService staffService;
     private final ImportOrderRepository importOrderRepository;
+    private final SupplierService supplierService;
+    private final ProductDetailService productDetailService;
 
     @GetMapping
     public String list(@RequestParam(required = false) Integer status, Model model) {
@@ -39,6 +45,45 @@ public class StaffImportController {
         model.addAttribute("title", "Quản lý phiếu nhập");
         model.addAttribute("pageContent", "staff/import/list");
         return "layouts/staff/layout";
+    }
+
+    @GetMapping("/create")
+    public String createForm(Model model) {
+        model.addAttribute("suppliers", supplierService.findAll());
+        model.addAttribute("productDetails", productDetailService.findAllActive());
+        model.addAttribute("title", "Tạo phiếu nhập");
+        model.addAttribute("pageContent", "staff/import/create");
+        return "layouts/staff/layout";
+    }
+
+    @PostMapping("/create")
+    public String create(@RequestParam(required = false) String supplierId,
+                         @RequestParam(required = false) String note,
+                         @RequestParam("productDetailIds") List<Integer> productDetailIds,
+                         @RequestParam("quantities") List<Integer> quantities,
+                         @RequestParam("importPrices") List<BigDecimal> importPrices,
+                         Authentication auth,
+                         RedirectAttributes ra) {
+        try {
+            Staff staff = staffService.findByAccountUsername(auth.getName());
+
+            List<ImportOrderDetail> details = new ArrayList<>();
+            for (int i = 0; i < productDetailIds.size(); i++) {
+                ImportOrderDetail detail = new ImportOrderDetail();
+                detail.setProductDetail(productDetailService.findById(productDetailIds.get(i)));
+                detail.setQuantity(quantities.get(i));
+                detail.setImportPrice(importPrices.get(i));
+                details.add(detail);
+            }
+
+            ImportOrder order = importOrderService.create(supplierId, staff.getId(), note, details);
+            ra.addFlashAttribute("success", "Đã tạo phiếu nhập " + order.getId() + " — chờ admin duyệt");
+            return "redirect:/staff/imports/" + order.getId();
+        } catch (Exception e) {
+            log.error("Error creating import order: {}", e.getMessage());
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/staff/imports/create";
+        }
     }
 
     @GetMapping("/{id}")

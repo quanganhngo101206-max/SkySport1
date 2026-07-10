@@ -56,12 +56,38 @@ public class DiscountCodeService {
 
     /**
      * Validate và tính tiền giảm cho 1 đơn hàng.
+     * Dùng để hiển thị preview số tiền được giảm (ví dụ ở trang checkout trước
+     * khi khách bấm đặt hàng) — KHÔNG khoá dòng, vì chỉ đọc để hiển thị, chưa
+     * thực sự tạo đơn. Luồng tạo đơn thật sự phải dùng {@link #lockAndValidate}.
      *
      * @return Số tiền được giảm (đã áp dụng max_discount_value)
      */
     public BigDecimal validate(String code, String customerId, BigDecimal orderTotal) {
         DiscountCode dc = findByCode(code);
+        validateRules(dc, customerId, orderTotal);
+        return calculateDiscountAmount(dc, orderTotal);
+    }
 
+    /**
+     * Khoá dòng discount_code (SELECT ... FOR UPDATE) rồi validate, dùng trong
+     * luồng tạo đơn hàng thực tế (BillServiceImpl.doCreateBill). Giữ khoá xuyên
+     * suốt transaction tới lúc tăng usedCount, để 2 đơn cùng dùng 1 voucher sắp
+     * hết lượt gần như đồng thời không thể cùng pass bước kiểm tra lượt dùng
+     * trước khi bên nào tăng usedCount xong (tránh oversell voucher) — đối xứng
+     * với cách ProductDetailRepository.findByIdForUpdate() bảo vệ tồn kho.
+     *
+     * @return DiscountCode entity đã bị khoá, dùng lại để tính tiền giảm và
+     *         tăng usedCount mà không phải query lại (đọc lại vẫn cùng dòng đã khoá).
+     */
+    @Transactional
+    public DiscountCode lockAndValidate(String code, String customerId, BigDecimal orderTotal) {
+        DiscountCode dc = discountCodeRepository.findByCodeForUpdate(code)
+                .orElseThrow(() -> new ResourceNotFoundException("mã giảm giá", code));
+        validateRules(dc, customerId, orderTotal);
+        return dc;
+    }
+
+    private void validateRules(DiscountCode dc, String customerId, BigDecimal orderTotal) {
         // Kiểm tra trạng thái
         if (dc.getStatus() != 1 || Boolean.TRUE.equals(dc.getDeleteFlag())) {
             throw new AppException("Mã giảm giá không còn hiệu lực");
@@ -88,8 +114,9 @@ public class DiscountCodeService {
                 && customerDiscountRepository.existsByCustomerIdAndDiscountCodeId(customerId, dc.getId())) {
             throw new AppException("Bạn đã sử dụng mã giảm giá này rồi");
         }
+    }
 
-        // Tính tiền giảm
+    public BigDecimal calculateDiscountAmount(DiscountCode dc, BigDecimal orderTotal) {
         BigDecimal discount;
         if (dc.getDiscountType() == 1) {
             // Cố định
@@ -111,7 +138,15 @@ public class DiscountCodeService {
      */
     @Transactional
     public void incrementUsedCount(Integer discountCodeId) {
-        DiscountCode dc = findById(discountCodeId);
+        incrementUsedCount(findById(discountCodeId));
+    }
+
+    /**
+     * Tăng used_count trên entity đã có sẵn (ví dụ entity vừa được khoá bởi
+     * {@link #lockAndValidate}) — tránh phải query lại DB một lần nữa.
+     */
+    @Transactional
+    public void incrementUsedCount(DiscountCode dc) {
         dc.setUsedCount(dc.getUsedCount() + 1);
         discountCodeRepository.save(dc);
     }
@@ -121,13 +156,22 @@ public class DiscountCodeService {
      */
     @Transactional
     public void recordUsage(String customerId, Integer discountCodeId, String billId) {
+        recordUsage(customerId, DiscountCode.builder().id(discountCodeId).build(), billId);
+    }
+
+    /**
+     * Ghi nhận khách hàng đã dùng voucher, dùng entity đã có sẵn (ví dụ entity
+     * vừa được khoá bởi {@link #lockAndValidate}) để tránh query lại DB.
+     */
+    @Transactional
+    public void recordUsage(String customerId, DiscountCode discountCode, String billId) {
         // Tạo CustomerDiscount entity trực tiếp để tránh circular dependency
         CustomerDiscount usage = CustomerDiscount.builder()
                 .customer(com.example.skysport1.entity.Customer.builder().id(customerId).build())
-                .discountCode(DiscountCode.builder().id(discountCodeId).build())
+                .discountCode(discountCode)
                 .bill(com.example.skysport1.entity.Bill.builder().id(billId).build())
                 .build();
         customerDiscountRepository.save(usage);
-        incrementUsedCount(discountCodeId);
+        incrementUsedCount(discountCode);
     }
 }

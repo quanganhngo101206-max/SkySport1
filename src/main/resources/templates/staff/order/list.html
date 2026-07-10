@@ -39,7 +39,7 @@
                                               (bill.status == 4 ? 'teal' :
                                               (bill.status == 5 ? 'danger' :
                                               (bill.status == 6 ? 'dark' :
-                                              (bill.status == 7 ? 'success' : 'secondary')))))))}">
+                                              (bill.status == 7 ? 'success' : 'secondary'))))))}">
                             <span th:switch="${bill.status}">
                                 <span th:case="1">Chờ xác nhận</span>
                                 <span th:case="2">Đã xác nhận</span>

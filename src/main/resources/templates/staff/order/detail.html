@@ -154,7 +154,7 @@
                                   th:classappend="${d.itemStatus == 2 ? 'danger' : (d.itemStatus == 3 ? 'warning' : 'success')}">
                                 <span th:if="${d.itemStatus == 2}">Đã hủy</span>
                                 <span th:if="${d.itemStatus == 3}">Chờ duyệt hủy</span>
-                                <span th:if="${d.itemStatus == null or d.itemStatus == 1}">Bình thường</span>
+                                <span th:if="${d.itemStatus == null or d.itemStatus == 1}">Đơn hàng ổn</span>
                             </span>
                         </td>
                         <td class="text-end">

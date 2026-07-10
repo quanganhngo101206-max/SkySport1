@@ -47,7 +47,16 @@
                 <tbody>
                 <tr th:each="o : ${orders}">
                     <td th:text="${o.id}">ID</td>
-                    <td th:text="${o.status}">-</td>
+                    <td>
+                        <span class="badge-sky"
+                              th:classappend="${o.status == 1 ? 'warning' : (o.status == 2 ? 'success' : 'danger')}">
+                            <span th:switch="${o.status}">
+                                <span th:case="1">Chờ duyệt</span>
+                                <span th:case="2">Đã duyệt</span>
+                                <span th:case="3">Từ chối</span>
+                            </span>
+                        </span>
+                    </td>
                     <td>
                         <a th:href="@{/admin/import-orders/{id}(id=${o.id})}" class="btn-sky btn-sky-secondary btn-sky-sm">
                             <i class="fas fa-eye"></i>

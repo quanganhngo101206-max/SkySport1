@@ -245,11 +245,18 @@ public class BillServiceImpl implements BillService {
 
         BigDecimal discountAmount = BigDecimal.ZERO;
         Integer discountCodeId = null;
+        DiscountCode lockedDiscountCode = null;
         if (discountCode != null && !discountCode.isBlank()) {
-            discountAmount = discountCodeService.validate(discountCode, customerId, subtotal);
-            discountCodeId = discountCodeRepository.findByCode(discountCode)
-                    .orElseThrow(() -> new ResourceNotFoundException("voucher", discountCode))
-                    .getId();
+            // Khoá dòng discount_code (SELECT ... FOR UPDATE) ngay khi đọc, giữ
+            // khoá xuyên suốt transaction tới lúc tăng usedCount ở dưới, để 2
+            // đơn cùng dùng 1 voucher sắp hết lượt gần như đồng thời không thể
+            // cùng pass bước kiểm tra lượt dùng trước khi bên nào tăng usedCount
+            // xong (tránh oversell voucher) — đối xứng với cách trừ tồn kho ở
+            // trên. Không dùng validate() (không khoá) ở đây vì đây là luồng
+            // tạo đơn thật sự, không phải preview.
+            lockedDiscountCode = discountCodeService.lockAndValidate(discountCode, customerId, subtotal);
+            discountAmount = discountCodeService.calculateDiscountAmount(lockedDiscountCode, subtotal);
+            discountCodeId = lockedDiscountCode.getId();
         }
 
         BigDecimal totalAmount = subtotal.add(shippingFee).subtract(discountAmount);
@@ -282,11 +289,11 @@ public class BillServiceImpl implements BillService {
             if (customerId != null) {
                 // Customer đã đăng nhập: ghi nhận CustomerDiscount (chặn dùng lại)
                 // + tăng usedCount toàn cục.
-                discountCodeService.recordUsage(customerId, discountCodeId, savedBill.getId());
+                discountCodeService.recordUsage(customerId, lockedDiscountCode, savedBill.getId());
             } else {
                 // Guest: không thể tạo CustomerDiscount (customer_id NOT NULL ở DB),
                 // nhưng vẫn phải tăng usedCount toàn cục để không bị dùng vô hạn lần.
-                discountCodeService.incrementUsedCount(discountCodeId);
+                discountCodeService.incrementUsedCount(lockedDiscountCode);
             }
         }
 

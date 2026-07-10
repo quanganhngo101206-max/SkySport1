@@ -61,9 +61,9 @@ public class CustomerOrderController {
                 return "redirect:/customer/orders";
             }
 
-            // Lấy timeline (sort ổn định theo createDate, secondary theo id)
+            // Lấy timeline theo thứ tự insert (IDENTITY id) để ổn định
             List<OrderStatusHistory> timeline =
-                    orderStatusHistoryRepository.findByBillIdOrderByCreateDateAscIdAsc(id);
+                    orderStatusHistoryRepository.findByBillIdOrderByIdAsc(id);
 
             model.addAttribute("bill", bill);
             model.addAttribute("timeline", timeline);
@@ -79,7 +79,9 @@ public class CustomerOrderController {
     }
 
     /**
-     * Hủy đơn (customer) - chỉ khi bill.status = 1 hoặc 2
+     * Hủy đơn (customer)
+     * - PENDING(1): hủy ngay (cancel cũ)
+     * - CONFIRMED(2): customer request hủy (chuyển sang CANCEL_REQUESTED)
      */
     @PostMapping("/{id}/cancel")
     public String cancel(@PathVariable String id,
@@ -96,14 +98,65 @@ public class CustomerOrderController {
                 return "redirect:/customer/orders/" + id;
             }
 
-            // actorId null vì BillServiceImpl.cancel chỉ validate theo trạng thái bill
-            billService.cancel(id, null, note);
+            int status = bill.getStatus();
 
-            ra.addFlashAttribute("success", "Đã hủy đơn hàng " + id);
+            if (status == com.example.skysport1.enums.OrderStatus.PENDING.getValue()) {
+                billService.cancel(id, null, note);
+                ra.addFlashAttribute("success", "Đã hủy đơn hàng " + id);
+            } else if (status == com.example.skysport1.enums.OrderStatus.CONFIRMED.getValue()) {
+                billService.requestCancel(id, note != null ? note : "Khách hàng hủy đơn");
+                ra.addFlashAttribute("success", "Đã gửi yêu cầu hủy đơn hàng " + id);
+            } else {
+                ra.addFlashAttribute("error", "Đơn hàng không thể hủy ở trạng thái hiện tại");
+            }
+
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
         }
+
         return "redirect:/customer/orders/" + id;
+    }
+
+    /**
+     * Hủy từng sản phẩm trong đơn (customer)
+     * POST: /customer/orders/{billId}/details/{billDetailId}/cancel
+     */
+    @PostMapping("/{billId}/details/{billDetailId}/cancel")
+    public String cancelBillDetail(@PathVariable String billId,
+                                     @PathVariable Integer billDetailId,
+                                     Authentication auth,
+                                     @RequestParam(required = false) String note,
+                                     RedirectAttributes ra) {
+        try {
+            String customerId = getCurrentCustomerId(auth);
+            Bill bill = billService.findById(billId);
+
+            // Quyền: bill phải thuộc customer
+            if (bill.getCustomer() == null || !bill.getCustomer().getId().equals(customerId)) {
+                ra.addFlashAttribute("error", "Bạn không có quyền hủy sản phẩm trong đơn này");
+                return "redirect:/customer/orders/" + billId;
+            }
+
+            int status = bill.getStatus();
+
+            if (status == com.example.skysport1.enums.OrderStatus.PENDING.getValue()) {
+                billService.cancelBillDetail(billId, billDetailId, note != null ? note : "Khách hàng hủy sản phẩm");
+                ra.addFlashAttribute("success", "Đã hủy sản phẩm trong đơn " + billId);
+            } else if (status == com.example.skysport1.enums.OrderStatus.CONFIRMED.getValue()) {
+                billService.requestCancelBillDetail(
+                        billId,
+                        billDetailId,
+                        note != null ? note : "Khách hàng hủy sản phẩm"
+                );
+                ra.addFlashAttribute("success", "Đã gửi yêu cầu hủy sản phẩm trong đơn " + billId + ". Vui lòng chờ shop xác nhận");
+            } else {
+                ra.addFlashAttribute("error", "Sản phẩm không thể hủy ở trạng thái hiện tại");
+            }
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/customer/orders/" + billId;
     }
 
     private String getCurrentCustomerId(Authentication auth) {

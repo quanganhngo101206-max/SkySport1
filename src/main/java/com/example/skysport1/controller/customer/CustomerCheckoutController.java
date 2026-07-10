@@ -29,7 +29,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,14 +55,6 @@ public class CustomerCheckoutController {
         String customerId = getCurrentCustomerId().orElse(null);
 
         log.info("🔍 checkoutPage - customerId: {}", customerId);
-
-        // ✅ DEBUG: In ra tất cả session attributes
-        log.info("📋 All session attributes:");
-        Enumeration<String> attrNames = session.getAttributeNames();
-        while (attrNames.hasMoreElements()) {
-            String name = attrNames.nextElement();
-            log.info("   {} = {}", name, session.getAttribute(name));
-        }
 
         // Lấy giỏ hàng
         List<CartDetail> cartItems = new ArrayList<>();
@@ -341,7 +332,9 @@ public class CustomerCheckoutController {
 
             session.removeAttribute(SESSION_GUEST_CART);
             ra.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + created.getId());
-            return "redirect:/customer/orders/" + created.getId();
+
+            // ✅ Sửa redirect để guest (chưa đăng nhập) không bị chặn role CUSTOMER
+            return "redirect:/guest/order/" + created.getId() + "?email=" + guestEmail;
 
         } catch (Exception e) {
             log.error("Guest checkout error: {}", e.getMessage(), e);

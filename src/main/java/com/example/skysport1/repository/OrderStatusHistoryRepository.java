@@ -9,9 +9,8 @@ import java.util.List;
 @Repository
 public interface OrderStatusHistoryRepository extends JpaRepository<OrderStatusHistory, Integer> {
 
-    // Sort primary by createDate, secondary by id to keep stable ordering
-    List<OrderStatusHistory> findByBillIdOrderByCreateDateAsc(String billId);
-
-    // Secondary sort to avoid “missing/incorrect ordering” feeling when multiple rows have same/null createDate
-    List<OrderStatusHistory> findByBillIdOrderByCreateDateAscIdAsc(String billId);
+    // Stable order for history timeline:
+    // SQL Server IDENTITY(id) is never NULL, never duplicated and always increases in insert order.
+    // createDate can be NULL / backfilled / duplicated -> not reliable for ordering.
+    List<OrderStatusHistory> findByBillIdOrderByIdAsc(String billId);
 }

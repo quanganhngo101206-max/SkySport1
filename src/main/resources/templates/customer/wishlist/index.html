@@ -53,7 +53,7 @@
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
               <input type="hidden" name="productId" th:value="${product != null ? product.id : ''}"/>
               <button type="submit" class="btn-ss btn-ss-ghost btn-ss-sm btn-ss-block"
-                      style="color:var(--flare);" onclick="return confirm('Xóa sản phẩm này khỏi yêu thích?')">
+                      style="color:var(--red);" onclick="return confirm('Xóa sản phẩm này khỏi yêu thích?')">
                 <i class="fas fa-trash"></i> Xóa
               </button>
             </form>

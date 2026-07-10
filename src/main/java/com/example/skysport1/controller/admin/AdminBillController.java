@@ -61,7 +61,7 @@ public class AdminBillController {
 			model.addAttribute("bill", bill);
 
 			List<OrderStatusHistory> statusHistories =
-					orderStatusHistoryRepository.findByBillIdOrderByCreateDateAscIdAsc(id);
+					orderStatusHistoryRepository.findByBillIdOrderByIdAsc(id);
 			model.addAttribute("statusHistories", statusHistories);
 
 			model.addAttribute("title", "Chi tiết đơn hàng");

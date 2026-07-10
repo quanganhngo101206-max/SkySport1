@@ -50,8 +50,13 @@ public class BillServiceImpl implements BillService {
         DELIVERED_TO_COMPLETED(OrderStatus.DELIVERED.getValue(), OrderStatus.COMPLETED.getValue()),
         PENDING_TO_CANCELLED(OrderStatus.PENDING.getValue(), OrderStatus.CANCELLED.getValue()),
         CONFIRMED_TO_CANCELLED(OrderStatus.CONFIRMED.getValue(), OrderStatus.CANCELLED.getValue()),
-        DELIVERED_TO_RETURNING(OrderStatus.DELIVERED.getValue(), OrderStatus.RETURNING.getValue()),
-        COMPLETED_TO_RETURNING(OrderStatus.COMPLETED.getValue(), OrderStatus.RETURNING.getValue());
+        SHIPPING_TO_RETURNING(OrderStatus.SHIPPING.getValue(), OrderStatus.RETURNING.getValue()),
+        COMPLETED_TO_RETURNING(OrderStatus.COMPLETED.getValue(), OrderStatus.RETURNING.getValue()),
+
+        // request cancel flow
+        CONFIRMED_TO_CANCEL_REQUESTED(OrderStatus.CONFIRMED.getValue(), OrderStatus.CANCEL_REQUESTED.getValue()),
+        CANCEL_REQUESTED_TO_CANCELLED(OrderStatus.CANCEL_REQUESTED.getValue(), OrderStatus.CANCELLED.getValue()),
+        CANCEL_REQUESTED_TO_CONFIRMED(OrderStatus.CANCEL_REQUESTED.getValue(), OrderStatus.CONFIRMED.getValue());
 
         private final int from;
         private final int to;
@@ -71,7 +76,7 @@ public class BillServiceImpl implements BillService {
         }
     }
 
-    // ── Query ──────────────────────────────────────────────────────────────
+    // ── Query ─────────────────────────────────────────────────────────────
 
     @Override
     public Bill findById(String id) {
@@ -100,6 +105,11 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
+    public List<Bill> findGuestBillsByContact(String contact) {
+        return billRepository.findGuestBillsByContact(contact);
+    }
+
+    @Override
     public List<Bill> findAll() {
         return billRepository.findAll();
     }
@@ -109,17 +119,17 @@ public class BillServiceImpl implements BillService {
         return billRepository.findAllWithCustomer(pageable);
     }
 
-    // ── Tạo đơn ───────────────────────────────────────────────────────────
+    // ── Tạo đơn ──────────────────────────────────────────────────────────
 
     @Override
     @Transactional
     public Bill createOnlineBill(String customerId,
-                                  String shippingAddress,
-                                  String receiverName,
-                                  String receiverPhone,
-                                  String paymentId,
-                                  String discountCode,
-                                  List<BillDetail> items) {
+                                 String shippingAddress,
+                                 String receiverName,
+                                 String receiverPhone,
+                                 String paymentId,
+                                 String discountCode,
+                                 List<BillDetail> items) {
         Bill bill = Bill.builder()
                 .id(idGenerator.generateBillId())
                 .customer(Customer.builder().id(customerId).build())
@@ -138,12 +148,12 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public Bill createGuestBill(String guestEmail,
-                                 String shippingAddress,
-                                 String receiverName,
-                                 String receiverPhone,
-                                 String paymentId,
-                                 String discountCode,
-                                 List<BillDetail> items) {
+                                String shippingAddress,
+                                String receiverName,
+                                String receiverPhone,
+                                String paymentId,
+                                String discountCode,
+                                List<BillDetail> items) {
         Bill bill = Bill.builder()
                 .id(idGenerator.generateBillId())
                 .guestEmail(guestEmail)
@@ -162,9 +172,9 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public Bill createCounterBill(String customerId,
-                                   String paymentId,
-                                   String staffId,
-                                   List<BillDetail> items) {
+                                  String paymentId,
+                                  String staffId,
+                                  List<BillDetail> items) {
         Bill bill = Bill.builder()
                 .id(idGenerator.generateBillId())
                 .customer(customerId != null ? Customer.builder().id(customerId).build() : null)
@@ -184,7 +194,7 @@ public class BillServiceImpl implements BillService {
     }
 
     private Bill doCreateBill(Bill bill, List<BillDetail> items,
-                               String discountCode, String customerId) {
+                              String discountCode, String customerId) {
         if (items == null || items.isEmpty()) {
             throw new AppException("Đơn hàng phải có ít nhất 1 sản phẩm");
         }
@@ -193,8 +203,12 @@ public class BillServiceImpl implements BillService {
         List<BillDetail> savedDetails = new ArrayList<>();
 
         for (BillDetail item : items) {
+            // Khoá dòng tồn kho (SELECT ... FOR UPDATE) ngay khi đọc, giữ khoá
+            // xuyên suốt transaction cho tới khi trừ kho ở dưới, để 2 đơn đặt
+            // cùng sản phẩm gần như đồng thời không thể cùng pass bước kiểm
+            // tra tồn kho trước khi bên nào trừ kho xong (tránh oversell).
             ProductDetail pd = productDetailRepository
-                    .findById(item.getProductDetail().getId())
+                    .findByIdForUpdate(item.getProductDetail().getId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "sản phẩm", String.valueOf(item.getProductDetail().getId())));
 
@@ -264,8 +278,16 @@ public class BillServiceImpl implements BillService {
                     -detail.getQuantity(), before, after, savedBill.getId());
         }
 
-        if (discountCodeId != null && customerId != null) {
-            discountCodeService.recordUsage(customerId, discountCodeId, savedBill.getId());
+        if (discountCodeId != null) {
+            if (customerId != null) {
+                // Customer đã đăng nhập: ghi nhận CustomerDiscount (chặn dùng lại)
+                // + tăng usedCount toàn cục.
+                discountCodeService.recordUsage(customerId, discountCodeId, savedBill.getId());
+            } else {
+                // Guest: không thể tạo CustomerDiscount (customer_id NOT NULL ở DB),
+                // nhưng vẫn phải tăng usedCount toàn cục để không bị dùng vô hạn lần.
+                discountCodeService.incrementUsedCount(discountCodeId);
+            }
         }
 
         if (bill.getInvoiceType() == 1) {
@@ -277,7 +299,7 @@ public class BillServiceImpl implements BillService {
         return savedBill;
     }
 
-    // ── Đổi trạng thái ────────────────────────────────────────────────────
+    // ── Đổi trạng thái ───────────────────────────────────────────────────
 
     @Override
     @Transactional
@@ -334,19 +356,124 @@ public class BillServiceImpl implements BillService {
         bill = changeStatus(bill, OrderStatus.CANCELLED.getValue(), actorId,
                 note != null ? note : "Hủy đơn hàng");
 
-        List<BillDetail> details = billDetailRepository.findByBillId(billId);
-        for (BillDetail detail : details) {
-            ProductDetail pd = detail.getProductDetail();
-            if (pd == null) continue;
-            int before = pd.getQuantity();
-            int after = before + detail.getQuantity();
-            pd.setQuantity(after);
-            productDetailRepository.save(pd);
-            logInventory(pd, InventoryActionType.ADJUSTMENT,
-                    detail.getQuantity(), before, after, billId);
-        }
+        restoreInventoryForBillCancellation(billId);
+        bill = refundIfPaid(bill, "Hoàn tiền do hủy đơn " + billId);
 
         log.info("Hủy đơn: {} | actor: {}", billId, actorId);
+        return bill;
+    }
+
+    /**
+     * Nếu đơn đã thanh toán (PAID), đánh dấu REFUNDED và tạo một
+     * PaymentTransaction ghi nhận việc hoàn tiền toàn bộ. Không làm gì
+     * nếu đơn chưa thanh toán, tránh tạo bản ghi hoàn tiền sai lệch.
+     */
+    private Bill refundIfPaid(Bill bill, String reason) {
+        if (bill.getPaymentStatus() == null
+                || !PaymentStatus.PAID.matches(bill.getPaymentStatus())) {
+            return bill;
+        }
+
+        PaymentTransaction tx = PaymentTransaction.builder()
+                .bill(bill)
+                .transactionCode(null)
+                .amount(bill.getTotalAmount() != null ? bill.getTotalAmount() : BigDecimal.ZERO)
+                .paymentMethod("REFUND")
+                .paymentStatus(PaymentStatus.REFUNDED.getValue())
+                .gatewayResponse(reason)
+                .build();
+        paymentTransactionRepository.save(tx);
+
+        bill.setPaymentStatus(PaymentStatus.REFUNDED.getValue());
+        bill = billRepository.save(bill);
+
+        log.info("Hoàn tiền toàn bộ cho đơn {} | số tiền: {}", bill.getId(), tx.getAmount());
+        return bill;
+    }
+
+    /**
+     * Hoàn tiền một phần khi hủy một sản phẩm trong đơn đã thanh toán.
+     * Giữ nguyên paymentStatus = PAID vì các sản phẩm khác trong đơn
+     * vẫn còn hiệu lực (chưa hoàn toàn bộ đơn).
+     */
+    private void partialRefundIfPaid(Bill bill, BillDetail detail, String reason) {
+        if (bill.getPaymentStatus() == null
+                || !PaymentStatus.PAID.matches(bill.getPaymentStatus())) {
+            return;
+        }
+
+        BigDecimal refundAmount = detail.getTotalAmount() != null ? detail.getTotalAmount() : BigDecimal.ZERO;
+        if (refundAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        PaymentTransaction tx = PaymentTransaction.builder()
+                .bill(bill)
+                .transactionCode(null)
+                .amount(refundAmount)
+                .paymentMethod("REFUND")
+                .paymentStatus(PaymentStatus.REFUNDED.getValue())
+                .gatewayResponse(reason)
+                .build();
+        paymentTransactionRepository.save(tx);
+
+        log.info("Hoàn tiền một phần cho đơn {} | billDetailId: {} | số tiền: {}",
+                bill.getId(), detail.getId(), refundAmount);
+    }
+
+    // ── New flow: customer request cancel (A) ───────────────────────────
+
+    @Override
+    @Transactional
+    public Bill requestCancel(String billId, String customerReason) {
+        Bill bill = findById(billId);
+
+        validateStatus(bill, OrderStatus.CONFIRMED.getValue(), "yêu cầu hủy");
+
+        return changeStatus(
+                bill,
+                OrderStatus.CANCEL_REQUESTED.getValue(),
+                null,
+                customerReason != null ? customerReason : "Khách hàng yêu cầu hủy đơn"
+        );
+    }
+
+    @Override
+    @Transactional
+    public Bill approveCancelRequest(String billId, String staffId, String staffNote) {
+        Bill bill = findById(billId);
+
+        validateStatus(bill, OrderStatus.CANCEL_REQUESTED.getValue(), "duyệt yêu cầu hủy");
+
+        bill = changeStatus(
+                bill,
+                OrderStatus.CANCELLED.getValue(),
+                staffId,
+                staffNote != null ? staffNote : "Duyệt hủy đơn"
+        );
+
+        restoreInventoryForBillCancellation(billId);
+        bill = refundIfPaid(bill, "Hoàn tiền do duyệt hủy đơn " + billId);
+
+        log.info("Approve cancel request: {} | staff: {}", billId, staffId);
+        return bill;
+    }
+
+    @Override
+    @Transactional
+    public Bill rejectCancelRequest(String billId, String staffId, String staffNote) {
+        Bill bill = findById(billId);
+
+        validateStatus(bill, OrderStatus.CANCEL_REQUESTED.getValue(), "từ chối yêu cầu hủy");
+
+        bill = changeStatus(
+                bill,
+                OrderStatus.CONFIRMED.getValue(),
+                staffId,
+                staffNote != null ? staffNote : "Từ chối hủy đơn"
+        );
+
+        log.info("Reject cancel request: {} | staff: {}", billId, staffId);
         return bill;
     }
 
@@ -359,12 +486,244 @@ public class BillServiceImpl implements BillService {
                 note != null ? note : "Hoàn thành đơn hàng");
     }
 
+    private void restoreInventoryForBillCancellation(String billId) {
+        List<BillDetail> details = billDetailRepository.findByBillId(billId);
+        for (BillDetail detail : details) {
+            // Bỏ qua các item đã bị hủy riêng lẻ trước đó (đã hoàn kho rồi)
+            // để tránh hoàn kho 2 lần khi hủy cả đơn.
+            if (detail.getItemStatus() != null && detail.getItemStatus() == ITEM_STATUS_CANCELLED) {
+                continue;
+            }
+
+            ProductDetail pd = detail.getProductDetail();
+            if (pd != null) {
+                int before = pd.getQuantity();
+                int after = before + detail.getQuantity();
+                pd.setQuantity(after);
+                productDetailRepository.save(pd);
+
+                logInventory(pd, InventoryActionType.ADJUSTMENT,
+                        detail.getQuantity(), before, after, billId);
+            }
+
+            // Đồng bộ item_status để dữ liệu nhất quán với trạng thái CANCELLED của cả đơn
+            if (detail.getItemStatus() == null || detail.getItemStatus() != ITEM_STATUS_CANCELLED) {
+                detail.setItemStatus(ITEM_STATUS_CANCELLED);
+                billDetailRepository.save(detail);
+            }
+        }
+    }
+
+    // ── New flow: cancel 1 item (Option 2) ─────────────────────────────
+
+    private static final int ITEM_STATUS_NORMAL = 1;
+    private static final int ITEM_STATUS_CANCELLED = 2;
+    private static final int ITEM_STATUS_CANCEL_REQUESTED = 3;
+
+    @Override
+    @Transactional
+    public Bill cancelBillDetail(String billId, Integer billDetailId, String note) {
+        Bill bill = findById(billId);
+
+        if (bill.getStatus() != OrderStatus.PENDING.getValue()
+                && bill.getStatus() != OrderStatus.CONFIRMED.getValue()) {
+            throw new AppException("Không thể hủy sản phẩm ở trạng thái hiện tại");
+        }
+
+        BillDetail detail = findBillDetail(billId, billDetailId);
+        validateItemBelongsToBill(detail, billId);
+        validateItemStatus(detail, ITEM_STATUS_NORMAL);
+
+        validateNotCancelAll(billId, detail.getId());
+
+        if (bill.getStatus() == OrderStatus.PENDING.getValue()) {
+            partialRefundIfPaid(bill, detail, "Hoàn tiền do hủy sản phẩm trong đơn " + billId);
+
+            detail.setItemStatus(ITEM_STATUS_CANCELLED);
+            billDetailRepository.save(detail);
+
+            restoreInventoryForBillDetailCancellation(detail, billId);
+            recalcBillTotalsExcludingCancelledItems(bill);
+
+            log.info("Cancel bill detail directly: billId={}, billDetailId={}", billId, billDetailId);
+            logItemCancelHistory(bill, detail, ITEM_STATUS_NORMAL, ITEM_STATUS_CANCELLED, note, null);
+            return billRepository.save(bill);
+        }
+
+        return requestCancelBillDetail(billId, billDetailId, note);
+    }
+
+    @Override
+    @Transactional
+    public Bill requestCancelBillDetail(String billId, Integer billDetailId, String customerNote) {
+        Bill bill = findById(billId);
+
+        validateStatus(bill, OrderStatus.CONFIRMED.getValue(), "yêu cầu hủy sản phẩm");
+
+        BillDetail detail = findBillDetail(billId, billDetailId);
+        validateItemBelongsToBill(detail, billId);
+        validateItemStatus(detail, ITEM_STATUS_NORMAL);
+        validateNotCancelAll(billId, detail.getId());
+
+        detail.setItemStatus(ITEM_STATUS_CANCEL_REQUESTED);
+        billDetailRepository.save(detail);
+
+        logItemCancelHistory(
+                bill,
+                detail,
+                ITEM_STATUS_NORMAL,
+                ITEM_STATUS_CANCEL_REQUESTED,
+                customerNote != null ? customerNote : "Khách hàng yêu cầu hủy sản phẩm",
+                null
+        );
+
+        log.info("Request cancel bill detail: billId={}, billDetailId={}", billId, billDetailId);
+        return bill;
+    }
+
+    @Override
+    @Transactional
+    public Bill approveCancelBillDetail(String billId, Integer billDetailId, String staffId, String staffNote) {
+        Bill bill = findById(billId);
+
+        BillDetail detail = findBillDetail(billId, billDetailId);
+        validateItemBelongsToBill(detail, billId);
+        validateItemStatus(detail, ITEM_STATUS_CANCEL_REQUESTED);
+
+        partialRefundIfPaid(bill, detail, "Hoàn tiền do duyệt hủy sản phẩm trong đơn " + billId);
+
+        detail.setItemStatus(ITEM_STATUS_CANCELLED);
+        billDetailRepository.save(detail);
+
+        restoreInventoryForBillDetailCancellation(detail, billId);
+        recalcBillTotalsExcludingCancelledItems(bill);
+
+        logItemCancelHistory(
+                bill,
+                detail,
+                ITEM_STATUS_CANCEL_REQUESTED,
+                ITEM_STATUS_CANCELLED,
+                staffNote != null ? staffNote : "Staff duyệt hủy sản phẩm",
+                staffId
+        );
+
+        log.info("Approve cancel bill detail: billId={}, billDetailId={}, staff={}", billId, billDetailId, staffId);
+        return billRepository.save(bill);
+    }
+
+    @Override
+    @Transactional
+    public Bill rejectCancelBillDetail(String billId, Integer billDetailId, String staffId, String staffNote) {
+        Bill bill = findById(billId);
+
+        BillDetail detail = findBillDetail(billId, billDetailId);
+        validateItemBelongsToBill(detail, billId);
+        validateItemStatus(detail, ITEM_STATUS_CANCEL_REQUESTED);
+
+        detail.setItemStatus(ITEM_STATUS_NORMAL);
+        billDetailRepository.save(detail);
+
+        logItemCancelHistory(
+                bill,
+                detail,
+                ITEM_STATUS_CANCEL_REQUESTED,
+                ITEM_STATUS_NORMAL,
+                staffNote != null ? staffNote : "Staff từ chối hủy sản phẩm",
+                staffId
+        );
+
+        log.info("Reject cancel bill detail: billId={}, billDetailId={}, staff={}", billId, billDetailId, staffId);
+        return bill;
+    }
+
+    private BillDetail findBillDetail(String billId, Integer billDetailId) {
+        return billDetailRepository.findById(billDetailId)
+                .orElseThrow(() -> new ResourceNotFoundException("billDetail", String.valueOf(billDetailId)));
+    }
+
+    private void validateItemBelongsToBill(BillDetail detail, String billId) {
+        if (detail.getBill() == null || detail.getBill().getId() == null) {
+            throw new AppException("BillDetail không thuộc đơn hợp lệ");
+        }
+        if (!billId.equals(detail.getBill().getId())) {
+            throw new AppException("BillDetail không thuộc đơn hàng");
+        }
+    }
+
+    private void validateItemStatus(BillDetail detail, int expected) {
+        Integer current = detail.getItemStatus();
+        if (current == null) {
+            throw new AppException("Trạng thái sản phẩm không hợp lệ");
+        }
+        if (current != expected) {
+            throw new AppException("Sản phẩm không ở trạng thái cho phép");
+        }
+    }
+
+    private void validateNotCancelAll(String billId, Integer cancelingBillDetailId) {
+        List<BillDetail> details = billDetailRepository.findByBillId(billId);
+        long remainingNormal = details.stream()
+                .filter(d -> d.getId() != null && !d.getId().equals(cancelingBillDetailId))
+                .filter(d -> d.getItemStatus() != null && d.getItemStatus() == ITEM_STATUS_NORMAL)
+                .count();
+
+        if (remainingNormal < 1) {
+            throw new AppException("Không thể hủy hết sản phẩm trong đơn");
+        }
+    }
+
+    private void restoreInventoryForBillDetailCancellation(BillDetail detail, String referenceId) {
+        ProductDetail pd = detail.getProductDetail();
+        if (pd == null) return;
+
+        int before = pd.getQuantity();
+        int after = before + detail.getQuantity();
+        pd.setQuantity(after);
+        productDetailRepository.save(pd);
+
+        logInventory(pd, InventoryActionType.ADJUSTMENT,
+                detail.getQuantity(), before, after, referenceId);
+    }
+
+    private void recalcBillTotalsExcludingCancelledItems(Bill bill) {
+        List<BillDetail> details = billDetailRepository.findByBillId(bill.getId());
+
+        BigDecimal newSubtotal = BigDecimal.ZERO;
+        for (BillDetail d : details) {
+            if (d.getItemStatus() != null && d.getItemStatus() == ITEM_STATUS_NORMAL) {
+                if (d.getTotalAmount() != null) {
+                    newSubtotal = newSubtotal.add(d.getTotalAmount());
+                }
+            }
+        }
+
+        BigDecimal newShippingFee;
+        if (bill.getInvoiceType() == 2) {
+            newShippingFee = BigDecimal.ZERO;
+        } else {
+            newShippingFee = (newSubtotal.compareTo(BigDecimal.valueOf(500_000)) < 0)
+                    ? BigDecimal.valueOf(30_000)
+                    : BigDecimal.ZERO;
+        }
+
+        BigDecimal newDiscountAmount = bill.getDiscountAmount() != null ? bill.getDiscountAmount() : BigDecimal.ZERO;
+
+        BigDecimal newTotal = newSubtotal.add(newShippingFee).subtract(newDiscountAmount);
+
+        bill.setSubtotal(newSubtotal);
+        bill.setShippingFee(newShippingFee);
+        bill.setDiscountAmount(newDiscountAmount);
+        bill.setTotalAmount(newTotal);
+
+        billRepository.save(bill);
+    }
+
     // ── Thanh toán ───────────────────────────────────────────────────────
 
     @Override
     @Transactional
     public void recordPayment(String billId, String transactionCode,
-                               String paymentMethod, String gatewayResponse) {
+                              String paymentMethod, String gatewayResponse) {
         Bill bill = findById(billId);
 
         PaymentTransaction tx = PaymentTransaction.builder()
@@ -386,7 +745,6 @@ public class BillServiceImpl implements BillService {
 
     // ── Helper ───────────────────────────────────────────────────────────
 
-    // ✅ CHỈ GIỮ METHOD NÀY - XÓA METHOD CÙNG TÊN Ở TRÊN
     private Bill changeStatus(Bill bill, int newStatus, String staffId, String note) {
         int oldStatus = bill.getStatus();
 
@@ -408,12 +766,12 @@ public class BillServiceImpl implements BillService {
         bill.setUpdatedBy(staffId);
         bill = billRepository.save(bill);
 
-        logHistory(bill, oldStatus, newStatus, note, staffId); // ✅ staffId hợp lệ
+        logHistory(bill, oldStatus, newStatus, note, staffId);
         return bill;
     }
 
     private void logHistory(Bill bill, Integer oldStatus, int newStatus,
-                             String note, String staffId) {
+                            String note, String staffId) {
         OrderStatusHistory history = OrderStatusHistory.builder()
                 .bill(bill)
                 .oldStatus(oldStatus)
@@ -422,8 +780,6 @@ public class BillServiceImpl implements BillService {
                 .createDate(LocalDateTime.now())
                 .build();
 
-        // staffId truyền vào thực tế là Account.id (đến từ AdminBillController/staff controllers)
-        // Map sang Staff để ghi staff_id vào Order_status_history
         if (staffId != null) {
             Staff staff = staffService.findByAccountId(staffId);
             history.setStaff(staff);
@@ -432,13 +788,61 @@ public class BillServiceImpl implements BillService {
         orderStatusHistoryRepository.save(history);
     }
 
-    /**
-     * Dùng cho các luồng bên ngoài (vd: ReturnRequest) để cập nhật Bill.status
-     * và đồng thời log OrderStatusHistory.
-     */
+    private void logItemCancelHistory(Bill bill, BillDetail detail,
+                                      int fromItemStatus, int toItemStatus,
+                                      String note, String staffId) {
+        String prefix = staffId != null ? "Staff" : "Customer";
+        String message = prefix + " cập nhật sản phẩm (billDetailId=" + detail.getId()
+                + "): " + fromItemStatus + " -> " + toItemStatus + ". " + note;
+
+        OrderStatusHistory history = OrderStatusHistory.builder()
+                .bill(bill)
+                .oldStatus(bill.getStatus())
+                .newStatus(bill.getStatus())
+                .note(message)
+                .createDate(LocalDateTime.now())
+                .build();
+
+        if (staffId != null) {
+            Staff staff = staffService.findByAccountId(staffId);
+            history.setStaff(staff);
+        }
+        orderStatusHistoryRepository.save(history);
+    }
+
+    private void logInventory(ProductDetail pd, InventoryActionType type,
+                              int change, int before, int after, String referenceId) {
+        InventoryTransaction tx = InventoryTransaction.builder()
+                .productDetail(pd)
+                .type(type.getValue())
+                .quantityChange(change)
+                .quantityBefore(before)
+                .quantityAfter(after)
+                .referenceId(referenceId)
+                .build();
+        inventoryTransactionRepository.save(tx);
+    }
+
+    private void validateStatus(Bill bill, int expectedStatus, String action) {
+        if (bill.getStatus() != expectedStatus) {
+            throw new AppException("Không thể " + action + " đơn hàng ở trạng thái hiện tại");
+        }
+    }
+
+    @Override
+    public Page<Bill> findAllWithCustomer(Pageable pageable) {
+        return billRepository.findAllWithCustomer(pageable);
+    }
+
+    @Override
+    public Page<Bill> findByStatusWithCustomer(Integer status, Pageable pageable) {
+        return billRepository.findByStatusWithCustomer(status, pageable);
+    }
+
+    @Override
     @Transactional
     public Bill changeBillStatusAndLogHistory(String billId, int newStatus,
-                                                String actorAccountId, String note) {
+                                              String actorAccountId, String note) {
         Bill bill = findById(billId);
 
         int oldStatus = bill.getStatus();
@@ -456,35 +860,5 @@ public class BillServiceImpl implements BillService {
 
         logHistory(bill, oldStatus, newStatus, note, actorAccountId);
         return bill;
-    }
-
-    private void logInventory(ProductDetail pd, InventoryActionType type,
-                               int change, int before, int after, String referenceId) {
-        InventoryTransaction tx = InventoryTransaction.builder()
-                .productDetail(pd)
-                .type(type.getValue())
-                .quantityChange(change)
-                .quantityBefore(before)
-                .quantityAfter(after)
-                .referenceId(referenceId)
-                .build();
-        inventoryTransactionRepository.save(tx);
-    }
-
-    private void validateStatus(Bill bill, int expectedStatus, String action) {
-        if (bill.getStatus() != expectedStatus) {
-            throw new AppException("Không thể " + action
-                    + " đơn hàng ở trạng thái hiện tại");
-        }
-    }
-
-    @Override
-    public Page<Bill> findAllWithCustomer(Pageable pageable) {
-        return billRepository.findAllWithCustomer(pageable);
-    }
-
-    @Override
-    public Page<Bill> findByStatusWithCustomer(Integer status, Pageable pageable) {
-        return billRepository.findByStatusWithCustomer(status, pageable);
     }
 }

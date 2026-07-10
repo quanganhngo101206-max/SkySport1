@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +37,22 @@ public class WishlistService {
 
     public List<WishlistDetail> findItems(String customerId) {
         Wishlist w = getOrCreate(customerId);
-        return wishlistDetailRepository.findByWishlistId(w.getId());
+        return wishlistDetailRepository.findByWishlistIdWithProduct(w.getId());
+    }
+
+    /**
+     * Trả về set productId đang có trong wishlist, dùng để hiển thị trạng
+     * thái nút tim trên trang danh sách/chi tiết sản phẩm. Không tạo
+     * wishlist mới nếu khách chưa có (khác với getOrCreate), tránh tạo
+     * dữ liệu rác chỉ vì xem trang sản phẩm.
+     */
+    public Set<String> findProductIdsInWishlist(String customerId) {
+        if (customerId == null) {
+            return Set.of();
+        }
+        return wishlistRepository.findByCustomerId(customerId)
+                .map(w -> Set.copyOf(wishlistDetailRepository.findProductIdsByWishlistId(w.getId())))
+                .orElseGet(Set::of);
     }
 
     @Transactional

@@ -63,6 +63,13 @@
         </li>
 
         <div class="nav-label">Hệ thống</div>
+        <!-- Chỉ Admin đang mượn giao diện Staff mới thấy nút quay lại -->
+        <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin}" class="nav-link">
+                <span class="icon"><i class="fas fa-shield-alt"></i></span>
+                <span>Giao diện Admin</span>
+            </a>
+        </li>
         <li class="nav-item">
             <form th:action="@{/staff/logout}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>

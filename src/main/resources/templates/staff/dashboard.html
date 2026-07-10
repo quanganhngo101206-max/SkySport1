@@ -107,10 +107,11 @@
                         <span class="badge-sky"
                               th:classappend="${b.status == 1 ? 'warning' :
                                              (b.status == 2 ? 'info' :
-                                             (b.status == 3 ? 'primary' :
-                                             (b.status == 4 ? 'success' :
+                                             (b.status == 3 ? 'purple' :
+                                             (b.status == 4 ? 'teal' :
                                              (b.status == 5 ? 'danger' :
-                                             (b.status == 6 ? 'dark' : 'secondary')))))}">
+                                             (b.status == 6 ? 'dark' :
+                                             (b.status == 7 ? 'success' : 'secondary')))))))}">
                             <span th:switch="${b.status}">
                                 <span th:case="1">Chờ xác nhận</span>
                                 <span th:case="2">Đã xác nhận</span>
@@ -119,6 +120,7 @@
                                 <span th:case="5">Đã hủy</span>
                                 <span th:case="6">Đang hoàn trả</span>
                                 <span th:case="7">Hoàn thành</span>
+                                <span th:case="8">Yêu cầu hủy</span>
                                 <span th:case="*">—</span>
                             </span>
                         </span>

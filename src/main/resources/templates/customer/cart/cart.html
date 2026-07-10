@@ -95,7 +95,12 @@
                 <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
                   <form th:action="@{/customer/cart/update}" method="post" style="display:flex;align-items:center;gap:4px;">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <input type="hidden" name="cartDetailId" th:value="${item.id}"/>
+                    <!-- Khách đăng nhập: dùng CartDetail.id thật.
+                         Guest: CartDetail chỉ tồn tại tạm trong session, item.id luôn null
+                         (chưa từng lưu DB) -> phải gửi productDetail.id, vì controller coi
+                         cartDetailId = productDetailId khi customerId == null (guest). -->
+                    <input type="hidden" name="cartDetailId"
+                           th:value="${cart != null ? item.id : (item.productDetail != null ? item.productDetail.id : '')}"/>
 
                     <!-- nút - -->
                     <button type="submit"
@@ -133,7 +138,8 @@
                 <div style="text-align:center;">
                   <form th:action="@{/customer/cart/remove}" method="post" style="display:inline;">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <input type="hidden" name="cartDetailId" th:value="${item.id}"/>
+                    <input type="hidden" name="cartDetailId"
+                           th:value="${cart != null ? item.id : (item.productDetail != null ? item.productDetail.id : '')}"/>
                     <button type="submit"
                             class="btn-ss btn-ss-ghost"
                             style="padding:.5rem .7rem;color:var(--muted);"

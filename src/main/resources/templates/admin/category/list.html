@@ -3,56 +3,46 @@
 <head><title>Page</title></head>
 <body>
 <div th:fragment="content">
-    <!-- Flash messages -->
-    <div th:if="${success}" class="alert alert-success alert-dismissible">
-        <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+
+    <div th:if="${success}" class="alert-sky alert-sky-success">
         <span th:text="${success}"></span>
     </div>
-    <div th:if="${error}" class="alert alert-danger alert-dismissible">
-        <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+    <div th:if="${error}" class="alert-sky alert-sky-danger">
         <span th:text="${error}"></span>
     </div>
 
-    <div class="card">
+    <div class="card-sky" style="max-width:1100px;">
         <div class="card-header">
-            <h3 class="card-title">Danh sách danh mục</h3>
-            <button type="button" class="btn btn-primary float-end"
-                    data-bs-toggle="modal" data-bs-target="#categoryModal">
-                <i class="fas fa-plus"></i> Thêm danh mục
-            </button>
+            <h3 class="card-title"><span class="icon"><i class="fas fa-folder"></i></span>Danh sách danh mục</h3>
+            <div class="card-actions">
+                <button type="button" class="btn-sky btn-sky-primary btn-sky-sm" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                    <i class="fas fa-plus"></i> Thêm danh mục
+                </button>
+            </div>
         </div>
         <div class="card-body">
-            <table id="categoryTable" class="table table-bordered table-striped">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tên danh mục</th>
-                    <th>Mô tả</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                </tr>
-                </thead>
+            <table id="categoryTable" class="table-sky">
+                <thead><tr>
+                    <th>ID</th><th>Tên danh mục</th><th>Mô tả</th><th>Trạng thái</th><th style="width:100px;">Hành động</th>
+                </tr></thead>
                 <tbody>
                 <tr th:each="category : ${categories}">
                     <td th:text="${category.id}">CAT001</td>
                     <td th:text="${category.name}">Áo thể thao</td>
                     <td th:text="${category.description}">Mô tả danh mục</td>
                     <td>
-                                    <span class="badge"
-                                          th:classappend="${category.status == 1 ? 'bg-success' : 'bg-danger'}">
-                                        <span th:if="${category.status == 1}">Hoạt động</span>
-                                        <span th:if="${category.status != 1}">Không hoạt động</span>
-                                    </span>
+                        <span class="badge-sky" th:classappend="${category.status == 1 ? 'success' : 'danger'}">
+                            <span th:if="${category.status == 1}">Hoạt động</span>
+                            <span th:if="${category.status != 1}">Không hoạt động</span>
+                        </span>
                     </td>
                     <td>
-                        <a th:href="@{/admin/categories/edit/{id}(id=${category.id})}" class="btn btn-sm btn-warning">
+                        <a th:href="@{/admin/categories/edit/{id}(id=${category.id})}" class="action-btn warning" style="color:#ffc107;">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form th:action="@{/admin/categories/delete/{id}(id=${category.id})}"
-                              method="post" style="display:inline;">
+                        <form th:action="@{/admin/categories/delete/{id}(id=${category.id})}" method="post" style="display:inline;">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button type="submit" class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Bạn có chắc muốn xóa danh mục này?')">
+                            <button type="submit" class="action-btn danger" style="color:#e63030;" onclick="return confirm('Bạn có chắc muốn xóa danh mục này?')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
@@ -63,41 +53,48 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Thêm/Sửa danh mục -->
 <div class="modal fade" id="categoryModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Thêm danh mục</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content" style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius);">
+            <div class="modal-header" style="border-bottom:1px solid var(--border-color);">
+                <h5 class="modal-title" style="color:var(--text-primary);">Thêm danh mục</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="categoryForm" th:action="@{/admin/categories/save}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="modal-body">
                     <input type="hidden" id="categoryId" name="id">
                     <div class="mb-3">
-                        <label class="form-label">Tên danh mục <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="categoryName" name="name" required>
+                        <label class="form-sky-label required">Tên danh mục</label>
+                        <input type="text" class="form-sky" id="categoryName" name="name" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Mô tả</label>
-                        <textarea class="form-control" id="categoryDescription" name="description" rows="2"></textarea>
+                        <label class="form-sky-label">Mô tả</label>
+                        <textarea class="form-sky" id="categoryDescription" name="description" rows="2"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Trạng thái</label>
-                        <select class="form-select" id="categoryStatus" name="status">
+                        <label class="form-sky-label">Trạng thái</label>
+                        <select class="form-sky" id="categoryStatus" name="status">
                             <option value="1">Hoạt động</option>
                             <option value="0">Không hoạt động</option>
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="submit" class="btn btn-primary">Lưu</button>
+                <div class="modal-footer" style="border-top:1px solid var(--border-color);">
+                    <button type="button" class="btn-sky btn-sky-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn-sky btn-sky-primary">Lưu</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initDataTable('#categoryTable');
+    });
+</script>
 <th:block th:fragment="scripts"></th:block>
 </body>
 </html>

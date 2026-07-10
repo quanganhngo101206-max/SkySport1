@@ -7,7 +7,10 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "Bill_detail")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class BillDetail {
 
     @Id
@@ -44,4 +47,8 @@ public class BillDetail {
 
     @Column(name = "total_amount", precision = 18, scale = 2)
     private BigDecimal totalAmount;
+
+    @Column(name = "item_status")
+    @Builder.Default
+    private Integer itemStatus = 1;
 }

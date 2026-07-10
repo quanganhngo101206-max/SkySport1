@@ -8,7 +8,11 @@ public enum OrderStatus {
     DELIVERED(4, "Đã giao"),
     CANCELLED(5, "Đã hủy"),
     RETURNING(6, "Hoàn trả"),
-    COMPLETED(7, "Hoàn thành");
+    COMPLETED(7, "Hoàn thành"),
+    /**
+     * Customer yêu cầu hủy (đơn đang chờ shop duyệt)
+     */
+    CANCEL_REQUESTED(8, "Yêu cầu hủy");
 
     private final int value;
     private final String label;

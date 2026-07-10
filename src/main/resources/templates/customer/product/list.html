@@ -61,6 +61,25 @@
                      onmouseover="this.style.borderColor='var(--flare)';this.style.transform='translateY(-6px)'"
                      onmouseout="this.style.borderColor='var(--line)';this.style.transform='translateY(0)'">
 
+                    <!-- Nút tim (wishlist) -->
+                    <form sec:authorize="hasRole('CUSTOMER')"
+                          th:action="@{/customer/wishlist/{action}(action = ${wishlistProductIds.contains(product.id)} ? 'remove' : 'add')}"
+                          method="post" style="position:absolute;top:.6rem;right:.6rem;z-index:2;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="productId" th:value="${product.id}"/>
+                        <input type="hidden" name="redirectTo" th:value="${currentUrl}"/>
+                        <button type="submit" title="Thêm vào yêu thích"
+                                style="width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.55);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"
+                                th:style="${wishlistProductIds.contains(product.id)} ? 'width:34px;height:34px;border-radius:50%;border:1px solid var(--flare);background:var(--flare);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;' : 'width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.55);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;'">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </form>
+                    <a sec:authorize="!hasRole('CUSTOMER')"
+                       href="/login" title="Đăng nhập để thêm vào yêu thích"
+                       style="position:absolute;top:.6rem;right:.6rem;z-index:2;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;">
+                        <i class="far fa-heart"></i>
+                    </a>
+
                     <a th:href="@{/san-pham/{slug}(slug=${product.slug})}" style="display:block;">
                         <div style="background:var(--panel-2);height:200px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);">
                             <i class="fas fa-tshirt" style="font-size:4rem;color:#333;"></i>

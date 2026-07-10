@@ -40,10 +40,14 @@ public class CustomerWishlistController {
     }
 
     /**
-     * Thêm vào yêu thích
+     * Thêm vào yêu thích. Nếu có tham số redirectTo (vd gọi từ trang sản
+     * phẩm), quay lại đúng trang đó thay vì luôn về /customer/wishlist.
      */
     @PostMapping("/add")
-    public String add(@RequestParam String productId, Authentication auth, RedirectAttributes ra) {
+    public String add(@RequestParam String productId,
+                      @RequestParam(required = false) String redirectTo,
+                      Authentication auth, RedirectAttributes ra) {
+        String target = safeRedirectTarget(redirectTo);
         try {
             String customerId = getCurrentCustomerId(auth);
             wishlistService.addProduct(customerId, productId);
@@ -52,14 +56,17 @@ public class CustomerWishlistController {
             log.error("Error adding to wishlist: {}", e.getMessage());
             ra.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/customer/wishlist";
+        return "redirect:" + target;
     }
 
     /**
-     * Xóa khỏi yêu thích
+     * Xóa khỏi yêu thích. Cũng hỗ trợ redirectTo như add().
      */
     @PostMapping("/remove")
-    public String remove(@RequestParam String productId, Authentication auth, RedirectAttributes ra) {
+    public String remove(@RequestParam String productId,
+                         @RequestParam(required = false) String redirectTo,
+                         Authentication auth, RedirectAttributes ra) {
+        String target = safeRedirectTarget(redirectTo);
         try {
             String customerId = getCurrentCustomerId(auth);
             wishlistService.removeProduct(customerId, productId);
@@ -68,7 +75,18 @@ public class CustomerWishlistController {
             log.error("Error removing from wishlist: {}", e.getMessage());
             ra.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/customer/wishlist";
+        return "redirect:" + target;
+    }
+
+    /**
+     * Chỉ chấp nhận redirect nội bộ (path bắt đầu bằng "/", không phải URL
+     * tuyệt đối) để tránh open-redirect.
+     */
+    private String safeRedirectTarget(String redirectTo) {
+        if (redirectTo != null && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+            return redirectTo;
+        }
+        return "/customer/wishlist";
     }
 
     /**

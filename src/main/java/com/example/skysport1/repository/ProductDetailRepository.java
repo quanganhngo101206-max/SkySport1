@@ -1,7 +1,9 @@
 package com.example.skysport1.repository;
 
 import com.example.skysport1.entity.ProductDetail;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,6 +13,13 @@ import java.util.Optional;
 
 @Repository
 public interface ProductDetailRepository extends JpaRepository<ProductDetail, Integer> {
+
+    // Dùng khi tạo đơn hàng: khoá dòng tồn kho (SELECT ... FOR UPDATE) trong
+    // suốt transaction tạo đơn, để 2 request đặt hàng cùng lúc không thể
+    // cùng pass bước kiểm tra tồn kho rồi cùng trừ kho (race condition/oversell).
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT pd FROM ProductDetail pd WHERE pd.id = :id")
+    Optional<ProductDetail> findByIdForUpdate(@Param("id") Integer id);
     List<ProductDetail> findByProductId(String productId);
 
     List<ProductDetail> findByProductIdAndStatusAndDeleteFlag(String productId, Integer status, Boolean deleteFlag);

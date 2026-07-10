@@ -22,6 +22,16 @@ public interface BillRepository extends JpaRepository<Bill, String> {
 
     List<Bill> findByGuestEmail(String guestEmail);
 
+    /**
+     * Guest tracking theo contact (email hoặc phone).
+     * Bắt buộc customer IS NULL để tránh lộ/tiết lộ đơn của customer đã có tài khoản.
+     */
+    @Query("SELECT b FROM Bill b " +
+            "WHERE b.customer IS NULL " +
+            "AND (b.guestEmail = :contact OR b.receiverPhone = :contact) " +
+            "ORDER BY b.createDate DESC")
+    List<Bill> findGuestBillsByContact(@Param("contact") String contact);
+
     // Fetch customer cùng lúc để tránh LazyInitializationException
     @Query("SELECT b FROM Bill b LEFT JOIN FETCH b.customer ORDER BY b.createDate DESC")
     List<Bill> findAllWithCustomer();

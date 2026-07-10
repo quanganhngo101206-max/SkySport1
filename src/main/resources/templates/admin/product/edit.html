@@ -3,104 +3,96 @@
 <head><title>Page</title></head>
 <body>
 <div th:fragment="content">
-    <div th:if="${error}" class="alert alert-danger alert-dismissible">
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div th:if="${error}" class="alert-sky alert-sky-danger">
         <span th:text="${error}"></span>
     </div>
-    <div class="card card-primary">
+
+    <div class="card-sky">
         <div class="card-header">
-            <h3 class="card-title">Sửa sản phẩm: <strong th:text="${product.name}"></strong></h3>
+            <div class="card-title">
+                <i class="fas fa-edit icon"></i>
+                Sửa sản phẩm: <strong th:text="${product.name}"></strong>
+            </div>
+            <div class="card-actions">
+                <a th:href="@{/admin/products/list}" class="btn-sky btn-sky-secondary">← Quay lại</a>
+            </div>
         </div>
         <form th:action="@{/admin/products/{id}/update(id=${product.id})}"
               th:object="${product}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="card-body">
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="name">Tên sản phẩm <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" th:field="*{name}"
-                                   placeholder="Nhập tên sản phẩm" required>
-                            <span th:errors="*{name}" class="text-danger"></span>
-                        </div>
+                        <label class="form-sky-label required" for="name">Tên sản phẩm</label>
+                        <input type="text" class="form-sky" id="name" th:field="*{name}"
+                               placeholder="Nhập tên sản phẩm" required>
+                        <span th:errors="*{name}" style="color:var(--primary);font-size:12px;"></span>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="slug">Slug</label>
-                            <input type="text" class="form-control" id="slug" th:field="*{slug}"
-                                   placeholder="URL-friendly">
-                            <span th:errors="*{slug}" class="text-danger"></span>
-                        </div>
+                        <label class="form-sky-label" for="slug">Slug</label>
+                        <input type="text" class="form-sky" id="slug" th:field="*{slug}"
+                               placeholder="URL-friendly">
+                        <span th:errors="*{slug}" style="color:var(--primary);font-size:12px;"></span>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="description">Mô tả</label>
-                    <textarea class="form-control" id="description" th:field="*{description}"
+                <div class="mt-3">
+                    <label class="form-sky-label" for="description">Mô tả</label>
+                    <textarea class="form-sky" id="description" th:field="*{description}"
                               rows="4" placeholder="Mô tả sản phẩm"></textarea>
-                    <span th:errors="*{description}" class="text-danger"></span>
+                    <span th:errors="*{description}" style="color:var(--primary);font-size:12px;"></span>
                 </div>
 
-                <div class="row">
+                <div class="row g-3 mt-1">
                     <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="brand">Thương hiệu <span class="text-danger">*</span></label>
-                            <select class="form-control" id="brand" name="brand.id">
-                                <option value="">-- Chọn thương hiệu --</option>
-                                <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}"
-                                        th:selected="${product.brand != null and product.brand.id == b.id}"></option>
-                            </select>
-                        </div>
+                        <label class="form-sky-label required" for="brand">Thương hiệu</label>
+                        <select class="form-sky" id="brand" name="brand.id">
+                            <option value="">-- Chọn thương hiệu --</option>
+                            <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}"
+                                    th:selected="${product.brand != null and product.brand.id == b.id}"></option>
+                        </select>
                     </div>
                     <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="category">Danh mục <span class="text-danger">*</span></label>
-                            <select class="form-control" id="category" name="category.id">
-                                <option value="">-- Chọn danh mục --</option>
-                                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
-                                        th:selected="${product.category != null and product.category.id == c.id}"></option>
-                            </select>
-                        </div>
+                        <label class="form-sky-label required" for="category">Danh mục</label>
+                        <select class="form-sky" id="category" name="category.id">
+                            <option value="">-- Chọn danh mục --</option>
+                            <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                                    th:selected="${product.category != null and product.category.id == c.id}"></option>
+                        </select>
                     </div>
                     <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="material">Chất liệu <span class="text-danger">*</span></label>
-                            <select class="form-control" id="material" name="material.id">
-                                <option value="">-- Chọn chất liệu --</option>
-                                <option th:each="m : ${materials}" th:value="${m.id}" th:text="${m.name}"
-                                        th:selected="${product.material != null and product.material.id == m.id}"></option>
-                            </select>
-                        </div>
+                        <label class="form-sky-label required" for="material">Chất liệu</label>
+                        <select class="form-sky" id="material" name="material.id">
+                            <option value="">-- Chọn chất liệu --</option>
+                            <option th:each="m : ${materials}" th:value="${m.id}" th:text="${m.name}"
+                                    th:selected="${product.material != null and product.material.id == m.id}"></option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="row">
+                <div class="row g-3 mt-1">
                     <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="gender">Giới tính</label>
-                            <select class="form-control" id="gender" th:field="*{gender}">
-                                <option value="3">Unisex</option>
-                                <option value="1">Nam</option>
-                                <option value="2">Nữ</option>
-                            </select>
-                        </div>
+                        <label class="form-sky-label" for="gender">Giới tính</label>
+                        <select class="form-sky" id="gender" th:field="*{gender}">
+                            <option value="3">Unisex</option>
+                            <option value="1">Nam</option>
+                            <option value="2">Nữ</option>
+                        </select>
                     </div>
                     <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="status">Trạng thái <span class="text-danger">*</span></label>
-                            <select class="form-control" id="status" th:field="*{status}">
-                                <option value="1">Đang bán</option>
-                                <option value="2">Hết hàng</option>
-                                <option value="0">Ngừng bán</option>
-                            </select>
-                        </div>
+                        <label class="form-sky-label required" for="status">Trạng thái</label>
+                        <select class="form-sky" id="status" th:field="*{status}">
+                            <option value="1">Đang bán</option>
+                            <option value="2">Hết hàng</option>
+                            <option value="0">Ngừng bán</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
-            <div class="card-footer">
-                <button type="submit" class="btn btn-primary">Cập nhật</button>
-                <a th:href="@{/admin/products/list}" class="btn btn-secondary">Hủy</a>
+            <div class="card-footer d-flex gap-2">
+                <button type="submit" class="btn-sky btn-sky-primary"><i class="fas fa-save"></i> Cập nhật</button>
+                <a th:href="@{/admin/products/list}" class="btn-sky btn-sky-secondary">Hủy</a>
             </div>
         </form>
     </div>

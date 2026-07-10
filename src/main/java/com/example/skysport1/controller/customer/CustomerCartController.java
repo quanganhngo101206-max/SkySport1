@@ -125,7 +125,7 @@ public class CustomerCartController {
 
     @PostMapping("/update")
     public String updateQuantity(
-            @RequestParam("cartDetailId") Integer cartDetailId,
+            @RequestParam(value = "cartDetailId", required = false) Integer cartDetailId,
             @RequestParam(value = "quantity", defaultValue = "1") int quantity,
             HttpSession session
     ) {
@@ -138,8 +138,27 @@ public class CustomerCartController {
         if (customerId == null) {
             // guest: cartDetailId treated as productDetailId
             Map<Integer, Integer> guestCart = getGuestCart(session);
-            if (quantity <= 0) guestCart.remove(cartDetailId);
-            else guestCart.put(cartDetailId, quantity);
+            if (quantity <= 0) {
+                guestCart.remove(cartDetailId);
+            } else {
+                // Giới hạn số lượng theo tồn kho thực tế, tránh guest tự set
+                // số lượng vượt kho (trước đây chỉ chặn ở bước checkout).
+                int allowedQuantity = quantity;
+                ProductDetail pd = productDetailRepository.findById(cartDetailId).orElse(null);
+                if (pd == null || pd.getStatus() != 1 || Boolean.TRUE.equals(pd.getDeleteFlag())) {
+                    guestCart.remove(cartDetailId);
+                    session.setAttribute(SESSION_GUEST_CART, guestCart);
+                    return "redirect:/customer/cart";
+                }
+                if (allowedQuantity > pd.getQuantity()) {
+                    allowedQuantity = pd.getQuantity();
+                }
+                if (allowedQuantity <= 0) {
+                    guestCart.remove(cartDetailId);
+                } else {
+                    guestCart.put(cartDetailId, allowedQuantity);
+                }
+            }
             session.setAttribute(SESSION_GUEST_CART, guestCart);
             return "redirect:/customer/cart";
         }
@@ -150,7 +169,7 @@ public class CustomerCartController {
 
     @PostMapping("/remove")
     public String removeItem(
-            @RequestParam("cartDetailId") Integer cartDetailId,
+            @RequestParam(value = "cartDetailId", required = false) Integer cartDetailId,
             HttpSession session
     ) {
         String customerId = getCurrentCustomerId().orElse(null);

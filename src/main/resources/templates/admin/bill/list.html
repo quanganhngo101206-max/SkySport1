@@ -37,6 +37,7 @@
                     <th>Khách hàng</th>
                     <th>Tổng tiền</th>
                     <th>Trạng thái</th>
+                    <th>Trạng thái thanh toán</th>
                     <th>Ngày tạo</th>
                     <th>Hành động</th>
                 </tr>
@@ -44,16 +45,18 @@
                 <tbody>
                 <tr th:each="bill : ${bills}">
                     <td th:text="${bill.id}">HD001</td>
-                    <td th:text="${bill.customer != null ? bill.customer.fullName : bill.guestEmail}">Khách hàng</td>
+                    <td th:text="${bill.customer != null ? bill.customer.fullName : bill.receiverName}">Khách hàng</td>
                     <td th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+
                     <td>
                         <span class="badge"
                               th:classappend="${bill.status == 1} ? 'bg-warning text-dark' :
                                              (${bill.status == 2} ? 'bg-info text-white' :
                                              (${bill.status == 3} ? 'bg-primary' :
-                                             (${bill.status == 4} ? 'bg-success' :
+                                             (${bill.status == 4} ? 'bg-light text-dark' :
                                              (${bill.status == 5} ? 'bg-danger' :
-                                             (${bill.status == 6} ? 'bg-dark' : 'bg-secondary')))))">
+                                             (${bill.status == 6} ? 'bg-dark' :
+                                             (${bill.status == 7} ? 'bg-success' : 'bg-secondary'))))))">
                             <span th:if="${bill.status == 1}">Chờ xác nhận</span>
                             <span th:if="${bill.status == 2}">Đã xác nhận</span>
                             <span th:if="${bill.status == 3}">Đang giao</span>
@@ -61,9 +64,24 @@
                             <span th:if="${bill.status == 5}">Đã hủy</span>
                             <span th:if="${bill.status == 6}">Đang hoàn trả</span>
                             <span th:if="${bill.status == 7}">Hoàn thành</span>
+                            <span th:if="${bill.status == 8}">Yêu cầu hủy</span>
                         </span>
                     </td>
+
+                    <td>
+                        <span class="badge"
+                              th:classappend="${bill.paymentStatus == 0} ? 'bg-warning text-dark' :
+                                             (${bill.paymentStatus == 1} ? 'bg-success' :
+                                             (${bill.paymentStatus == 2} ? 'bg-danger' : 'bg-secondary'))">
+                            <span th:if="${bill.paymentStatus == 0}">Chưa thanh toán</span>
+                            <span th:if="${bill.paymentStatus == 1}">Đã thanh toán</span>
+                            <span th:if="${bill.paymentStatus == 2}">Hoàn tiền</span>
+                            <span th:if="${bill.paymentStatus != 0 and bill.paymentStatus != 1 and bill.paymentStatus != 2}">Không rõ</span>
+                        </span>
+                    </td>
+
                     <td th:text="${#temporals.format(bill.createDate, 'dd/MM/yyyy HH:mm')}">24/06/2024 15:30</td>
+
                     <td>
                         <a th:href="@{/admin/bills/{id}(id=${bill.id})}" class="btn btn-sm btn-info">
                             <i class="fas fa-eye"></i>

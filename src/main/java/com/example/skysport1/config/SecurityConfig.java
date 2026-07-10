@@ -1,8 +1,8 @@
 package com.example.skysport1.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -14,11 +14,21 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final AuthenticationSuccessHandlerImpl authenticationSuccessHandler;
+
+    // KHÔNG dùng @RequiredArgsConstructor của Lombok ở đây: Lombok không copy
+    // annotation @Lazy từ field sang tham số constructor (trừ khi có
+    // lombok.config khai báo lombok.copyableAnnotations), nên Spring vẫn coi
+    // đây là dependency eager -> vẫn bị circular reference dù đã có @Lazy
+    // trên field. Viết constructor tay để @Lazy áp dụng đúng chỗ Spring cần.
+    public SecurityConfig(CustomUserDetailsService userDetailsService,
+                          @Lazy AuthenticationSuccessHandlerImpl authenticationSuccessHandler) {
+        this.userDetailsService = userDetailsService;
+        this.authenticationSuccessHandler = authenticationSuccessHandler;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

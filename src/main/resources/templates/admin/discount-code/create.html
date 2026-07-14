@@ -78,6 +78,33 @@
                                type="datetime-local"
                                name="endDate"/>
                     </div>
+
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Áp dụng cho nhóm khách hàng</label>
+                        <select class="form-sky" name="applicableCustomerGroup">
+                            <option value="0" selected>Tất cả khách hàng</option>
+                            <option value="1">Chỉ khách hàng mới (chưa có đơn hoàn thành)</option>
+                            <option value="2">Chỉ khách hàng VIP</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-sky-label">
+                            Số lần tối đa 1 khách được dùng mã này
+                            <small style="font-weight:400;color:var(--text-muted);">(để trống = không giới hạn số lần/khách)</small>
+                        </label>
+                        <input class="form-sky" type="number" min="1" name="maxUsagePerCustomer" value="1" placeholder="Để trống = không giới hạn"/>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-sky-label">
+                            Áp dụng cho sản phẩm cụ thể
+                            <small style="font-weight:400;color:var(--text-muted);">(bỏ trống = áp dụng cho tất cả sản phẩm)</small>
+                        </label>
+                        <select class="form-sky" name="applicableProductIds" multiple size="8">
+                            <option th:each="p : ${products}" th:value="${p.id}" th:text="${p.name}"></option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="mt-4 d-flex gap-2">

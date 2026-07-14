@@ -41,6 +41,31 @@ public class DiscountCode {
     @Column(name = "quantity")
     private Integer quantity;
 
+    // 0: tất cả khách hàng, 1: chỉ khách mới (chưa có đơn hoàn thành), 2: chỉ khách VIP
+    @Column(name = "applicable_customer_group")
+    @Builder.Default
+    private Integer applicableCustomerGroup = 0;
+
+    // Số lần tối đa 1 khách hàng được dùng mã này. null = không giới hạn
+    // (khách dùng bao nhiêu lần cũng được, miễn còn lượt chung của mã).
+    // Mặc định 1 để giữ hành vi cũ (mỗi khách chỉ dùng được 1 lần).
+    @Column(name = "max_usage_per_customer")
+    @Builder.Default
+    private Integer maxUsagePerCustomer = 1;
+
+    // Danh sách sản phẩm được áp dụng mã này. Rỗng = áp dụng cho TẤT CẢ sản
+    // phẩm (giữ hành vi mặc định cũ). Nếu có ít nhất 1 sản phẩm, mã chỉ giảm
+    // giá trên các sản phẩm nằm trong danh sách, sản phẩm khác trong cùng đơn
+    // giữ nguyên giá.
+    @ManyToMany
+    @JoinTable(
+            name = "discount_code_product",
+            joinColumns = @JoinColumn(name = "discount_code_id"),
+            inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    @Builder.Default
+    private java.util.List<Product> applicableProducts = new java.util.ArrayList<>();
+
     @Column(name = "used_count")
     @Builder.Default
     private Integer usedCount = 0;

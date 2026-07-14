@@ -29,6 +29,20 @@ public class AdminAttributeController {
     private final SizeService     sizeService;
     private final ColorService    colorService;
     private final IdGenerator     idGenerator;
+    private final AccountService  accountService;
+
+    /**
+     * Brand/Category/Material/Supplier có created_by/updated_by ràng buộc
+     * FOREIGN KEY trỏ về dbo.Account.id — KHÔNG được lưu thẳng
+     * auth.getName() (username đăng nhập) vào đó, phải resolve ra đúng
+     * Account.id trước. (Size/Color không có 2 cột này nên không bị ảnh
+     * hưởng.) Trước đây lưu thẳng username nên mọi lần tạo/sửa Brand,
+     * Category, Material đều bị SQL Server chặn với lỗi FOREIGN KEY,
+     * y hệt bug đã gặp ở Supplier.
+     */
+    private String resolveAccountId(Authentication auth) {
+        return accountService.findByUsername(auth.getName()).getId();
+    }
 
     // ============================================================
     // BRAND
@@ -63,8 +77,9 @@ public class AdminAttributeController {
         }
         try {
             brand.setId(idGenerator.generateBrandId());
-            brand.setCreatedBy(auth.getName());
-            brand.setUpdatedBy(auth.getName());
+            String accountId = resolveAccountId(auth);
+            brand.setCreatedBy(accountId);
+            brand.setUpdatedBy(accountId);
             brandService.save(brand);
             ra.addFlashAttribute("success", "Thêm thương hiệu thành công!");
             log.info("Brand '{}' created by {}", brand.getName(), auth.getName());
@@ -86,7 +101,7 @@ public class AdminAttributeController {
             return "redirect:/admin/brands";
         }
         try {
-            brand.setUpdatedBy(auth.getName());
+            brand.setUpdatedBy(resolveAccountId(auth));
             brandService.update(brand);
             ra.addFlashAttribute("success", "Cập nhật thương hiệu thành công!");
             log.info("Brand '{}' updated by {}", brand.getName(), auth.getName());
@@ -141,8 +156,9 @@ public class AdminAttributeController {
         }
         try {
             category.setId(idGenerator.generateCategoryId());
-            category.setCreatedBy(auth.getName());
-            category.setUpdatedBy(auth.getName());
+            String accountId = resolveAccountId(auth);
+            category.setCreatedBy(accountId);
+            category.setUpdatedBy(accountId);
             categoryService.save(category);
             ra.addFlashAttribute("success", "Thêm danh mục thành công!");
             log.info("Category '{}' created by {}", category.getName(), auth.getName());
@@ -164,7 +180,7 @@ public class AdminAttributeController {
             return "redirect:/admin/categories";
         }
         try {
-            category.setUpdatedBy(auth.getName());
+            category.setUpdatedBy(resolveAccountId(auth));
             categoryService.update(category);
             ra.addFlashAttribute("success", "Cập nhật danh mục thành công!");
             log.info("Category '{}' updated by {}", category.getName(), auth.getName());
@@ -219,8 +235,9 @@ public class AdminAttributeController {
         }
         try {
             material.setId(idGenerator.generateMaterialId());
-            material.setCreatedBy(auth.getName());
-            material.setUpdatedBy(auth.getName());
+            String accountId = resolveAccountId(auth);
+            material.setCreatedBy(accountId);
+            material.setUpdatedBy(accountId);
             materialService.save(material);
             ra.addFlashAttribute("success", "Thêm chất liệu thành công!");
             log.info("Material '{}' created by {}", material.getName(), auth.getName());
@@ -242,7 +259,7 @@ public class AdminAttributeController {
             return "redirect:/admin/materials";
         }
         try {
-            material.setUpdatedBy(auth.getName());
+            material.setUpdatedBy(resolveAccountId(auth));
             materialService.update(material);
             ra.addFlashAttribute("success", "Cập nhật chất liệu thành công!");
             log.info("Material '{}' updated by {}", material.getName(), auth.getName());

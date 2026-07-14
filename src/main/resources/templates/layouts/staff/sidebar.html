@@ -63,6 +63,13 @@
         </li>
 
         <div class="nav-label">Hệ thống</div>
+        <li class="nav-item">
+            <a th:href="@{/staff/profile}" class="nav-link"
+               th:classappend="${#strings.contains(pageContent, 'staff/profile')} ? 'active' : ''">
+                <span class="icon"><i class="fas fa-user-circle"></i></span>
+                <span>Hồ sơ cá nhân</span>
+            </a>
+        </li>
         <!-- Chỉ Admin đang mượn giao diện Staff mới thấy nút quay lại -->
         <li class="nav-item" sec:authorize="hasRole('ADMIN')">
             <a th:href="@{/admin}" class="nav-link">

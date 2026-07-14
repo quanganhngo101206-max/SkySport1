@@ -28,4 +28,8 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
 
     @Query("SELECT s FROM Staff s WHERE s.account.username = :username")
     Optional<Staff> findByAccountUsername(@Param("username") String username);
+
+    @Query("SELECT s FROM Staff s WHERE s.account.role.name = 'ADMIN' " +
+            "AND s.deleteFlag = false AND s.status = 1")
+    List<Staff> findAllActiveAdmins();
 }

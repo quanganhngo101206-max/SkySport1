@@ -117,6 +117,7 @@
                     <form th:action="@{/customer/checkout/guest}" method="post" id="guestCheckoutForm"
                           sec:authorize="!isAuthenticated()">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="buyNow" th:if="${buyNow}" value="true"/>
 
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -131,7 +132,7 @@
                                 <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
                                     Số điện thoại <span style="color:var(--flare);">*</span>
                                 </label>
-                                <input type="tel" name="receiverPhone" class="ss-input"
+                                <input type="tel" name="receiverPhone" id="guestPhoneInput" class="ss-input"
                                        placeholder="Nhập số điện thoại" required>
                             </div>
 
@@ -139,8 +140,20 @@
                                 <label style="display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:4px;">
                                     Email <span style="color:var(--flare);">*</span>
                                 </label>
-                                <input type="email" name="guestEmail" class="ss-input"
+                                <input type="email" name="guestEmail" id="guestEmailInput" class="ss-input"
                                        placeholder="Nhập email để nhận xác nhận đơn hàng" required>
+                            </div>
+
+                            <!-- Gợi ý đăng nhập nếu email/SĐT đã có tài khoản — KHÔNG chặn,
+                                 chỉ hiển thị khi phát hiện trùng, guest vẫn có thể đặt hàng tiếp -->
+                            <div class="col-12" id="guestContactSuggestion" style="display:none;">
+                                <div class="ss-card" style="padding:.75rem 1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(215,255,63,0.06);border:1px solid rgba(215,255,63,0.2);">
+                                    <i class="fas fa-user-check" style="color:var(--volt);"></i>
+                                    <span style="color:var(--muted);font-size:.85rem;flex:1;">
+                                        Email/SĐT này đã có tài khoản. <a href="/login" style="color:var(--flare);font-weight:700;">Đăng nhập</a>
+                                        để nhận ưu đãi và theo dõi đơn hàng dễ hơn — hoặc bạn vẫn có thể tiếp tục đặt với tư cách khách.
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="col-12">
@@ -232,6 +245,7 @@
                     <form th:action="@{/customer/checkout}" method="post" id="loggedInCheckoutForm"
                           sec:authorize="isAuthenticated()">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="buyNow" th:if="${buyNow}" value="true"/>
 
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -330,6 +344,7 @@
                           sec:authorize="isAuthenticated()" style="margin:0;">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <input type="hidden" name="applyDiscountCode" id="applyDiscountCode"/>
+                        <input type="hidden" name="buyNow" th:if="${buyNow}" value="true"/>
                     </form>
                 </div>
             </div>
@@ -514,6 +529,51 @@
                 if (sameNotice) sameNotice.style.display = 'none';
             });
         }
+    })();
+</script>
+
+<script th:inline="javascript">
+    // Gợi ý đăng nhập nếu email/SĐT guest nhập trùng với tài khoản đã có —
+    // gọi debounce khi rời khỏi ô nhập, KHÔNG chặn submit, chỉ hiển thị box gợi ý.
+    (function () {
+        const emailInput = document.getElementById('guestEmailInput');
+        const phoneInput = document.getElementById('guestPhoneInput');
+        const suggestionBox = document.getElementById('guestContactSuggestion');
+        if (!emailInput || !phoneInput || !suggestionBox) return;
+
+        let debounceTimer = null;
+
+        function checkContact() {
+            const email = emailInput.value.trim();
+            const phone = phoneInput.value.trim();
+            if (!email && !phone) {
+                suggestionBox.style.display = 'none';
+                return;
+            }
+            const params = new URLSearchParams();
+            if (email) params.set('email', email);
+            if (phone) params.set('phone', phone);
+
+            fetch('/customer/checkout/check-guest-contact?' + params.toString())
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    suggestionBox.style.display = (data && data.exists) ? 'block' : 'none';
+                })
+                .catch(() => {
+                    // Lỗi mạng/API: im lặng bỏ qua, không ảnh hưởng luồng đặt hàng chính
+                    suggestionBox.style.display = 'none';
+                });
+        }
+
+        function debouncedCheck() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(checkContact, 500);
+        }
+
+        emailInput.addEventListener('blur', checkContact);
+        phoneInput.addEventListener('blur', checkContact);
+        emailInput.addEventListener('input', debouncedCheck);
+        phoneInput.addEventListener('input', debouncedCheck);
     })();
 </script>
 

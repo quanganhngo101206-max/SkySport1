@@ -1,5 +1,6 @@
 package com.example.skysport1.controller.admin;
 
+import com.example.skysport1.dto.request.StaffChangePasswordRequest;
 import com.example.skysport1.dto.request.StaffCreateRequest;
 import com.example.skysport1.dto.request.StaffUpdateRequest;
 import com.example.skysport1.entity.Staff;
@@ -52,9 +53,9 @@ public class AdminStaffController {
      */
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("staffRequest") StaffCreateRequest request,
-                         BindingResult bindingResult,
-                         Model model,
-                         RedirectAttributes ra) {
+                       BindingResult bindingResult,
+                       Model model,
+                       RedirectAttributes ra) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("errors", bindingResult.getAllErrors());
             model.addAttribute("title", "Thêm nhân viên");
@@ -93,9 +94,9 @@ public class AdminStaffController {
      */
     @PostMapping("/update")
     public String update(@Valid @ModelAttribute StaffUpdateRequest request,
-                          BindingResult bindingResult,
-                          Model model,
-                          RedirectAttributes ra) {
+                         BindingResult bindingResult,
+                         Model model,
+                         RedirectAttributes ra) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("staffRequest", request);
             model.addAttribute("errors", bindingResult.getAllErrors());
@@ -116,6 +117,30 @@ public class AdminStaffController {
             ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
             return "redirect:/admin/staffs/edit/" + request.getId();
         }
+    }
+
+    /**
+     * Đổi mật khẩu nhân viên — endpoint RIÊNG khỏi update thông tin cơ bản,
+     * để tránh admin vô tình đổi mật khẩu người khác khi chỉ sửa SĐT/email.
+     */
+    @PostMapping("/{id}/change-password")
+    public String changePassword(@PathVariable String id,
+                                 @Valid @ModelAttribute StaffChangePasswordRequest request,
+                                 BindingResult bindingResult,
+                                 RedirectAttributes ra) {
+        if (bindingResult.hasErrors()) {
+            ra.addFlashAttribute("error", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/staffs/edit/" + id;
+        }
+        try {
+            staffService.changePassword(id, request.getNewPassword());
+            ra.addFlashAttribute("success", "Đổi mật khẩu nhân viên thành công!");
+            log.info("Admin đổi mật khẩu nhân viên: {}", id);
+        } catch (Exception e) {
+            log.error("Lỗi khi đổi mật khẩu nhân viên {}: {}", id, e.getMessage(), e);
+            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/staffs/edit/" + id;
     }
 
     /**

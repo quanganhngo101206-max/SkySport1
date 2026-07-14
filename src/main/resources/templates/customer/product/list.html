@@ -104,21 +104,13 @@
                             </div>
 
                             <div style="display:flex;gap:8px;">
-                                <a th:href="@{/san-pham/{slug}(slug=${product.slug})}" class="btn-ss btn-ss-ghost btn-ss-sm" style="flex:1;">
-                                    <i class="fas fa-eye"></i> Xem
+                                <a th:href="@{/san-pham/{slug}(slug=${product.slug})}"
+                                   class="btn-ss btn-ss-primary btn-ss-sm btn-ss-block" style="flex:1;"
+                                   th:style="${firstDetail == null or firstDetail.quantity <= 0} ? 'flex:1;opacity:.5;pointer-events:none;' : 'flex:1;'">
+                                    <i class="fas fa-cart-plus"></i>
+                                    <span th:if="${firstDetail == null or firstDetail.quantity <= 0}">Hết hàng</span>
+                                    <span th:unless="${firstDetail == null or firstDetail.quantity <= 0}">Chọn mua</span>
                                 </a>
-                                <form th:action="@{/customer/cart/add}" method="post" style="flex:1;">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <input type="hidden" name="productDetailId" th:value="${firstDetail != null ? firstDetail.id : ''}"/>
-                                    <input type="hidden" name="quantity" value="1"/>
-                                    <button type="submit" class="btn-ss btn-ss-primary btn-ss-sm btn-ss-block"
-                                            th:disabled="${firstDetail == null or firstDetail.quantity <= 0}"
-                                            th:style="${firstDetail == null or firstDetail.quantity <= 0} ? 'opacity:.5;cursor:not-allowed;' : ''">
-                                        <i class="fas fa-cart-plus"></i>
-                                        <span th:if="${firstDetail == null or firstDetail.quantity <= 0}">Hết hàng</span>
-                                        <span th:unless="${firstDetail == null or firstDetail.quantity <= 0}">Thêm</span>
-                                    </button>
-                                </form>
                             </div>
                         </div>
                     </div>

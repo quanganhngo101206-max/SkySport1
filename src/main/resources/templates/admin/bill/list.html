@@ -2,129 +2,123 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <body>
 <div th:fragment="content">
-    <!-- Flash messages -->
-    <div th:if="${success}" class="alert alert-success alert-dismissible">
-        <button type="button" class="close" data-bs-dismiss="alert">&times;</button>
+    <div th:if="${success}" class="alert-sky alert-sky-success">
         <span th:text="${success}"></span>
     </div>
-    <div th:if="${error}" class="alert alert-danger alert-dismissible">
-        <button type="button" class="close" data-bs-dismiss="alert">&times;</button>
+    <div th:if="${error}" class="alert-sky alert-sky-danger">
         <span th:text="${error}"></span>
     </div>
 
-    <div class="card">
+    <div class="card-sky">
         <div class="card-header">
-            <h3 class="card-title">Danh sách đơn hàng</h3>
-            <form method="get" class="float-right d-flex" style="gap:8px;">
-                <select name="status" class="form-control" style="width:auto;">
-                    <option value="">-- Tất cả trạng thái --</option>
-                    <option value="1" th:selected="${status == 1}">Chờ xác nhận</option>
-                    <option value="2" th:selected="${status == 2}">Đã xác nhận</option>
-                    <option value="3" th:selected="${status == 3}">Đang giao</option>
-                    <option value="4" th:selected="${status == 4}">Đã giao</option>
-                    <option value="5" th:selected="${status == 5}">Đã hủy</option>
-                    <option value="6" th:selected="${status == 6}">Đang hoàn trả</option>
-                    <option value="7" th:selected="${status == 7}">Hoàn thành</option>
-                </select>
-                <button type="submit" class="btn btn-primary">Lọc</button>
-            </form>
+            <div class="card-title">
+                <i class="fas fa-receipt icon"></i>
+                <span th:text="${title}">Danh sách đơn hàng</span>
+            </div>
+            <div class="card-actions">
+                <form method="get" class="row g-2" style="display:flex;gap:8px;">
+                    <select name="status" class="form-sky" onchange="this.form.submit()">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option value="1" th:selected="${status == 1}">Chờ xác nhận</option>
+                        <option value="2" th:selected="${status == 2}">Đã xác nhận</option>
+                        <option value="3" th:selected="${status == 3}">Đang giao</option>
+                        <option value="4" th:selected="${status == 4}">Đã giao</option>
+                        <option value="5" th:selected="${status == 5}">Đã hủy</option>
+                        <option value="6" th:selected="${status == 6}">Đang hoàn trả</option>
+                        <option value="7" th:selected="${status == 7}">Hoàn thành</option>
+                        <option value="8" th:selected="${status == 8}">Yêu cầu hủy</option>
+                    </select>
+                </form>
+            </div>
         </div>
+
         <div class="card-body">
-            <table id="billTable" class="table table-bordered table-striped">
-                <thead>
-                <tr>
-                    <th>Mã đơn</th>
-                    <th>Khách hàng</th>
-                    <th>Tổng tiền</th>
-                    <th>Trạng thái</th>
-                    <th>Trạng thái thanh toán</th>
-                    <th>Ngày tạo</th>
-                    <th>Hành động</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="bill : ${bills}">
-                    <td th:text="${bill.id}">HD001</td>
-                    <td th:text="${bill.customer != null ? bill.customer.fullName : bill.receiverName}">Khách hàng</td>
-                    <td th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+            <div th:if="${#lists.isEmpty(bills)}" class="empty-state">
+                <div class="icon"><i class="fas fa-inbox"></i></div>
+                <div class="title">Chưa có đơn hàng</div>
+                <div class="desc">Chưa có đơn hàng nào khớp với bộ lọc hiện tại.</div>
+            </div>
 
-                    <td>
-                        <span class="badge"
-                              th:classappend="${bill.status == 1} ? 'bg-warning text-dark' :
-                                             (${bill.status == 2} ? 'bg-info text-white' :
-                                             (${bill.status == 3} ? 'bg-primary' :
-                                             (${bill.status == 4} ? 'bg-light text-dark' :
-                                             (${bill.status == 5} ? 'bg-danger' :
-                                             (${bill.status == 6} ? 'bg-dark' :
-                                             (${bill.status == 7} ? 'bg-success' : 'bg-secondary'))))))">
-                            <span th:if="${bill.status == 1}">Chờ xác nhận</span>
-                            <span th:if="${bill.status == 2}">Đã xác nhận</span>
-                            <span th:if="${bill.status == 3}">Đang giao</span>
-                            <span th:if="${bill.status == 4}">Đã giao</span>
-                            <span th:if="${bill.status == 5}">Đã hủy</span>
-                            <span th:if="${bill.status == 6}">Đang hoàn trả</span>
-                            <span th:if="${bill.status == 7}">Hoàn thành</span>
-                            <span th:if="${bill.status == 8}">Yêu cầu hủy</span>
-                        </span>
-                    </td>
+            <div th:if="${!#lists.isEmpty(bills)}" class="table-responsive">
+                <table id="billTable" class="table-sky">
+                    <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="bill : ${bills}">
+                        <td th:text="${bill.id}">HD001</td>
+                        <td th:text="${bill.customer != null ? bill.customer.fullName : (bill.receiverName + ' (Khách)')}">Khách hàng</td>
+                        <td th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
 
-                    <td>
-                        <span class="badge"
-                              th:classappend="${bill.paymentStatus == 0} ? 'bg-warning text-dark' :
-                                             (${bill.paymentStatus == 1} ? 'bg-success' :
-                                             (${bill.paymentStatus == 2} ? 'bg-danger' : 'bg-secondary'))">
-                            <span th:if="${bill.paymentStatus == 0}">Chưa thanh toán</span>
-                            <span th:if="${bill.paymentStatus == 1}">Đã thanh toán</span>
-                            <span th:if="${bill.paymentStatus == 2}">Hoàn tiền</span>
-                            <span th:if="${bill.paymentStatus != 0 and bill.paymentStatus != 1 and bill.paymentStatus != 2}">Không rõ</span>
-                        </span>
-                    </td>
+                        <td>
+                            <span class="badge-sky"
+                                  th:classappend="${bill.status == 1} ? 'warning' :
+                                                 (${bill.status == 2} ? 'info' :
+                                                 (${bill.status == 3} ? 'primary' :
+                                                 (${bill.status == 4} ? 'teal' :
+                                                 (${bill.status == 5} ? 'danger' :
+                                                 (${bill.status == 6} ? 'purple' :
+                                                 (${bill.status == 7} ? 'success' : 'dark'))))))">
+                                <span th:if="${bill.status == 1}">Chờ xác nhận</span>
+                                <span th:if="${bill.status == 2}">Đã xác nhận</span>
+                                <span th:if="${bill.status == 3}">Đang giao</span>
+                                <span th:if="${bill.status == 4}">Đã giao</span>
+                                <span th:if="${bill.status == 5}">Đã hủy</span>
+                                <span th:if="${bill.status == 6}">Đang hoàn trả</span>
+                                <span th:if="${bill.status == 7}">Hoàn thành</span>
+                                <span th:if="${bill.status == 8}">Yêu cầu hủy</span>
+                            </span>
+                        </td>
 
-                    <td th:text="${#temporals.format(bill.createDate, 'dd/MM/yyyy HH:mm')}">24/06/2024 15:30</td>
+                        <td>
+                            <span class="badge-sky"
+                                  th:classappend="${bill.paymentStatus == 0} ? 'warning' :
+                                                 (${bill.paymentStatus == 1} ? 'success' :
+                                                 (${bill.paymentStatus == 2} ? 'danger' : 'secondary'))">
+                                <span th:if="${bill.paymentStatus == 0}">Chưa thanh toán</span>
+                                <span th:if="${bill.paymentStatus == 1}">Đã thanh toán</span>
+                                <span th:if="${bill.paymentStatus == 2}">Hoàn tiền</span>
+                                <span th:if="${bill.paymentStatus != 0 and bill.paymentStatus != 1 and bill.paymentStatus != 2}">Không rõ</span>
+                            </span>
+                        </td>
 
-                    <td>
-                        <a th:href="@{/admin/bills/{id}(id=${bill.id})}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                        <td th:text="${#temporals.format(bill.createDate, 'dd/MM/yyyy HH:mm')}">24/06/2024 15:30</td>
+
+                        <td>
+                            <a th:href="@{/admin/bills/{id}(id=${bill.id})}" class="btn-sky btn-sky-secondary btn-sky-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Phân trang -->
-            <nav th:if="${totalPages > 1}">
-                <ul class="pagination pagination-sm justify-content-end">
-                    <li class="page-item" th:classappend="${page == 0} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/bills(page=${page - 1}, size=${size}, status=${status})}">«</a>
-                    </li>
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                        th:classappend="${i == page} ? 'active'">
-                        <a class="page-link" th:href="@{/admin/bills(page=${i}, size=${size}, status=${status})}"
-                           th:text="${i + 1}">1</a>
-                    </li>
-                    <li class="page-item" th:classappend="${page == totalPages - 1} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/bills(page=${page + 1}, size=${size}, status=${status})}">»</a>
-                    </li>
-                </ul>
+            <nav th:if="${totalPages > 1}" style="display:flex;justify-content:flex-end;gap:6px;margin-top:16px;">
+                <a class="btn-sky btn-sky-secondary btn-sky-sm"
+                   th:style="${page == 0} ? 'opacity:.4;pointer-events:none;' : ''"
+                   th:href="@{/admin/bills(page=${page - 1}, size=${size}, status=${status})}">«</a>
+                <a th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                   class="btn-sky btn-sky-sm"
+                   th:classappend="${i == page} ? 'btn-sky-primary' : 'btn-sky-secondary'"
+                   th:href="@{/admin/bills(page=${i}, size=${size}, status=${status})}"
+                   th:text="${i + 1}">1</a>
+                <a class="btn-sky btn-sky-secondary btn-sky-sm"
+                   th:style="${page == totalPages - 1} ? 'opacity:.4;pointer-events:none;' : ''"
+                   th:href="@{/admin/bills(page=${page + 1}, size=${size}, status=${status})}">»</a>
             </nav>
         </div>
     </div>
 </div>
-
-<th:block th:fragment="scripts">
-    <script>
-        $(function () {
-            $("#billTable").DataTable({
-                "responsive": true,
-                "lengthChange": false,
-                "autoWidth": false,
-                "paging": false,
-                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-            }).buttons().container().appendTo('#billTable_wrapper .col-md-6:eq(0)');
-        });
-    </script>
-</th:block>
+<th:block th:fragment="scripts"></th:block>
 </body>
 </html>

@@ -1,6 +1,8 @@
 package com.example.skysport1.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -13,6 +15,8 @@ public class Material {
     private String id;
 
     @Column(nullable = false)
+    @NotBlank(message = "Vui lòng nhập tên chất liệu")
+    @Size(max = 100, message = "Tên chất liệu tối đa 100 ký tự")
     private String name;
 
     private String description;

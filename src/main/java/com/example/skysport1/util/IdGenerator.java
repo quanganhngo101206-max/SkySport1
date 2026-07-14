@@ -31,6 +31,7 @@ public class IdGenerator {
     private final SizeRepository         sizeRepository;
     private final ColorRepository        colorRepository;
     private final ProductRepository      productRepository;
+    private final SupplierRepository     supplierRepository;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -95,13 +96,16 @@ public class IdGenerator {
         colorRepository.findAll().stream()
                 .map(c -> extractNumber(c.getId(), "COL")).max(Integer::compareTo)
                 .ifPresent(max -> colorCounter.set(max + 1));
+        supplierRepository.findAll().stream()
+                .map(s -> extractNumber(s.getId(), "NCC")).max(Integer::compareTo)
+                .ifPresent(max -> supplierCounter.set(max + 1));
         productRepository.findAll().stream()
                 .map(p -> extractNumber(p.getId(), "SP")).max(Integer::compareTo)
                 .ifPresent(max -> productCounter.set(max + 1));
 
-        log.info("IdGenerator init xong — SP={}, BR={}, KH={}, HD={}",
+        log.info("IdGenerator init xong — SP={}, BR={}, KH={}, HD={}, NCC={}",
                 productCounter.get(), brandCounter.get(),
-                customerCounter.get(), billCounter.get());
+                customerCounter.get(), billCounter.get(), supplierCounter.get());
     }
 
     // ── Người dùng ─────────────────────────────────────────

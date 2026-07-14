@@ -292,8 +292,23 @@ public class AdminProductController {
     @GetMapping("/{id}/details")
     public String detailList(@PathVariable String id, Model model) {
         Product product = productService.findById(id);
+        List<ProductDetail> details = productDetailService.findByProductId(id);
+
+        // Mục 17: cố định nhóm bảng biến thể theo size — mỗi size 1 bảng con,
+        // biến thể không có size xếp vào nhóm "Chưa gán size" ở cuối.
+        java.util.LinkedHashMap<String, List<ProductDetail>> groupedBySize = new java.util.LinkedHashMap<>();
+        for (ProductDetail d : details) {
+            String key = d.getSize() != null ? d.getSize().getName() : "__NO_SIZE__";
+            groupedBySize.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(d);
+        }
+        if (groupedBySize.containsKey("__NO_SIZE__")) {
+            List<ProductDetail> noSize = groupedBySize.remove("__NO_SIZE__");
+            groupedBySize.put("Chưa gán size", noSize);
+        }
+
         model.addAttribute("product",    product);
-        model.addAttribute("details",    productDetailService.findByProductId(id));
+        model.addAttribute("details",    details);
+        model.addAttribute("groupedBySize", groupedBySize);
         model.addAttribute("sizes",      sizeService.findAll());
         model.addAttribute("colors",     colorService.findAll());
         model.addAttribute("newDetail",  new ProductDetail());

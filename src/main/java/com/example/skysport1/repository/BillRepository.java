@@ -45,6 +45,10 @@ public interface BillRepository extends JpaRepository<Bill, String> {
     // Dashboard: count theo status
     long countByStatus(Integer status);
 
+    // Dùng để xác định "khách mới" khi validate mã giảm giá theo nhóm khách
+    // hàng: khách mới = chưa có đơn nào ở trạng thái COMPLETED.
+    boolean existsByCustomerIdAndStatus(String customerId, Integer status);
+
     /**
      * Dashboard top products:
      * Tránh LazyInitializationException khi AdminDashboardController duyệt b.getBillDetails().

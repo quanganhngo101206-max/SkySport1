@@ -42,6 +42,12 @@ public class Customer {
     @Builder.Default
     private Integer status = 1;
 
+    // Cờ VIP gán thủ công bởi admin — dùng để lọc điều kiện áp dụng mã giảm
+    // giá theo nhóm khách hàng (mục "chỉ áp dụng cho khách VIP").
+    @Column(name = "is_vip")
+    @Builder.Default
+    private Boolean isVip = false;
+
     @Column(name = "delete_flag")
     @Builder.Default
     private Boolean deleteFlag = false;

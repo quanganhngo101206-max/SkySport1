@@ -13,6 +13,10 @@
                 Chi tiết phiếu nhập
             </div>
             <div class="card-actions">
+                <a th:if="${order.status == 1}" th:href="@{/admin/import-orders/edit/{id}(id=${order.id})}"
+                   class="btn-sky btn-sky-primary">
+                    <i class="fas fa-edit"></i> Sửa
+                </a>
                 <a th:href="@{/admin/import-orders}" class="btn-sky btn-sky-secondary">
                     ← Quay lại
                 </a>

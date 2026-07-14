@@ -111,6 +111,68 @@ public class AdminImportOrderController {
         }
     }
 
+    // ── Form sửa phiếu nhập (chỉ khi Chờ duyệt) ────────────────────────────
+
+    @GetMapping("/edit/{id}")
+    public String editForm(@PathVariable String id, Model model, RedirectAttributes ra) {
+        try {
+            ImportOrder order = importOrderService.findById(id);
+            if (order.getStatus() != ImportOrderStatus.PENDING.getValue()) {
+                ra.addFlashAttribute("error", "Chỉ có thể sửa phiếu nhập đang ở trạng thái Chờ duyệt");
+                return "redirect:/admin/import-orders/" + id;
+            }
+            List<ImportOrderDetail> details = importOrderService.findDetails(id);
+
+            model.addAttribute("order", order);
+            model.addAttribute("details", details);
+            model.addAttribute("suppliers", supplierService.findAll());
+            model.addAttribute("productDetails", productDetailService.findAllActive());
+            model.addAttribute("title", "Sửa phiếu nhập");
+            model.addAttribute("pageContent", "admin/import-order/edit");
+            return "layouts/adminlte/layout";
+        } catch (Exception e) {
+            log.error("Error loading import order {} for edit: {}", id, e.getMessage());
+            ra.addFlashAttribute("error", "Không tìm thấy phiếu nhập: " + id);
+            return "redirect:/admin/import-orders";
+        }
+    }
+
+    @PostMapping("/edit/{id}")
+    public String update(@PathVariable String id,
+                         @RequestParam(required = false) String supplierId,
+                         @RequestParam(required = false) String note,
+                         @RequestParam("productDetailIds") List<Integer> productDetailIds,
+                         @RequestParam("quantities") List<Integer> quantities,
+                         @RequestParam("importPrices") List<BigDecimal> importPrices,
+                         Authentication auth,
+                         RedirectAttributes ra) {
+        try {
+            String staffId = null;
+            try {
+                staffId = staffService.findByAccountUsername(auth.getName()).getId();
+            } catch (Exception e) {
+                log.warn("Admin {} không có Staff record, ghi log bằng username", auth.getName());
+            }
+
+            List<ImportOrderDetail> details = new ArrayList<>();
+            for (int i = 0; i < productDetailIds.size(); i++) {
+                ImportOrderDetail detail = new ImportOrderDetail();
+                detail.setProductDetail(productDetailService.findById(productDetailIds.get(i)));
+                detail.setQuantity(quantities.get(i));
+                detail.setImportPrice(importPrices.get(i));
+                details.add(detail);
+            }
+
+            importOrderService.update(id, supplierId, note, details, staffId);
+            ra.addFlashAttribute("success", "Đã cập nhật phiếu nhập " + id);
+            return "redirect:/admin/import-orders/" + id;
+        } catch (Exception e) {
+            log.error("Error updating import order {}: {}", id, e.getMessage());
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/admin/import-orders/edit/" + id;
+        }
+    }
+
     // ── Duyệt phiếu nhập ─────────────────────────────────────────────────
 
     @PostMapping("/{id}/approve")

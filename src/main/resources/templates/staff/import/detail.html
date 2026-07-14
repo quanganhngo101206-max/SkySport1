@@ -6,6 +6,10 @@
                 Chi tiết phiếu nhập: <strong th:text="${order.id}">PN001</strong>
             </h3>
             <div class="card-actions">
+                <a th:if="${order.status == 1}" th:href="@{/staff/imports/edit/{id}(id=${order.id})}"
+                   class="btn-sky btn-sky-primary btn-sky-sm">
+                    <i class="fas fa-edit"></i> Sửa
+                </a>
                 <a th:href="@{/staff/imports}" class="btn-sky btn-sky-secondary btn-sky-sm">
                     <i class="fas fa-arrow-left"></i> Quay lại
                 </a>
@@ -101,32 +105,12 @@
                 </table>
             </div>
 
-            <!-- Action buttons — chỉ hiện khi chờ duyệt -->
-            <div th:if="${order.status == 1}" style="display:flex;gap:.75rem;flex-wrap:wrap;">
-                <form th:action="@{/staff/imports/{id}/approve(id=${order.id})}" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <div class="mb-3">
-                        <label class="form-sky-label">Ghi chú duyệt (tuỳ chọn)</label>
-                        <input type="text" class="form-sky" name="note" placeholder="Nhập ghi chú...">
-                    </div>
-                    <button type="submit" class="btn-sky btn-sky-success"
-                            onclick="return confirm('Duyệt phiếu nhập này? Kho sẽ được cập nhật.')">
-                        <i class="fas fa-check"></i> Duyệt phiếu nhập
-                    </button>
-                </form>
-
-                <form th:action="@{/staff/imports/{id}/reject(id=${order.id})}" method="post"
-                      style="display:flex;flex-direction:column;gap:.5rem;">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <div class="mb-3">
-                        <label class="form-sky-label">Lý do từ chối (tuỳ chọn)</label>
-                        <input type="text" class="form-sky" name="note" placeholder="Nhập lý do...">
-                    </div>
-                    <button type="submit" class="btn-sky btn-sky-danger"
-                            onclick="return confirm('Từ chối phiếu nhập này?')">
-                        <i class="fas fa-times"></i> Từ chối
-                    </button>
-                </form>
+            <!-- Staff không có quyền duyệt/từ chối phiếu nhập (tránh tự duyệt
+                 phiếu do chính mình tạo) — duyệt/từ chối chỉ Admin mới làm được. -->
+            <div th:if="${order.status == 1}"
+                 style="padding:1rem 1.25rem;background:var(--bg-hover);border-radius:var(--radius-sm);color:var(--text-muted);font-size:.9rem;">
+                <i class="fas fa-clock me-2"></i>
+                Phiếu nhập đang chờ Admin duyệt.
             </div>
 
             <!-- Trạng thái đã xử lý -->

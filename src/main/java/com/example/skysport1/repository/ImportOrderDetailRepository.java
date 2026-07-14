@@ -32,4 +32,8 @@ public interface ImportOrderDetailRepository extends JpaRepository<ImportOrderDe
            where d.productDetail.id = :productDetailId
            """)
     List<ImportOrderDetail> findByProductDetailId(@Param("productDetailId") Integer productDetailId);
+
+    // Dùng khi sửa phiếu nhập đang Chờ duyệt: xoá hết chi tiết cũ trước khi
+    // ghi lại chi tiết mới. An toàn vì phiếu Chờ duyệt chưa cộng tồn kho.
+    void deleteByImportOrderId(String importOrderId);
 }

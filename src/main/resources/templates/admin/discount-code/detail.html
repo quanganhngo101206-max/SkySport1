@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Chi tiết mã giảm giá</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-tag icon"></i>
+                Mã giảm giá: <strong th:text="${discountCode.code}"></strong>
+            </div>
+            <div class="card-actions">
+                <a th:href="@{/admin/discount-codes/edit/{id}(id=${discountCode.id})}" class="btn-sky btn-sky-primary btn-sky-sm">
+                    <i class="fas fa-pen"></i> Sửa
+                </a>
+                <a th:href="@{/admin/discount-codes}" class="btn-sky btn-sky-secondary btn-sky-sm">
+                    ← Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-2"><span style="color:var(--text-muted);">Tên:</span> <strong th:text="${discountCode.name}"></strong></div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Loại giảm:</span>
+                        <strong th:text="${T(com.example.skysport1.enums.DiscountType).of(discountCode.discountType)?.label ?: discountCode.discountType}"></strong>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Giá trị giảm:</span>
+                        <strong th:text="${discountCode.discountValue}"></strong>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Giảm tối đa:</span>
+                        <strong th:text="${discountCode.maxDiscountValue != null ? discountCode.maxDiscountValue : '—'}"></strong>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Giá trị đơn tối thiểu:</span>
+                        <strong th:text="${discountCode.minOrderValue != null ? discountCode.minOrderValue : '—'}"></strong>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Số lượt đã dùng / tổng số lượng:</span>
+                        <strong th:text="${discountCode.usedCount} + ' / ' + (${discountCode.quantity != null} ? ${discountCode.quantity} : '∞')"></strong>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Hiệu lực từ:</span>
+                        <strong th:text="${discountCode.startDate != null ? #temporals.format(discountCode.startDate, 'dd/MM/yyyy HH:mm') : '—'}"></strong>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Hiệu lực đến:</span>
+                        <strong th:text="${discountCode.endDate != null ? #temporals.format(discountCode.endDate, 'dd/MM/yyyy HH:mm') : '—'}"></strong>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Trạng thái:</span>
+                        <span class="badge-sky" th:classappend="${discountCode.status == 1 ? 'success' : 'secondary'}"
+                              th:text="${discountCode.status == 1 ? 'Hoạt động' : 'Dừng'}"></span>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Nhóm khách hàng áp dụng:</span>
+                        <strong th:text="${discountCode.applicableCustomerGroup == 1 ? 'Chỉ khách hàng mới'
+                                            : (discountCode.applicableCustomerGroup == 2 ? 'Chỉ khách hàng VIP' : 'Tất cả khách hàng')}"></strong>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Số lần dùng tối đa / khách:</span>
+                        <strong th:text="${discountCode.maxUsagePerCustomer != null ? discountCode.maxUsagePerCustomer + ' lần' : 'Không giới hạn'}"></strong>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Sản phẩm áp dụng:</span>
+                        <strong th:if="${discountCode.applicableProducts == null or #lists.isEmpty(discountCode.applicableProducts)}">Tất cả sản phẩm</strong>
+                        <span th:unless="${discountCode.applicableProducts == null or #lists.isEmpty(discountCode.applicableProducts)}">
+                            <span th:each="p, iter : ${discountCode.applicableProducts}">
+                                <strong th:text="${p.name}"></strong><span th:unless="${iter.last}">, </span>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <span style="color:var(--text-muted);">Ngày tạo:</span>
+                        <strong th:text="${discountCode.createDate != null ? #temporals.format(discountCode.createDate, 'dd/MM/yyyy HH:mm') : '—'}"></strong>
+                        <span style="color:var(--text-muted);" th:if="${discountCode.createdBy}" th:text="'(bởi ' + ${discountCode.createdBy} + ')'"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-sky mt-3">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-users icon"></i>
+                Khách hàng đã sử dụng (<span th:text="${#lists.size(usages)}"></span>)
+            </div>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(usages)}" class="empty-state">
+                <div class="icon"><i class="fas fa-circle-exclamation"></i></div>
+                <div class="title">Chưa có khách hàng nào dùng mã này</div>
+            </div>
+            <table class="table-sky table table-striped align-middle" th:if="${!#lists.isEmpty(usages)}">
+                <thead>
+                <tr>
+                    <th>Khách hàng</th>
+                    <th>Đơn hàng</th>
+                    <th>Thời điểm dùng</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="u : ${usages}">
+                    <td th:text="${u.customer != null ? u.customer.fullName : '—'}"></td>
+                    <td>
+                        <a th:if="${u.bill != null}" th:href="@{/admin/bills/{id}(id=${u.bill.id})}" th:text="${u.bill.id}"></a>
+                        <span th:unless="${u.bill != null}">—</span>
+                    </td>
+                    <td th:text="${u.usedDate != null ? #temporals.format(u.usedDate, 'dd/MM/yyyy HH:mm') : '—'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

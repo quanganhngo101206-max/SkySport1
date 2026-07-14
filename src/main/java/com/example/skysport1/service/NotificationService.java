@@ -4,7 +4,9 @@ import com.example.skysport1.entity.Customer;
 import com.example.skysport1.entity.Notification;
 import com.example.skysport1.entity.Staff;
 import com.example.skysport1.repository.NotificationRepository;
+import com.example.skysport1.repository.StaffRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +14,11 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final StaffRepository staffRepository;
 
     public List<Notification> findByCustomer(String customerId) {
         return notificationRepository.findByCustomerIdOrderByCreateDateDesc(customerId);
@@ -58,6 +62,23 @@ public class NotificationService {
                 .isRead(false)
                 .build();
         notificationRepository.save(notification);
+    }
+
+    /**
+     * Gửi thông báo cho TẤT CẢ admin đang hoạt động — dùng cho các sự kiện
+     * cần admin biết ngay: đơn hàng mới, phiếu nhập mới, khách hàng mới đăng ký.
+     * Lỗi khi gửi (nếu có) chỉ log, không làm rollback nghiệp vụ chính.
+     */
+    @Transactional
+    public void notifyAllAdmins(String title, String content, String type, String referenceId) {
+        try {
+            List<Staff> admins = staffRepository.findAllActiveAdmins();
+            for (Staff admin : admins) {
+                sendToStaff(admin.getId(), title, content, type, referenceId);
+            }
+        } catch (Exception e) {
+            log.error("Không thể gửi thông báo cho admin (type={}, ref={}): {}", type, referenceId, e.getMessage());
+        }
     }
 
     @Transactional

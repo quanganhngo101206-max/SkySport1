@@ -30,6 +30,14 @@ public interface ImportOrderService {
     ImportOrder create(String supplierId, String staffId, String note,
                        List<ImportOrderDetail> details);
 
+    /**
+     * Sửa phiếu nhập đang ở trạng thái Chờ duyệt (supplier, ghi chú, danh sách
+     * sản phẩm/số lượng/giá nhập). Không cho sửa phiếu đã Duyệt/Từ chối — phiếu
+     * Duyệt rồi đã cộng tồn kho, sửa lại sẽ làm sai lệch dữ liệu tồn kho.
+     */
+    ImportOrder update(String importOrderId, String supplierId, String note,
+                       List<ImportOrderDetail> details, String staffId);
+
     // ── Đổi trạng thái ────────────────────────────────────
 
     /**

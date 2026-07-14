@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -135,10 +136,23 @@ public class SecurityConfig {
                                 "/login", "/dang-ky",
                                 "/403", "/404",
                                 "/css/**", "/js/**", "/images/**", "/dist/**", "/plugins/**",
-                                "/guest/**",
+                                "/guest/**"
+                        ).permitAll()
+                        // Giỏ hàng/checkout: cho phép khách vãng lai (chưa đăng nhập) và
+                        // Customer, nhưng CHẶN Staff/Admin — trước đây các route này permitAll()
+                        // nên tài khoản nội bộ (Staff/Admin) vẫn "mua hàng" được như khách, dễ
+                        // gây nhầm lẫn vai trò/dữ liệu (đơn hàng gắn với tài khoản nội bộ). Route
+                        // /san-pham/** ở trên vẫn permitAll() (xem sản phẩm không sao), chỉ riêng
+                        // hành vi "mua" (giỏ hàng/thanh toán) mới bị chặn với Staff/Admin.
+                        .requestMatchers(
                                 "/customer/cart", "/customer/cart/**",
                                 "/customer/checkout", "/customer/checkout/**"
-                        ).permitAll()
+                        ).access((authentication, context) -> {
+                            boolean isStaffOrAdmin = authentication.get().getAuthorities().stream()
+                                    .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF")
+                                            || a.getAuthority().equals("ROLE_ADMIN"));
+                            return new AuthorizationDecision(!isStaffOrAdmin);
+                        })
                         .requestMatchers(
                                 "/customer/profile/**",
                                 "/customer/address/**",

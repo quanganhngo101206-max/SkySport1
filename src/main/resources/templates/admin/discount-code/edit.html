@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <title>Sửa mã giảm giá</title>
+</head>
+<body>
+<div th:fragment="content">
+
+  <div class="card-sky">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-pen icon"></i>
+        Sửa mã giảm giá: <strong th:text="${discountCode.code}"></strong>
+      </div>
+      <div class="card-actions">
+        <a th:href="@{/admin/discount-codes/{id}(id=${discountCode.id})}" class="btn-sky btn-sky-secondary">
+          ← Quay lại
+        </a>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <form th:action="@{/admin/discount-codes/update/{id}(id=${discountCode.id})}" method="post">
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <p style="color:var(--text-muted); font-size:.85rem;">
+          <i class="fas fa-circle-info"></i>
+          Không thể đổi <strong>mã (code)</strong> sau khi tạo — nếu cần đổi mã, hãy tạo mã mới và dừng mã cũ.
+        </p>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-sky-label">Mã</label>
+            <input class="form-sky" type="text" th:value="${discountCode.code}" disabled
+                   style="opacity:.6; cursor:not-allowed;"/>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-sky-label required">Tên</label>
+            <input class="form-sky" type="text" name="name" required
+                   th:value="${discountCode.name}"/>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-sky-label required">Loại giảm</label>
+            <select class="form-sky" name="discountType" required>
+              <option th:each="dt : ${discountTypes}"
+                      th:value="${dt.value}"
+                      th:text="${dt.label}"
+                      th:selected="${dt.value == discountCode.discountType}"></option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-sky-label required">Giá trị giảm</label>
+            <input class="form-sky" type="number" name="discountValue" min="0" step="0.01" required
+                   th:value="${discountCode.discountValue}"/>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-sky-label">
+              Số lượng
+              <span style="color:var(--text-muted); font-weight:400;"
+                    th:text="'(đã dùng: ' + ${discountCode.usedCount} + ')'"></span>
+            </label>
+            <input class="form-sky" type="number" name="quantity"
+                   th:min="${discountCode.usedCount}"
+                   th:value="${discountCode.quantity}"/>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-sky-label">Giá trị đơn tối thiểu</label>
+            <input class="form-sky" type="number" name="minOrderValue" min="0" step="0.01"
+                   th:value="${discountCode.minOrderValue}"/>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-sky-label">Giảm tối đa</label>
+            <input class="form-sky" type="number" name="maxDiscountValue" min="0" step="0.01"
+                   th:value="${discountCode.maxDiscountValue}"/>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-sky-label">Ngày bắt đầu</label>
+            <input class="form-sky" type="datetime-local" name="startDate"
+                   th:value="${discountCode.startDate}"/>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-sky-label">Ngày kết thúc</label>
+            <input class="form-sky" type="datetime-local" name="endDate"
+                   th:value="${discountCode.endDate}"/>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-sky-label required">Trạng thái</label>
+            <select class="form-sky" name="status">
+              <option value="1" th:selected="${discountCode.status == 1}">Hoạt động</option>
+              <option value="0" th:selected="${discountCode.status == 0}">Dừng</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-sky-label">Áp dụng cho nhóm khách hàng</label>
+            <select class="form-sky" name="applicableCustomerGroup">
+              <option value="0" th:selected="${discountCode.applicableCustomerGroup == 0}">Tất cả khách hàng</option>
+              <option value="1" th:selected="${discountCode.applicableCustomerGroup == 1}">Chỉ khách hàng mới (chưa có đơn hoàn thành)</option>
+              <option value="2" th:selected="${discountCode.applicableCustomerGroup == 2}">Chỉ khách hàng VIP</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-sky-label">
+              Số lần tối đa 1 khách được dùng mã này
+              <small style="font-weight:400;color:var(--text-muted);">(để trống = không giới hạn số lần/khách)</small>
+            </label>
+            <input class="form-sky" type="number" min="1" name="maxUsagePerCustomer"
+                   th:value="${discountCode.maxUsagePerCustomer}" placeholder="Để trống = không giới hạn"/>
+          </div>
+
+          <div class="col-12">
+            <label class="form-sky-label">
+              Áp dụng cho sản phẩm cụ thể
+              <small style="font-weight:400;color:var(--text-muted);">(bỏ trống = áp dụng cho tất cả sản phẩm)</small>
+            </label>
+            <select class="form-sky" name="applicableProductIds" multiple size="8">
+              <option th:each="p : ${products}" th:value="${p.id}" th:text="${p.name}"
+                      th:selected="${selectedProductIds.contains(p.id)}"></option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn-sky btn-sky-primary">
+            <i class="fas fa-save"></i>
+            Lưu thay đổi
+          </button>
+          <a th:href="@{/admin/discount-codes/{id}(id=${discountCode.id})}" class="btn-sky btn-sky-secondary">
+            Hủy
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

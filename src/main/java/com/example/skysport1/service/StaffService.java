@@ -96,8 +96,7 @@ public class StaffService {
     }
 
     /**
-     * Cập nhật thông tin nhân viên. Nếu request.password có giá trị thì đổi
-     * luôn mật khẩu tài khoản gắn với nhân viên đó.
+     * Cập nhật thông tin nhân viên (KHÔNG đụng tới mật khẩu — xem changePassword()).
      */
     @Transactional
     public Staff update(String id, StaffUpdateRequest request) {
@@ -120,14 +119,24 @@ public class StaffService {
         }
         staff.setUpdateDate(LocalDateTime.now());
 
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            Account account = staff.getAccount();
-            account.setPassword(passwordEncoder.encode(request.getPassword()));
-            account.setUpdateDate(LocalDateTime.now());
-            accountRepository.save(account);
-        }
-
         return staffRepository.save(staff);
+    }
+
+    /**
+     * Đổi mật khẩu nhân viên — endpoint/hành động RIÊNG so với update thông
+     * tin cơ bản, để admin không thể vô tình đổi mật khẩu người khác khi
+     * chỉ định sửa SĐT/email.
+     */
+    @Transactional
+    public void changePassword(String id, String newPassword) {
+        Staff staff = findById(id);
+        Account account = staff.getAccount();
+        if (account == null) {
+            throw new ResourceNotFoundException("tài khoản của nhân viên", id);
+        }
+        account.setPassword(passwordEncoder.encode(newPassword));
+        account.setUpdateDate(LocalDateTime.now());
+        accountRepository.save(account);
     }
 
     @Transactional
@@ -167,9 +176,6 @@ public class StaffService {
         if (staff.getAccount() != null) {
             dto.setUsername(staff.getAccount().getUsername());
         }
-
-        // password để trống -> không đổi mật khẩu
-        dto.setPassword(null);
 
         return dto;
     }

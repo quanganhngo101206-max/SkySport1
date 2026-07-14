@@ -2,9 +2,11 @@ package com.example.skysport1.controller.customer;
 
 import com.example.skysport1.dto.request.ReviewRequest;
 import com.example.skysport1.entity.Account;
+import com.example.skysport1.entity.Bill;
 import com.example.skysport1.entity.BillDetail;
 import com.example.skysport1.entity.Customer;
 import com.example.skysport1.entity.Review;
+import com.example.skysport1.enums.OrderStatus;
 import com.example.skysport1.repository.BillDetailRepository;
 import com.example.skysport1.service.AccountService;
 import com.example.skysport1.service.CustomerService;
@@ -55,6 +57,19 @@ public class CustomerReviewController {
             String customerId = getCurrentCustomerId(auth);
             BillDetail billDetail = billDetailRepository.findById(billDetailId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+            // Chặn sớm ở đây (thay vì để khách điền form xong mới báo lỗi ở
+            // bước submit): phải đúng chủ đơn + đơn đã Hoàn thành mới cho
+            // vào form đánh giá. Logic thật sự (không thể bỏ qua) vẫn nằm ở
+            // ReviewServiceImpl.create().
+            Bill bill = billDetail.getBill();
+            if (bill == null || bill.getCustomer() == null
+                    || !customerId.equals(bill.getCustomer().getId())) {
+                throw new RuntimeException("Bạn không có quyền đánh giá sản phẩm này");
+            }
+            if (!OrderStatus.COMPLETED.matches(bill.getStatus())) {
+                throw new RuntimeException("Chỉ có thể đánh giá sản phẩm khi đơn hàng đã hoàn thành");
+            }
 
             model.addAttribute("billDetail", billDetail);
             model.addAttribute("reviewRequest", new ReviewRequest());

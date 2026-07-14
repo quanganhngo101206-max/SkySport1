@@ -3,10 +3,12 @@ package com.example.skysport1.service.impl;
 import com.example.skysport1.entity.*;
 import com.example.skysport1.enums.ImportOrderStatus;
 import com.example.skysport1.enums.InventoryActionType;
+import com.example.skysport1.enums.NotificationType;
 import com.example.skysport1.exception.AppException;
 import com.example.skysport1.exception.ResourceNotFoundException;
 import com.example.skysport1.repository.*;
 import com.example.skysport1.service.ImportOrderService;
+import com.example.skysport1.service.NotificationService;
 import com.example.skysport1.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class ImportOrderServiceImpl implements ImportOrderService {
     private final ProductDetailRepository        productDetailRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
     private final IdGenerator                    idGenerator;
+    private final NotificationService             notificationService;
 
     // ── Query ──────────────────────────────────────────────────────────────
 
@@ -121,8 +124,85 @@ public class ImportOrderServiceImpl implements ImportOrderService {
         logHistory(savedOrder, null, ImportOrderStatus.PENDING.getValue(),
                 "Tạo phiếu nhập", staffId);
 
+        // Báo cho admin biết có phiếu nhập mới đang chờ duyệt — hạ tầng
+        // notification đã có sẵn (enum NEW_IMPORT_ORDER), chỉ còn thiếu bước
+        // "nối dây" này. Lỗi gửi thông báo (nếu có) chỉ log bên trong
+        // notifyAllAdmins, không làm rollback việc tạo phiếu nhập.
+        notificationService.notifyAllAdmins(
+                "Phiếu nhập mới",
+                "Phiếu nhập " + savedOrder.getId() + " vừa được tạo, tổng tiền "
+                        + totalAmount + "đ — đang chờ duyệt.",
+                NotificationType.NEW_IMPORT_ORDER.getValue(),
+                savedOrder.getId());
+
         log.info("Tạo phiếu nhập: {} | supplier: {} | total: {}",
                 savedOrder.getId(), supplierId, totalAmount);
+        return savedOrder;
+    }
+
+    // ── Sửa phiếu (chỉ khi đang Chờ duyệt) ──────────────────────────────────
+
+    @Override
+    @Transactional
+    public ImportOrder update(String importOrderId, String supplierId, String note,
+                              List<ImportOrderDetail> details, String staffId) {
+        ImportOrder importOrder = findById(importOrderId);
+
+        if (importOrder.getStatus() != ImportOrderStatus.PENDING.getValue()) {
+            throw new AppException("Chỉ có thể sửa phiếu nhập đang ở trạng thái Chờ duyệt");
+        }
+        if (details == null || details.isEmpty()) {
+            throw new AppException("Phiếu nhập phải có ít nhất 1 sản phẩm");
+        }
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        List<ImportOrderDetail> validatedDetails = new ArrayList<>();
+
+        for (ImportOrderDetail item : details) {
+            if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                throw new AppException("Số lượng nhập phải lớn hơn 0");
+            }
+
+            ProductDetail pd = productDetailRepository
+                    .findById(item.getProductDetail().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "sản phẩm", String.valueOf(item.getProductDetail().getId())));
+
+            BigDecimal importPrice = item.getImportPrice() != null
+                    ? item.getImportPrice()
+                    : pd.getCostPrice() != null ? pd.getCostPrice() : BigDecimal.ZERO;
+
+            BigDecimal lineTotal = importPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
+            totalAmount = totalAmount.add(lineTotal);
+
+            validatedDetails.add(ImportOrderDetail.builder()
+                    .productDetail(pd)
+                    .quantity(item.getQuantity())
+                    .importPrice(importPrice)
+                    .totalAmount(lineTotal)
+                    .build());
+        }
+
+        // Xoá hết chi tiết cũ rồi ghi lại chi tiết mới — an toàn vì phiếu
+        // đang Chờ duyệt nghĩa là CHƯA cộng tồn kho, không có gì cần "hoàn tác".
+        importOrderDetailRepository.deleteByImportOrderId(importOrderId);
+
+        importOrder.setSupplier(supplierId != null ? Supplier.builder().id(supplierId).build() : null);
+        importOrder.setNote(note);
+        importOrder.setTotalAmount(totalAmount);
+        importOrder.setUpdatedBy(staffId);
+        importOrder = importOrderRepository.save(importOrder);
+
+        final ImportOrder savedOrder = importOrder;
+        for (ImportOrderDetail detail : validatedDetails) {
+            detail.setImportOrder(savedOrder);
+            importOrderDetailRepository.save(detail);
+        }
+
+        logHistory(savedOrder, savedOrder.getStatus(), savedOrder.getStatus(),
+                "Sửa phiếu nhập", staffId);
+
+        log.info("Sửa phiếu nhập: {} | staff: {}", importOrderId, staffId);
         return savedOrder;
     }
 

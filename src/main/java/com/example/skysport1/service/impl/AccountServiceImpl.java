@@ -4,6 +4,7 @@ import com.example.skysport1.dto.request.RegisterRequest;
 import com.example.skysport1.entity.Account;
 import com.example.skysport1.entity.Customer;
 import com.example.skysport1.entity.Role;
+import com.example.skysport1.enums.NotificationType;
 import com.example.skysport1.enums.RoleName;
 import com.example.skysport1.exception.AppException;
 import com.example.skysport1.exception.DuplicateException;
@@ -11,6 +12,7 @@ import com.example.skysport1.repository.AccountRepository;
 import com.example.skysport1.repository.CustomerRepository;
 import com.example.skysport1.repository.RoleRepository;
 import com.example.skysport1.service.AccountService;
+import com.example.skysport1.service.NotificationService;
 import com.example.skysport1.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class AccountServiceImpl implements AccountService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final IdGenerator idGenerator;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -74,6 +77,12 @@ public class AccountServiceImpl implements AccountService {
                 .deleteFlag(false)
                 .build();
         customerRepository.save(customer);
+
+        notificationService.notifyAllAdmins(
+                "Khách hàng mới",
+                "Khách hàng " + customer.getFullName() + " (" + customer.getId() + ") vừa đăng ký tài khoản.",
+                NotificationType.NEW_CUSTOMER.getValue(),
+                customer.getId());
 
         log.info("Đăng ký thành công: {} ({})", account.getUsername(), account.getId());
         return account;

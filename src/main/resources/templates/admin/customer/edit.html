@@ -27,31 +27,39 @@
                 </div>
 
                 <input type="hidden" name="id" th:value="${customer.id}">
+                <p style="color:var(--text-muted); font-size:.85rem; margin-top:-.5rem;">
+                    <i class="fas fa-circle-info"></i>
+                    Thông tin định danh của khách hàng chỉ hiển thị để tham khảo — khách hàng tự
+                    sửa các trường này trong trang hồ sơ của họ. Admin chỉ có thể khoá/mở khoá tài khoản.
+                </p>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-sky-label required">Họ tên</label>
-                            <input type="text" class="form-sky" id="fullName" name="fullName"
-                                   th:value="${customer.fullName}" required>
+                            <label class="form-sky-label">Họ tên</label>
+                            <input type="text" class="form-sky" id="fullName"
+                                   th:value="${customer.fullName}" disabled
+                                   style="opacity:.6; cursor:not-allowed;">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-sky-label required">Số điện thoại</label>
-                            <input type="text" class="form-sky" id="phone" name="phone"
-                                   th:value="${customer.phone}" required>
+                            <label class="form-sky-label">Số điện thoại</label>
+                            <input type="text" class="form-sky" id="phone"
+                                   th:value="${customer.phone}" disabled
+                                   style="opacity:.6; cursor:not-allowed;">
                         </div>
 
                         <div class="mb-3">
                             <label class="form-sky-label">Email</label>
-                            <input type="email" class="form-sky" id="email" name="email"
-                                   th:value="${customer.email}">
+                            <input type="email" class="form-sky" id="email"
+                                   th:value="${customer.email}" disabled
+                                   style="opacity:.6; cursor:not-allowed;">
                         </div>
                     </div>
 
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-sky-label">Giới tính</label>
-                            <select class="form-sky" id="gender" name="gender">
+                            <select class="form-sky" id="gender" disabled style="opacity:.6; cursor:not-allowed;">
                                 <option value="">Chưa xác định</option>
                                 <option value="true" th:selected="${customer.gender == true}">Nam</option>
                                 <option value="false" th:selected="${customer.gender == false}">Nữ</option>
@@ -60,16 +68,38 @@
 
                         <div class="mb-3">
                             <label class="form-sky-label">Ngày sinh</label>
-                            <input type="date" class="form-sky" id="dob" name="dob"
-                                   th:value="${customer.dob}">
+                            <input type="date" class="form-sky" id="dob"
+                                   th:value="${customer.dob}" disabled
+                                   style="opacity:.6; cursor:not-allowed;">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-sky-label">Trạng thái</label>
+                            <label class="form-sky-label required">Trạng thái tài khoản</label>
                             <select class="form-sky" id="status" name="status">
                                 <option value="1" th:selected="${customer.status == 1}">Hoạt động</option>
-                                <option value="0" th:selected="${customer.status == 0}">Không hoạt động</option>
+                                <option value="0" th:selected="${customer.status == 0}">Không hoạt động (khoá)</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="border-color:var(--border-color); margin:1.5rem 0;">
+
+                <h6 style="color:var(--primary); font-weight:700; margin-bottom:1rem;">
+                    <i class="fas fa-location-dot me-2"></i>Địa chỉ giao hàng
+                </h6>
+                <div th:if="${#lists.isEmpty(addresses)}" style="color:var(--text-muted);">
+                    Khách hàng chưa lưu địa chỉ giao hàng nào.
+                </div>
+                <div th:unless="${#lists.isEmpty(addresses)}" class="row g-2">
+                    <div class="col-md-6" th:each="addr : ${addresses}">
+                        <div style="border:1px solid var(--border-color); border-radius:var(--radius); padding:.85rem 1rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong th:text="${addr.receiverName}"></strong>
+                                <span th:if="${addr.isDefault}" class="badge-sky success">Mặc định</span>
+                            </div>
+                            <div style="color:var(--text-muted); font-size:.85rem;" th:text="${addr.receiverPhone}"></div>
+                            <div th:text="${addr.address}"></div>
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,10 @@
 package com.example.skysport1.controller;
 
 import com.example.skysport1.entity.Account;
+import com.example.skysport1.entity.Color;
 import com.example.skysport1.entity.Product;
+import com.example.skysport1.entity.ProductDetail;
+import com.example.skysport1.entity.Size;
 import com.example.skysport1.repository.BrandRepository;
 import com.example.skysport1.repository.CategoryRepository;
 import com.example.skysport1.service.AccountService;
@@ -18,8 +21,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -93,6 +99,28 @@ public class HomeController {
         var details = productService.findDetailsByProductId(product.getId());
         model.addAttribute("product", product);
         model.addAttribute("productDetails", details);
+
+//         Danh sách màu/size DUY NHẤT để vẽ swatch/button — trước đây vòng
+//         lặp chạy trực tiếp trên productDetails (mỗi dòng = 1 tổ hợp
+//         color+size) nên 1 màu có nhiều size sẽ bị vẽ lặp nhiều swatch,
+//         và mỗi swatch/button lại gắn cứng với đúng 1 detail.id -> bấm size
+//         sau ghi đè mất màu đã chọn trước đó. LinkedHashMap giữ đúng thứ
+//         tự xuất hiện trong danh sách gốc.
+        List<Color> distinctColors = details.stream()
+                .map(ProductDetail::getColor)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Color::getId, c -> c, (a, b) -> a, LinkedHashMap::new))
+                .values().stream().toList();
+
+        List<Size> distinctSizes = details.stream()
+                .map(ProductDetail::getSize)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Size::getId, s -> s, (a, b) -> a, LinkedHashMap::new))
+                .values().stream().toList();
+
+        model.addAttribute("distinctColors", distinctColors);
+        model.addAttribute("distinctSizes", distinctSizes);
+
         Set<String> wishlistProductIds = wishlistService.findProductIdsInWishlist(getCurrentCustomerId());
         model.addAttribute("inWishlist", wishlistProductIds.contains(product.getId()));
         model.addAttribute("currentUrl", request.getRequestURI());

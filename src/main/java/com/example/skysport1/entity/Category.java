@@ -1,6 +1,8 @@
 package com.example.skysport1.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -13,6 +15,8 @@ public class Category {
     private String id;
 
     @Column(nullable = false)
+    @NotBlank(message = "Vui lòng nhập tên danh mục")
+    @Size(max = 100, message = "Tên danh mục tối đa 100 ký tự")
     private String name;
 
     private String description;

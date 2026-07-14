@@ -55,14 +55,21 @@
                                 —
                             </span>
                         </td>
-                        <td>
+                        <td style="white-space:nowrap;">
+                            <a th:href="@{/admin/discount-codes/{id}(id=${dc.id})}"
+                               class="btn-sky btn-sky-secondary btn-sky-sm" title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a th:href="@{/admin/discount-codes/edit/{id}(id=${dc.id})}"
+                               class="btn-sky btn-sky-primary btn-sky-sm" title="Sửa">
+                                <i class="fas fa-pen"></i>
+                            </a>
                             <form th:action="@{/admin/discount-codes/delete/{id}(id=${dc.id})}" method="post" style="display:inline;">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <button type="submit"
                                         class="btn-sky btn-sky-danger btn-sky-sm"
-                                        onclick="return confirm('Xóa mã giảm giá này?')">
+                                        onclick="return confirm('Xóa mã giảm giá này?')" title="Xóa">
                                     <i class="fas fa-trash"></i>
-                                    Xóa
                                 </button>
                             </form>
                         </td>

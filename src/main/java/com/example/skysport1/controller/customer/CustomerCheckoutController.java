@@ -7,6 +7,7 @@ import com.example.skysport1.entity.CartDetail;
 import com.example.skysport1.entity.DiscountCode;
 import com.example.skysport1.entity.ProductDetail;
 import com.example.skysport1.repository.AddressShippingRepository;
+import com.example.skysport1.repository.CustomerRepository;
 import com.example.skysport1.repository.ProductDetailRepository;
 import com.example.skysport1.service.AccountService;
 import com.example.skysport1.service.BillService;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -40,6 +42,9 @@ import java.util.Optional;
 public class CustomerCheckoutController {
 
     private static final String SESSION_GUEST_CART = "GUEST_CART";
+    // Phải trùng key với CustomerCartController — nơi "Mua ngay" ghi 1 sản
+    // phẩm/biến thể vào session, tách biệt khỏi giỏ hàng thật.
+    private static final String SESSION_BUY_NOW_ITEM = "BUY_NOW_ITEM";
 
     private final ProductDetailRepository productDetailRepository;
     private final BillService billService;
@@ -48,56 +53,37 @@ public class CustomerCheckoutController {
     private final CustomerService customerService;
     private final DiscountCodeService discountCodeService;
     private final AddressShippingRepository addressShippingRepository;
+    private final CustomerRepository customerRepository;
 
     // ===== HIỂN THỊ FORM CHECKOUT =====
     @GetMapping
-    public String checkoutPage(Model model, HttpSession session) {
+    public String checkoutPage(@RequestParam(required = false) Boolean buyNow,
+                               Model model, HttpSession session) {
         String customerId = getCurrentCustomerId().orElse(null);
+        boolean buyNowMode = isBuyNowMode(buyNow, session);
 
-        log.info("🔍 checkoutPage - customerId: {}", customerId);
+        log.info("🔍 checkoutPage - customerId: {}, buyNow: {}", customerId, buyNowMode);
 
-        // Lấy giỏ hàng
-        List<CartDetail> cartItems = new ArrayList<>();
-        if (customerId != null) {
+        // Lấy giỏ hàng: ưu tiên item "mua ngay" nếu đang ở chế độ này, ngược
+        // lại đọc giỏ hàng thật như bình thường (không đụng vào nhau).
+        List<CartDetail> cartItems;
+        if (buyNowMode) {
+            cartItems = buildCartDetailsFromMap(getBuyNowItem(session));
+            log.info("🛒 Buy-now mode: {} sản phẩm", cartItems.size());
+        } else if (customerId != null) {
             cartItems = cartService.getCartDetails(customerId);
             log.info("🟢 Customer {} có {} sản phẩm trong giỏ", customerId, cartItems.size());
         } else {
             Map<Integer, Integer> guestCart = getGuestCart(session);
             log.info("🟡 Guest có {} sản phẩm trong session cart", guestCart.size());
-            log.info("🟡 Session cart content: {}", guestCart);
-
-            for (Map.Entry<Integer, Integer> e : guestCart.entrySet()) {
-                Integer productDetailId = e.getKey();
-                Integer qty = e.getValue();
-
-                if (productDetailId == null || productDetailId <= 0) {
-                    log.warn("⚠️ ProductDetailId invalid: {}", productDetailId);
-                    continue;
-                }
-                if (qty == null || qty <= 0) {
-                    log.warn("⚠️ Quantity invalid for productDetailId {}: {}", productDetailId, qty);
-                    continue;
-                }
-
-                try {
-                    ProductDetail pd = productDetailRepository.findByIdWithProductSizeColor(productDetailId)
-                            .orElseThrow(() -> new RuntimeException("ProductDetail not found: " + productDetailId));
-                    CartDetail cd = CartDetail.builder()
-                            .productDetail(pd)
-                            .quantity(qty)
-                            .build();
-                    cartItems.add(cd);
-                    log.info("   ✅ Added product: {} - SL: {}", pd.getProduct().getName(), qty);
-                } catch (Exception ex) {
-                    log.error("   ❌ Không tìm thấy sản phẩm với id: {}, error: {}", productDetailId, ex.getMessage());
-                }
-            }
+            cartItems = buildCartDetailsFromMap(guestCart);
         }
 
         log.info("📦 Total cart items after processing: {}", cartItems.size());
 
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartItemsCount", cartItems.size());
+        model.addAttribute("buyNow", buyNowMode);
         model.addAttribute("title", "Thanh toán");
 
         // Tính subtotal
@@ -118,9 +104,11 @@ public class CustomerCheckoutController {
         BigDecimal bestDiscountAmount = BigDecimal.ZERO;
         String bestDiscountCode = null;
         if (customerId != null) {
+            List<com.example.skysport1.service.DiscountCodeService.LineItem> lineItems =
+                    com.example.skysport1.service.DiscountCodeService.fromCartDetails(cartItems);
             for (DiscountCode dc : discountCodes) {
                 try {
-                    BigDecimal current = discountCodeService.validate(dc.getCode(), customerId, subtotal);
+                    BigDecimal current = discountCodeService.validate(dc.getCode(), customerId, lineItems);
                     if (current != null && current.compareTo(bestDiscountAmount) > 0) {
                         bestDiscountAmount = current;
                         bestDiscountCode = dc.getCode();
@@ -147,40 +135,41 @@ public class CustomerCheckoutController {
         return "customer/checkout/checkout";
     }
 
+    // ===== CHECK TRÙNG EMAIL/PHONE (GỢI Ý ĐĂNG NHẬP, KHÔNG CHẶN) =====
+    /**
+     * Gọi bằng AJAX khi guest nhập email/phone ở form checkout khách vãng lai.
+     * Chỉ dùng để GỢI Ý "email/SĐT này đã có tài khoản, đăng nhập để nhận ưu
+     * đãi" — KHÔNG chặn guest tiếp tục đặt hàng nếu họ không muốn đăng nhập
+     * (đúng yêu cầu nghiệp vụ, xem mục 2.7/14 trong note đánh giá cải tiến).
+     */
+    @GetMapping("/check-guest-contact")
+    @ResponseBody
+    public Map<String, Object> checkGuestContact(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone) {
+        boolean existsByEmail = email != null && !email.isBlank()
+                && customerRepository.findByEmail(email.trim()).isPresent();
+        boolean existsByPhone = phone != null && !phone.isBlank()
+                && customerRepository.existsByPhone(phone.trim());
+
+        return Map.of("exists", existsByEmail || existsByPhone);
+    }
+
     @GetMapping("/guest")
-    public String guestCheckoutPage(Model model, HttpSession session) {
+    public String guestCheckoutPage(@RequestParam(required = false) Boolean buyNow,
+                                    Model model, HttpSession session) {
+        boolean buyNowMode = isBuyNowMode(buyNow, session);
+
         // Load cart items and compute totals for guest, so template can render order summary.
-        Map<Integer, Integer> guestCart = getGuestCart(session);
+        List<CartDetail> cartItems = buyNowMode
+                ? buildCartDetailsFromMap(getBuyNowItem(session))
+                : buildCartDetailsFromMap(getGuestCart(session));
 
-        List<CartDetail> cartItems = new ArrayList<>();
-        for (Map.Entry<Integer, Integer> e : guestCart.entrySet()) {
-            Integer productDetailId = e.getKey();
-            Integer qty = e.getValue();
-
-            if (productDetailId == null || productDetailId <= 0) continue;
-            if (qty == null || qty <= 0) continue;
-
-            try {
-                ProductDetail pd = productDetailRepository.findByIdWithProductSizeColor(productDetailId)
-                        .orElseThrow(() -> new RuntimeException("ProductDetail not found: " + productDetailId));
-
-                CartDetail cd = CartDetail.builder()
-                        .productDetail(pd)
-                        .quantity(qty)
-                        .build();
-
-                cartItems.add(cd);
-                log.info("✅ [GUEST] Added cartItems -> productDetailId={}, product={}, qty={}",
-                        productDetailId, pd.getProduct() != null ? pd.getProduct().getName() : null, qty);
-            } catch (Exception ex) {
-                log.error("Guest checkoutPage - cannot load productDetailId={}: {}", productDetailId, ex.getMessage());
-            }
-        }
-
-        log.info("📦 [GUEST] cartItems.size() after processing: {}", cartItems.size());
+        log.info("📦 [GUEST] cartItems.size() after processing: {}, buyNow: {}", cartItems.size(), buyNowMode);
 
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("cartItemsCount", cartItems.size());
+        model.addAttribute("buyNow", buyNowMode);
         model.addAttribute("title", "Thanh toán - Khách");
 
         BigDecimal subtotal = cartItems.stream()
@@ -216,6 +205,7 @@ public class CustomerCheckoutController {
     @PostMapping("/apply-discount")
     public String applyDiscount(
             @RequestParam(value = "applyDiscountCode", required = false) String discountCode,
+            @RequestParam(required = false) Boolean buyNow,
             Model model,
             HttpSession session,
             RedirectAttributes ra
@@ -226,9 +216,14 @@ public class CustomerCheckoutController {
             return "redirect:/customer/checkout/guest";
         }
 
-        // Lấy giỏ hàng
-        List<CartDetail> cartItems = cartService.getCartDetails(customerId);
+        boolean buyNowMode = isBuyNowMode(buyNow, session);
+
+        // Lấy giỏ hàng: ưu tiên item "mua ngay" nếu đang ở chế độ này
+        List<CartDetail> cartItems = buyNowMode
+                ? buildCartDetailsFromMap(getBuyNowItem(session))
+                : cartService.getCartDetails(customerId);
         model.addAttribute("cartItems", cartItems);
+        model.addAttribute("buyNow", buyNowMode);
         model.addAttribute("title", "Thanh toán");
 
         BigDecimal subtotal = cartItems.stream()
@@ -249,7 +244,8 @@ public class CustomerCheckoutController {
 
         if (normalizedCode != null) {
             try {
-                discountAmount = discountCodeService.validate(normalizedCode, customerId, subtotal);
+                discountAmount = discountCodeService.validate(normalizedCode, customerId,
+                        com.example.skysport1.service.DiscountCodeService.fromCartDetails(cartItems));
                 finalCode = normalizedCode;
                 ra.addFlashAttribute("discountConfirmCode", normalizedCode);
                 log.info("✅ Áp dụng mã thành công: {} - giảm: {}", normalizedCode, discountAmount);
@@ -289,20 +285,22 @@ public class CustomerCheckoutController {
             @RequestParam("receiverPhone") String receiverPhone,
             @RequestParam("paymentId") String paymentId,
             @RequestParam(value = "discountCode", required = false) String discountCode,
+            @RequestParam(required = false) Boolean buyNow,
             HttpSession session,
             RedirectAttributes ra
     ) {
         try {
-            Map<Integer, Integer> guestCart = getGuestCart(session);
-            log.info("🟡 Guest checkout - cart content: {}", guestCart);
+            boolean buyNowMode = isBuyNowMode(buyNow, session);
+            Map<Integer, Integer> sourceCart = buyNowMode ? getBuyNowItem(session) : getGuestCart(session);
+            log.info("🟡 Guest checkout - cart content: {}, buyNow: {}", sourceCart, buyNowMode);
 
-            if (guestCart == null || guestCart.isEmpty()) {
+            if (sourceCart == null || sourceCart.isEmpty()) {
                 ra.addFlashAttribute("error", "Giỏ hàng trống! Vui lòng thêm sản phẩm trước khi thanh toán.");
                 return "redirect:/customer/cart";
             }
 
             List<BillDetail> items = new ArrayList<>();
-            for (Map.Entry<Integer, Integer> e : guestCart.entrySet()) {
+            for (Map.Entry<Integer, Integer> e : sourceCart.entrySet()) {
                 Integer productDetailId = e.getKey();
                 Integer qty = e.getValue();
 
@@ -330,7 +328,13 @@ public class CustomerCheckoutController {
                     items
             );
 
-            session.removeAttribute(SESSION_GUEST_CART);
+            // Chỉ xoá đúng nguồn giỏ hàng đã dùng — "mua ngay" không được đụng
+            // tới giỏ hàng thật (guest cart) của khách và ngược lại.
+            if (buyNowMode) {
+                clearBuyNowItem(session);
+            } else {
+                session.removeAttribute(SESSION_GUEST_CART);
+            }
             ra.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + created.getId());
 
             // ✅ Sửa redirect để guest (chưa đăng nhập) không bị chặn role CUSTOMER
@@ -351,13 +355,18 @@ public class CustomerCheckoutController {
             @RequestParam("receiverPhone") String receiverPhone,
             @RequestParam("paymentId") String paymentId,
             @RequestParam(value = "discountCode", required = false) String discountCode,
+            @RequestParam(required = false) Boolean buyNow,
+            HttpSession session,
             RedirectAttributes ra
     ) {
         try {
             String customerId = getCurrentCustomerId()
                     .orElseThrow(() -> new RuntimeException("Bạn cần đăng nhập để checkout"));
 
-            List<CartDetail> cartDetails = cartService.getCartDetails(customerId);
+            boolean buyNowMode = isBuyNowMode(buyNow, session);
+            List<CartDetail> cartDetails = buyNowMode
+                    ? buildCartDetailsFromMap(getBuyNowItem(session))
+                    : cartService.getCartDetails(customerId);
             if (cartDetails == null || cartDetails.isEmpty()) {
                 ra.addFlashAttribute("error", "Giỏ hàng trống!");
                 return "redirect:/customer/cart";
@@ -381,7 +390,12 @@ public class CustomerCheckoutController {
                     items
             );
 
-            cartService.clearCart(customerId);
+            // "Mua ngay" chỉ xoá item tạm, KHÔNG đụng tới giỏ hàng thật của khách
+            if (buyNowMode) {
+                clearBuyNowItem(session);
+            } else {
+                cartService.clearCart(customerId);
+            }
             ra.addFlashAttribute("success", "Đặt hàng thành công! Mã đơn: " + created.getId());
             return "redirect:/customer/orders/" + created.getId();
 
@@ -393,6 +407,56 @@ public class CustomerCheckoutController {
     }
 
     // ===== HELPER METHODS =====
+
+    /**
+     * true nếu đang ở luồng "Mua ngay" VÀ session còn item tương ứng — dùng ở
+     * cả GET (hiển thị) lẫn POST (tạo đơn) để đảm bảo tính nhất quán.
+     */
+    private boolean isBuyNowMode(Boolean buyNow, HttpSession session) {
+        return Boolean.TRUE.equals(buyNow) && !getBuyNowItem(session).isEmpty();
+    }
+
+    private Map<Integer, Integer> getBuyNowItem(HttpSession session) {
+        Object raw = session.getAttribute(SESSION_BUY_NOW_ITEM);
+        if (raw instanceof Map<?, ?> map) {
+            Map<Integer, Integer> result = new java.util.HashMap<>();
+            for (Map.Entry<?, ?> e : map.entrySet()) {
+                if (e.getKey() instanceof Integer k && e.getValue() instanceof Integer v) {
+                    result.put(k, v);
+                }
+            }
+            return result;
+        }
+        return Collections.emptyMap();
+    }
+
+    private void clearBuyNowItem(HttpSession session) {
+        session.removeAttribute(SESSION_BUY_NOW_ITEM);
+    }
+
+    /**
+     * Build danh sách CartDetail (để tính tiền/hiển thị) từ 1 map
+     * productDetailId -> quantity — dùng chung cho cả giỏ hàng guest thật lẫn
+     * item "mua ngay", tránh lặp lại vòng lặp try/catch ở nhiều nơi.
+     */
+    private List<CartDetail> buildCartDetailsFromMap(Map<Integer, Integer> map) {
+        List<CartDetail> items = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> e : map.entrySet()) {
+            Integer productDetailId = e.getKey();
+            Integer qty = e.getValue();
+            if (productDetailId == null || productDetailId <= 0) continue;
+            if (qty == null || qty <= 0) continue;
+            try {
+                ProductDetail pd = productDetailRepository.findByIdWithProductSizeColor(productDetailId)
+                        .orElseThrow(() -> new RuntimeException("ProductDetail not found: " + productDetailId));
+                items.add(CartDetail.builder().productDetail(pd).quantity(qty).build());
+            } catch (Exception ex) {
+                log.error("buildCartDetailsFromMap - không tìm thấy productDetailId={}: {}", productDetailId, ex.getMessage());
+            }
+        }
+        return items;
+    }
+
     private Map<Integer, Integer> getGuestCart(HttpSession session) {
         Object raw = session.getAttribute(SESSION_GUEST_CART);
         log.info("🔍 Raw guest cart from session: {}", raw);

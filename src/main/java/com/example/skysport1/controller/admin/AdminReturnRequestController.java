@@ -3,6 +3,7 @@ package com.example.skysport1.controller.admin;
 import com.example.skysport1.entity.ReturnRequest;
 import com.example.skysport1.entity.ReturnRequestDetail;
 import com.example.skysport1.entity.Staff;
+import com.example.skysport1.repository.ReturnStatusHistoryRepository;
 import com.example.skysport1.service.ReturnRequestService;
 import com.example.skysport1.service.StaffService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class AdminReturnRequestController {
 
     private final ReturnRequestService returnRequestService;
     private final StaffService staffService;
+    private final ReturnStatusHistoryRepository returnStatusHistoryRepository;
 
     // ── Danh sách ────────────────────────────────────────────────────────
 
@@ -47,8 +49,15 @@ public class AdminReturnRequestController {
         try {
             ReturnRequest request = returnRequestService.findById(id);
             List<ReturnRequestDetail> details = returnRequestService.findDetails(id);
+            List<com.example.skysport1.entity.ReturnStatusHistory> history =
+                    returnStatusHistoryRepository.findByReturnRequestIdOrderByIdAsc(id);
+            java.math.BigDecimal totalRefund = details.stream()
+                    .map(d -> d.getRefundPrice() != null ? d.getRefundPrice() : java.math.BigDecimal.ZERO)
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
             model.addAttribute("request", request);
             model.addAttribute("details", details);
+            model.addAttribute("history", history);
+            model.addAttribute("totalRefund", totalRefund);
             model.addAttribute("title", "Chi tiết yêu cầu hoàn trả");
             model.addAttribute("pageContent", "admin/return-request/detail");
             return "layouts/adminlte/layout";

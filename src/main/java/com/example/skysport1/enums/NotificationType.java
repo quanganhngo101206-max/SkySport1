@@ -10,7 +10,9 @@ public enum NotificationType {
     RETURN_REJECTED("RETURN_REJECTED",   "Hoàn trả bị từ chối"),
     VOUCHER_NEW("VOUCHER_NEW",           "Voucher mới"),
     LOW_STOCK("LOW_STOCK",               "Tồn kho thấp"),
-    NEW_ORDER("NEW_ORDER",               "Đơn hàng mới");
+    NEW_ORDER("NEW_ORDER",               "Đơn hàng mới"),
+    NEW_IMPORT_ORDER("NEW_IMPORT_ORDER", "Phiếu nhập mới"),
+    NEW_CUSTOMER("NEW_CUSTOMER",         "Khách hàng mới");
 
     private final String value;
     private final String label;

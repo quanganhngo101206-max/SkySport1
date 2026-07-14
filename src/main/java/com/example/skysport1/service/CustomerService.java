@@ -2,7 +2,6 @@ package com.example.skysport1.service;
 
 import com.example.skysport1.dto.request.CustomerUpdateRequest;
 import com.example.skysport1.entity.Customer;
-import com.example.skysport1.exception.DuplicateException;
 import com.example.skysport1.exception.ResourceNotFoundException;
 import com.example.skysport1.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,20 +35,18 @@ public class CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("khách hàng", phone));
     }
 
+    /**
+     * Admin CHỈ được phép khoá/mở khoá tài khoản khách hàng (status) tại đây.
+     * Họ tên/SĐT/email/giới tính/ngày sinh là dữ liệu định danh của khách,
+     * cố ý KHÔNG cho admin sửa trực tiếp để tránh việc sửa nhầm ảnh hưởng
+     * tới khách hàng — khách tự sửa những trường đó qua trang hồ sơ của họ
+     * (CustomerProfileController). fullName/phone/email/... trong
+     * CustomerUpdateRequest chỉ được form gửi lên ở dạng readonly để hiển
+     * thị, service này bỏ qua, không ghi đè.
+     */
     @Transactional
     public Customer update(String id, CustomerUpdateRequest request) {
         Customer customer = findById(id);
-        // Kiểm tra phone trùng nếu đổi
-        if (request.getPhone() != null
-                && !request.getPhone().equals(customer.getPhone())
-                && customerRepository.existsByPhone(request.getPhone())) {
-            throw new DuplicateException("Số điện thoại đã được sử dụng");
-        }
-        customer.setFullName(request.getFullName());
-        customer.setPhone(request.getPhone());
-        customer.setEmail(request.getEmail());
-        customer.setGender(request.getGender());
-        customer.setDob(request.getDob());
         if (request.getStatus() != null) {
             customer.setStatus(request.getStatus());
         }

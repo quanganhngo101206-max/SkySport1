@@ -285,8 +285,10 @@
 
         @media print {
             .no-print { display: none !important; }
-            .card-sky { border: 1px solid #ddd; }
+            .ss-nav, .ss-footer { display: none !important; }
             body { background: #fff; color: #000; }
+            .container-custom { max-width: 100%; margin: 0; padding: 0; }
+            .card-sky { border: 1px solid #ddd; box-shadow: none; break-inside: avoid; }
             .badge-status { border: 1px solid #ddd; }
         }
     </style>
@@ -440,6 +442,7 @@
                         <form th:if="${(bill.status == 1 or bill.status == 2) and detail.itemStatus == 1}"
                               th:action="@{/guest/order/{billId}/details/{billDetailId}/cancel(billId=${bill.id}, billDetailId=${detail.id})}"
                               method="post"
+                              class="no-print"
                               style="display:inline;"
                               onsubmit="return confirm('Bạn có chắc chắn muốn hủy sản phẩm này không?')">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>

@@ -10,6 +10,13 @@ import java.time.LocalDate;
 /**
  * DTO cho admin sửa thông tin khách hàng.
  * Thay cho việc bind thẳng entity Customer qua @ModelAttribute.
+ *
+ * LƯU Ý: admin/customer/edit.html hiện chỉ cho phép admin đổi "status"
+ * (khoá/mở khoá tài khoản) — fullName/phone/email/gender/dob được hiển thị
+ * ở dạng disabled nên trình duyệt KHÔNG gửi lên khi submit. Các field đó
+ * vẫn giữ lại trong DTO để không phá vỡ chỗ khác lỡ còn tham chiếu, nhưng
+ * KHÔNG còn @NotBlank/bắt buộc, và CustomerService.update() cũng không
+ * dùng chúng để ghi đè dữ liệu khách hàng.
  */
 @Data
 public class CustomerUpdateRequest {
@@ -17,10 +24,8 @@ public class CustomerUpdateRequest {
     @NotBlank(message = "Thiếu id khách hàng")
     private String id;
 
-    @NotBlank(message = "Vui lòng nhập họ tên")
     private String fullName;
 
-    @NotBlank(message = "Vui lòng nhập số điện thoại")
     @Pattern(regexp = "^(0[3|5|7|8|9])[0-9]{8}$", message = "Số điện thoại không hợp lệ")
     private String phone;
 

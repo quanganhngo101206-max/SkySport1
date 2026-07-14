@@ -60,7 +60,10 @@
                     <td>
                         <a th:href="@{/admin/import-orders/{id}(id=${o.id})}" class="btn-sky btn-sky-secondary btn-sky-sm">
                             <i class="fas fa-eye"></i>
-                            Chi tiết
+                        </a>
+                        <a th:if="${o.status == 1}" th:href="@{/admin/import-orders/{id}/edit(id=${o.id})}"
+                           class="btn-sky btn-sky-warning btn-sky-sm">
+                            <i class="fas fa-pen"></i>
                         </a>
                     </td>
                 </tr>

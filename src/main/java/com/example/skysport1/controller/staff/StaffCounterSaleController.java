@@ -14,6 +14,11 @@ import com.example.skysport1.repository.CustomerRepository;
 import com.example.skysport1.repository.PaymentRepository;
 import com.example.skysport1.repository.ProductDetailRepository;
 import com.example.skysport1.service.BillService;
+import com.example.skysport1.service.BrandService;
+import com.example.skysport1.service.CategoryService;
+import com.example.skysport1.service.ColorService;
+import com.example.skysport1.service.MaterialService;
+import com.example.skysport1.service.SizeService;
 import com.example.skysport1.service.StaffService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,13 +57,56 @@ public class StaffCounterSaleController {
     private final ProductDetailRepository productDetailRepository;
     private final CustomerRepository customerRepository;
     private final PaymentRepository paymentRepository;
+    private final BrandService brandService;
+    private final CategoryService categoryService;
+    private final MaterialService materialService;
+    private final SizeService sizeService;
+    private final ColorService colorService;
 
     @GetMapping
     public String index(Model model) {
         model.addAttribute("payments", paymentRepository.findAll());
+        model.addAttribute("brands", brandService.findAll());
+        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("materials", materialService.findAll());
+        model.addAttribute("sizes", sizeService.findAll());
+        model.addAttribute("colors", colorService.findAll());
         model.addAttribute("title", "Bán hàng tại quầy");
         model.addAttribute("pageContent", "staff/counter-sale/index");
         return "layouts/staff/layout";
+    }
+
+    /**
+     * Lọc sản phẩm kết hợp theo hãng/danh mục/chất liệu/size/màu + từ khoá.
+     * Mọi tham số optional, không truyền hoặc rỗng nghĩa là bỏ qua điều kiện đó.
+     */
+    @GetMapping("/filter-product")
+    @ResponseBody
+    public List<CounterSaleProductResponse> filterProduct(
+            @RequestParam(required = false) String brandId,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String materialId,
+            @RequestParam(required = false) String sizeId,
+            @RequestParam(required = false) String colorId,
+            @RequestParam(required = false) String keyword) {
+        List<ProductDetail> results = productDetailRepository.filterForCounterSale(
+                blankToNull(brandId), blankToNull(categoryId), blankToNull(materialId),
+                blankToNull(sizeId), blankToNull(colorId), keyword);
+        return results.stream()
+                .map(pd -> new CounterSaleProductResponse(
+                        pd.getId(),
+                        pd.getSku(),
+                        pd.getProduct() != null ? pd.getProduct().getName() : "",
+                        pd.getSize() != null ? pd.getSize().getName() : null,
+                        pd.getColor() != null ? pd.getColor().getName() : null,
+                        pd.getPrice(),
+                        pd.getQuantity()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value;
     }
 
     /**

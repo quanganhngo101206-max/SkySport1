@@ -4,6 +4,15 @@
 <body>
 <div th:replace="~{layouts/customer/layout :: body}">
     <div th:fragment="content">
+        <style>
+            @media print {
+                .no-print { display: none !important; }
+                .cus-navbar, .account-sidebar, .cus-footer { display: none !important; }
+                .account-content { padding: 0 !important; }
+                body { background: #fff; color: #000; }
+                .cus-card { border: 1px solid #ddd !important; box-shadow: none !important; }
+            }
+        </style>
         <div class="cus-card">
             <div class="cus-card-header">
                 <h5>
@@ -11,7 +20,7 @@
                     Chi tiết đơn hàng: <strong th:text="${bill.id}">HD001</strong>
                 </h5>
 
-                <div class="cus-card-actions" style="display:flex;gap:.75rem;align-items:center;">
+                <div class="cus-card-actions no-print" style="display:flex;gap:.75rem;align-items:center;">
                     <a th:href="@{/customer/orders}" class="cus-btn cus-btn-secondary cus-btn-sm">
                         <i class="fas fa-arrow-left"></i> Quay lại
                     </a>
@@ -27,6 +36,10 @@
                             <i class="fas fa-xmark me-1"></i> Hủy đơn
                         </button>
                     </form>
+
+                    <button type="button" onclick="window.print()" class="cus-btn cus-btn-secondary cus-btn-sm">
+                        <i class="fas fa-print me-1"></i> In đơn hàng
+                    </button>
                 </div>
             </div>
 
@@ -198,6 +211,7 @@
                                 <form th:if="${(bill.status == 1 or bill.status == 2) and d.itemStatus == 1}"
                                       th:action="@{/customer/orders/{billId}/details/{billDetailId}/cancel(billId=${bill.id}, billDetailId=${d.id})}"
                                       method="post"
+                                      class="no-print"
                                       style="display:inline;">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <input type="hidden" name="note" value="Khách hàng hủy sản phẩm"/>

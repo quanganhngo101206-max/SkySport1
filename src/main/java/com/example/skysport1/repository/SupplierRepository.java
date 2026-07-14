@@ -19,6 +19,17 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByNameIgnoreCaseAndDeleteFlagFalse(String name);
+
+    // Dùng khi UPDATE — loại trừ chính bản ghi đang sửa ra khỏi check trùng,
+    // nếu không thì mỗi lần sửa (mà không đổi tên/SĐT/email) sẽ tự báo trùng
+    // với chính nó.
+    boolean existsByPhoneAndIdNot(String phone, String id);
+
+    boolean existsByEmailAndIdNot(String email, String id);
+
+    boolean existsByNameIgnoreCaseAndDeleteFlagFalseAndIdNot(String name, String id);
+
     @Query("SELECT s FROM Supplier s WHERE s.deleteFlag = false AND " +
             "LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Supplier> searchByName(@Param("keyword") String keyword);

@@ -254,8 +254,10 @@ public class BillServiceImpl implements BillService {
             // xong (tránh oversell voucher) — đối xứng với cách trừ tồn kho ở
             // trên. Không dùng validate() (không khoá) ở đây vì đây là luồng
             // tạo đơn thật sự, không phải preview.
-            lockedDiscountCode = discountCodeService.lockAndValidate(discountCode, customerId, subtotal);
-            discountAmount = discountCodeService.calculateDiscountAmount(lockedDiscountCode, subtotal);
+            lockedDiscountCode = discountCodeService.lockAndValidate(discountCode, customerId,
+                    com.example.skysport1.service.DiscountCodeService.fromBillDetails(savedDetails));
+            discountAmount = discountCodeService.calculateDiscountAmount(lockedDiscountCode,
+                    com.example.skysport1.service.DiscountCodeService.fromBillDetails(savedDetails));
             discountCodeId = lockedDiscountCode.getId();
         }
 
@@ -300,6 +302,12 @@ public class BillServiceImpl implements BillService {
         if (bill.getInvoiceType() == 1) {
             logHistory(savedBill, null, OrderStatus.PENDING.getValue(),
                     "Khách hàng đặt đơn", null);
+            notificationService.notifyAllAdmins(
+                    "Đơn hàng mới",
+                    "Đơn hàng " + savedBill.getId() + " vừa được đặt, tổng tiền "
+                            + totalAmount + "đ — cần xác nhận.",
+                    NotificationType.NEW_ORDER.getValue(),
+                    savedBill.getId());
         }
 
         log.info("Tạo đơn thành công: {} | total: {}", savedBill.getId(), totalAmount);

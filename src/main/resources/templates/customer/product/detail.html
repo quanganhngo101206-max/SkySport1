@@ -71,38 +71,32 @@
                         </div>
                     </div>
 
-                    <!-- ===== ADD TO CART FORM ===== -->
-                    <form th:action="@{/customer/cart/add}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <input type="hidden" id="productDetailId" name="productDetailId" th:value="${firstDetail != null ? firstDetail.id : ''}"/>
+                    <!-- ===== ADD TO CART / BUY NOW FORM ===== -->
+                    <form id="variantForm">
+                        <input type="hidden" id="productDetailId" name="productDetailId" value=""/>
 
                         <!-- Màu sắc -->
-                        <div class="mb-3" th:if="${#lists.size(productDetails) > 0}">
+                        <div class="mb-3" th:if="${#lists.size(distinctColors) > 0}">
                             <label style="color:var(--paper);font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Màu sắc</label>
                             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                <span th:each="detail : ${productDetails}" th:if="${detail.color != null}">
+                                <span th:each="color : ${distinctColors}">
                                     <span class="color-swatch"
-                                          style="display:inline-block;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);cursor:pointer;transition:.2s;"
-                                          th:style="'background-color:' + ${detail.color.hexCode}"
-                                          th:title="${detail.color.name}"
-                                          th:data-detail-id="${detail.id}"
-                                          th:onclick="'selectColor(this, ' + ${detail.id} + ')'"></span>
+                                          th:style="'display:inline-block;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);cursor:pointer;transition:.2s;background-color:' + ${color.hexCode}"
+                                          th:title="${color.name}"
+                                          th:data-color-id="${color.id}"></span>
                                 </span>
                             </div>
                             <span style="color:var(--muted);font-size:.8rem;display:block;margin-top:6px;" id="selectedColorText">Chọn màu</span>
                         </div>
 
                         <!-- Size -->
-                        <div class="mb-3" th:if="${#lists.size(productDetails) > 0}">
+                        <div class="mb-3" th:if="${#lists.size(distinctSizes) > 0}">
                             <label style="color:var(--paper);font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Kích cỡ</label>
                             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                <span th:each="detail : ${productDetails}" th:if="${detail.size != null}">
+                                <span th:each="size : ${distinctSizes}">
                                     <button type="button" class="size-btn btn-ss btn-ss-ghost btn-ss-sm"
-                                            th:text="${detail.size.name}"
-                                            th:data-detail-id="${detail.id}"
-                                            th:disabled="${detail.quantity <= 0}"
-                                            th:style="${detail.quantity <= 0} ? 'opacity:.4;cursor:not-allowed;' : ''"
-                                            th:onclick="'selectSize(this, ' + ${detail.id} + ')'">M</button>
+                                            th:text="${size.name}"
+                                            th:data-size-id="${size.id}">M</button>
                                 </span>
                             </div>
                             <span style="color:var(--muted);font-size:.8rem;display:block;margin-top:6px;" id="selectedSizeText">Chọn size</span>
@@ -119,11 +113,17 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn-ss btn-ss-primary btn-ss-block" style="padding:1rem;font-size:1rem;">
-                            <i class="fas fa-cart-plus"></i>
-                            <span id="btnText">Thêm vào giỏ hàng</span>
-                        </button>
+                        <div style="display:flex;gap:10px;">
+                            <button type="button" id="btnAddToCart" class="btn-ss btn-ss-ghost btn-ss-block" style="padding:1rem;font-size:1rem;flex:1;">
+                                <i class="fas fa-cart-plus"></i>
+                                <span id="btnText">Thêm vào giỏ hàng</span>
+                            </button>
+                            <button type="button" id="btnBuyNow" class="btn-ss btn-ss-primary btn-ss-block" style="padding:1rem;font-size:1rem;flex:1;">
+                                <i class="fas fa-bolt"></i> Mua ngay
+                            </button>
+                        </div>
                     </form>
+                    <div id="pdpToast" style="display:none;margin-top:10px;padding:.7rem 1rem;border-radius:8px;font-size:.9rem;"></div>
 
                     <!-- Mô tả -->
                     <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--line);">
@@ -150,27 +150,85 @@
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 
-<script>
-    function selectColor(el, detailId) {
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var CSRF_PARAM_NAME = /*[[${_csrf.parameterName}]]*/ '_csrf';
+    /*]]>*/
+
+    // Bảng tra "màu + size -> ProductDetail.id" — build 1 lần khi load trang
+    // từ toàn bộ productDetails (danh sách gốc, KHÔNG phải distinctColors/
+    // distinctSizes). Đây là chỗ fix bug chính: trước đây selectColor và
+    // selectSize đều ghi đè trực tiếp #productDetailId nên chọn cái sau sẽ
+    // xóa mất lựa chọn của cái trước.
+    var variantList = [];
+    /*[# th:each="d : ${productDetails}"]*/
+    /*[# th:if="${d.color != null and d.size != null}"]*/
+    variantList.push({
+        colorId: /*[[${d.color.id}]]*/ '',
+        sizeId: /*[[${d.size.id}]]*/ '',
+        detailId: /*[[${d.id}]]*/ 0,
+        quantity: /*[[${d.quantity}]]*/ 0
+    });
+    /*[/]*/
+    /*[/]*/
+
+    var variantMap = {};
+    variantList.forEach(function (v) {
+        variantMap[v.colorId + '|' + v.sizeId] = { id: v.detailId, quantity: v.quantity };
+    });
+
+    var selectedColorId = null;
+    var selectedSizeId = null;
+
+    function selectColor(el, colorId) {
         document.querySelectorAll('.color-swatch').forEach(s => { s.style.borderColor = 'var(--line)'; s.style.boxShadow = 'none'; });
         el.style.borderColor = 'var(--flare)';
         el.style.boxShadow = '0 0 0 2px var(--flare)';
-        document.getElementById('productDetailId').value = detailId;
+        selectedColorId = colorId;
         document.getElementById('selectedColorText').textContent = 'Đã chọn: ' + el.getAttribute('title');
-        updateButtonText();
+        resolveVariant();
     }
 
-    function selectSize(el, detailId) {
+    function selectSize(el, sizeId) {
         document.querySelectorAll('.size-btn').forEach(b => {
             b.style.borderColor = 'var(--line)'; b.style.background = 'var(--panel-2)'; b.style.color = 'var(--muted)';
         });
         el.style.borderColor = 'var(--flare)';
         el.style.background = 'var(--flare)';
         el.style.color = '#fff';
-        document.getElementById('productDetailId').value = detailId;
+        selectedSizeId = sizeId;
         document.getElementById('selectedSizeText').textContent = 'Đã chọn: ' + el.textContent;
-        updateButtonText();
+        resolveVariant();
     }
+
+    // Chỉ khi đã chọn ĐỦ cả màu lẫn size mới tra variantMap ra đúng
+    // ProductDetail.id thật của tổ hợp đó.
+    function resolveVariant() {
+        document.getElementById('productDetailId').value = '';
+        if (!selectedColorId || !selectedSizeId) return;
+
+        var v = variantMap[selectedColorId + '|' + selectedSizeId];
+        if (v && v.quantity > 0) {
+            document.getElementById('productDetailId').value = v.id;
+        } else {
+            showPdpToast('Tổ hợp màu/size này hiện không có sẵn hoặc đã hết hàng', 'error');
+        }
+    }
+
+    // Gắn event bằng JS thuần (KHÔNG dùng th:onclick) — Thymeleaf 3.1 chặn
+    // biến kiểu String nội suy trực tiếp vào thuộc tính sự kiện DOM
+    // (onclick/onload...) để chống injection, chỉ đọc được qua data-*.
+    document.querySelectorAll('.color-swatch').forEach(function (el) {
+        el.addEventListener('click', function () {
+            selectColor(this, this.getAttribute('data-color-id'));
+        });
+    });
+    document.querySelectorAll('.size-btn').forEach(function (el) {
+        el.addEventListener('click', function () {
+            if (this.disabled) return;
+            selectSize(this, this.getAttribute('data-size-id'));
+        });
+    });
 
     function changeQty(delta) {
         var input = document.getElementById('qty');
@@ -178,29 +236,77 @@
         if (val >= 1) input.value = val;
     }
 
-    function updateButtonText() {
-        var detailId = document.getElementById('productDetailId').value;
-        document.getElementById('btnText').textContent = (detailId && detailId !== '') ? 'Thêm vào giỏ hàng' : 'Vui lòng chọn màu hoặc size';
+    function getSelectedDetailId() {
+        return document.getElementById('productDetailId').value;
     }
 
-    document.querySelector('form').addEventListener('submit', function(e) {
-        var detailId = document.getElementById('productDetailId').value;
-        if (!detailId || detailId === '') {
-            e.preventDefault();
-            alert('Vui lòng chọn màu sắc hoặc kích cỡ trước khi thêm vào giỏ!');
+    function showPdpToast(message, type) {
+        var el = document.getElementById('pdpToast');
+        el.textContent = message;
+        el.style.background = type === 'error' ? 'rgba(220,53,69,.15)' : 'rgba(46,213,115,.15)';
+        el.style.color = type === 'error' ? '#dc3545' : '#2ed573';
+        el.style.display = 'block';
+        setTimeout(function () { el.style.display = 'none'; }, 3000);
+    }
+
+    document.getElementById('btnAddToCart').addEventListener('click', function () {
+        var detailId = getSelectedDetailId();
+        if (!detailId) {
+            showPdpToast('Vui lòng chọn màu sắc hoặc kích cỡ trước khi thêm vào giỏ!', 'error');
+            return;
         }
+        var qty = document.getElementById('qty').value || 1;
+        var csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        var body = new URLSearchParams();
+        body.set('productDetailId', detailId);
+        body.set('quantity', qty);
+
+        var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        headers[csrfHeader] = csrfToken;
+
+        fetch('/customer/cart/add', { method: 'POST', headers: headers, body: body.toString() })
+            .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+            .then(function (res) {
+                if (res.ok && res.data.success) {
+                    showPdpToast('Đã thêm vào giỏ hàng!', 'success');
+                    if (typeof updateCartBadge === 'function') updateCartBadge(res.data.cartCount);
+                } else {
+                    showPdpToast(res.data.message || 'Không thể thêm vào giỏ', 'error');
+                }
+            })
+            .catch(function () { showPdpToast('Không thể kết nối tới máy chủ', 'error'); });
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-        var firstDetail = document.querySelector('.color-swatch');
-        if (firstDetail) {
-            selectColor(firstDetail, parseInt(firstDetail.getAttribute('data-detail-id')));
-        } else {
-            var firstSize = document.querySelector('.size-btn:not([disabled])');
-            if (firstSize) {
-                selectSize(firstSize, parseInt(firstSize.getAttribute('data-detail-id')));
-            }
+    document.getElementById('btnBuyNow').addEventListener('click', function () {
+        var detailId = getSelectedDetailId();
+        if (!detailId) {
+            showPdpToast('Vui lòng chọn màu sắc hoặc kích cỡ trước khi mua!', 'error');
+            return;
         }
+        var qty = document.getElementById('qty').value || 1;
+        var csrfToken = document.querySelector('meta[name="_csrf"]').content;
+
+        // Submit thật (không phải AJAX) để trình duyệt theo đúng redirect
+        // sang trang checkout ở chế độ mua ngay.
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/customer/cart/buy-now';
+
+        function addField(name, value) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        }
+        addField('productDetailId', detailId);
+        addField('quantity', qty);
+        addField(CSRF_PARAM_NAME, csrfToken);
+
+        document.body.appendChild(form);
+        form.submit();
     });
 </script>
 

@@ -164,8 +164,11 @@
         </div>
 
         <div class="ss-actions">
-            <a href="/customer/cart" class="ss-icon-btn" title="Giỏ hàng">
+            <a href="/customer/cart" class="ss-icon-btn" title="Giỏ hàng" style="position:relative;">
                 <i class="fas fa-shopping-cart"></i>
+                <span id="cartBadge" style="display:none;position:absolute;top:-6px;right:-6px;background:var(--flare);
+                        color:#fff;font-size:.65rem;font-weight:700;min-width:16px;height:16px;border-radius:8px;
+                        display:none;align-items:center;justify-content:center;padding:0 4px;">0</span>
             </a>
 
             <!-- Khách chưa đăng nhập -->
@@ -217,5 +220,26 @@
         </div>
         <div class="bottom">© 2026 SkySport — Áo thể thao chính hãng</div>
     </div>
+
+    <!-- Badge số lượng giỏ hàng — nằm trong fragment footer nên mọi trang
+         include footer đều tự có, không cần include thêm gì khác -->
+    <script>
+        function updateCartBadge(count) {
+            var badge = document.getElementById('cartBadge');
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('/customer/cart/count')
+                .then(function (r) { return r.json(); })
+                .then(function (data) { updateCartBadge(data.cartCount); })
+                .catch(function () {});
+        });
+    </script>
 </footer>
 </html>

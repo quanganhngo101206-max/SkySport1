@@ -22,6 +22,37 @@
                         </div>
                     </div>
 
+                    <!-- BỘ LỌC THUỘC TÍNH: lọc kết hợp hãng/danh mục/chất liệu/size/màu -->
+                    <div class="form-group">
+                        <label>Lọc theo thuộc tính</label>
+                        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;">
+                            <select id="filterBrand" class="form-sky">
+                                <option value="">Hãng</option>
+                                <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}"></option>
+                            </select>
+                            <select id="filterCategory" class="form-sky">
+                                <option value="">Danh mục</option>
+                                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+                            </select>
+                            <select id="filterMaterial" class="form-sky">
+                                <option value="">Chất liệu</option>
+                                <option th:each="m : ${materials}" th:value="${m.id}" th:text="${m.name}"></option>
+                            </select>
+                            <select id="filterSize" class="form-sky">
+                                <option value="">Size</option>
+                                <option th:each="s : ${sizes}" th:value="${s.id}" th:text="${s.name}"></option>
+                            </select>
+                            <select id="filterColor" class="form-sky">
+                                <option value="">Màu</option>
+                                <option th:each="co : ${colors}" th:value="${co.id}" th:text="${co.name}"></option>
+                            </select>
+                        </div>
+                        <div id="filterResultsWrap" style="display:none;margin-top:.6rem;max-height:280px;overflow-y:auto;
+                                border:1px solid var(--border-color,#eee);border-radius:var(--radius-sm,8px);">
+                            <div id="filterResultsList"></div>
+                        </div>
+                    </div>
+
                     <table class="table-sky" style="margin-top:1rem;">
                         <thead>
                         <tr>
@@ -147,6 +178,57 @@
                     resultList.style.display = 'none';
                 }
             });
+
+            // ===== LỌC THEO THUỘC TÍNH (hãng/danh mục/chất liệu/size/màu) =====
+            const filterIds = ['filterBrand', 'filterCategory', 'filterMaterial', 'filterSize', 'filterColor'];
+            const filterResultsWrap = document.getElementById('filterResultsWrap');
+            const filterResultsList = document.getElementById('filterResultsList');
+
+            function doFilter() {
+                const brandId = document.getElementById('filterBrand').value;
+                const categoryId = document.getElementById('filterCategory').value;
+                const materialId = document.getElementById('filterMaterial').value;
+                const sizeId = document.getElementById('filterSize').value;
+                const colorId = document.getElementById('filterColor').value;
+
+                if (!brandId && !categoryId && !materialId && !sizeId && !colorId) {
+                    filterResultsWrap.style.display = 'none';
+                    filterResultsList.innerHTML = '';
+                    return;
+                }
+
+                const params = new URLSearchParams();
+                if (brandId) params.set('brandId', brandId);
+                if (categoryId) params.set('categoryId', categoryId);
+                if (materialId) params.set('materialId', materialId);
+                if (sizeId) params.set('sizeId', sizeId);
+                if (colorId) params.set('colorId', colorId);
+
+                fetch('/staff/counter-sale/filter-product?' + params.toString())
+                    .then(r => r.json())
+                    .then(items => {
+                        if (!items.length) {
+                            filterResultsList.innerHTML = '<div style="padding:.7rem;color:var(--text-muted);">Không có biến thể nào khớp bộ lọc</div>';
+                        } else {
+                            filterResultsList.innerHTML = items.map(it => `
+                        <div class="cs-search-item" style="padding:.6rem .8rem;cursor:pointer;border-bottom:1px solid var(--border-color,#eee);"
+                             data-item='${JSON.stringify(it)}'>
+                            <strong>${it.productName}</strong> ${it.sizeName ? '- ' + it.sizeName : ''} ${it.colorName ? '- ' + it.colorName : ''}
+                            <div style="font-size:.85rem;color:var(--text-muted);">
+                                SKU: ${it.sku} · Tồn: ${it.quantityAvailable} · ${money(it.price)}
+                            </div>
+                        </div>`).join('');
+                            filterResultsList.querySelectorAll('.cs-search-item').forEach(el => {
+                                el.addEventListener('click', function() {
+                                    addToCart(JSON.parse(this.getAttribute('data-item')));
+                                });
+                            });
+                        }
+                        filterResultsWrap.style.display = 'block';
+                    });
+            }
+
+            filterIds.forEach(id => document.getElementById(id).addEventListener('change', doFilter));
 
             // ===== GIỎ HÀNG =====
             function addToCart(item) {

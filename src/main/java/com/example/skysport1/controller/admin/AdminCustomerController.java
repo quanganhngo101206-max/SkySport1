@@ -3,6 +3,7 @@ package com.example.skysport1.controller.admin;
 import com.example.skysport1.dto.request.CustomerUpdateRequest;
 import com.example.skysport1.entity.Customer;
 import com.example.skysport1.exception.DuplicateException;
+import com.example.skysport1.repository.AddressShippingRepository;
 import com.example.skysport1.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,9 @@ import java.util.List;
 public class AdminCustomerController {
 
     private final CustomerService customerService;
+    // Chỉ dùng để HIỂN THỊ địa chỉ giao hàng của khách ở trang sửa —
+    // admin không có quyền thêm/sửa/xóa địa chỉ, đó là dữ liệu của khách hàng.
+    private final AddressShippingRepository addressShippingRepository;
 
     /**
      * Danh sách khách hàng
@@ -42,6 +46,7 @@ public class AdminCustomerController {
     public String editForm(@PathVariable String id, Model model) {
         Customer customer = customerService.findById(id);
         model.addAttribute("customer", customer);
+        model.addAttribute("addresses", addressShippingRepository.findByCustomerId(id));
         model.addAttribute("title", "Sửa khách hàng");
         model.addAttribute("pageContent", "admin/customer/edit");
         return "layouts/adminlte/layout";
@@ -59,6 +64,7 @@ public class AdminCustomerController {
             // Load lại form với lỗi validate hiển thị ngay, không redirect mất dữ liệu
             Customer customer = customerService.findById(request.getId());
             model.addAttribute("customer", customer);
+            model.addAttribute("addresses", addressShippingRepository.findByCustomerId(request.getId()));
             model.addAttribute("errors", bindingResult.getAllErrors());
             model.addAttribute("title", "Sửa khách hàng");
             model.addAttribute("pageContent", "admin/customer/edit");
@@ -66,8 +72,8 @@ public class AdminCustomerController {
         }
         try {
             customerService.update(request.getId(), request);
-            ra.addFlashAttribute("success", "Cập nhật khách hàng thành công!");
-            log.info("Cập nhật khách hàng: {} ({})", request.getFullName(), request.getId());
+            ra.addFlashAttribute("success", "Cập nhật trạng thái khách hàng thành công!");
+            log.info("Cập nhật trạng thái khách hàng {}: status={}", request.getId(), request.getStatus());
         } catch (DuplicateException e) {
             ra.addFlashAttribute("error", e.getMessage());
             return "redirect:/admin/customers/edit/" + request.getId();

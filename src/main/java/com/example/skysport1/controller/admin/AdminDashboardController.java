@@ -134,6 +134,39 @@ public class AdminDashboardController {
                 .limit(5)
                 .toList();
 
+        // ===== Doanh thu thực thu (trừ giá vốn) =====
+        // Lưu ý: BillDetail không snapshot costPrice lúc bán, nên lấy costPrice
+        // hiện tại của ProductDetail — chấp nhận được cho mục đích thống kê
+        // tổng quan (không dùng để đối soát kế toán chính xác tuyệt đối).
+        BigDecimal totalCost = completedBills.stream()
+                .filter(b -> b.getBillDetails() != null)
+                .flatMap(b -> b.getBillDetails().stream())
+                .filter(bd -> bd.getProductDetail() != null && bd.getProductDetail().getCostPrice() != null
+                        && bd.getQuantity() != null)
+                .map(bd -> bd.getProductDetail().getCostPrice().multiply(BigDecimal.valueOf(bd.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal netRevenue = totalRevenue.subtract(totalCost);
+
+        // ===== Top khách hàng theo tổng chi tiêu (dựa trên đơn Hoàn thành) =====
+        Map<Customer, BigDecimal> spendByCustomer = completedBills.stream()
+                .filter(b -> b.getCustomer() != null && b.getTotalAmount() != null)
+                .collect(Collectors.groupingBy(
+                        Bill::getCustomer,
+                        Collectors.reducing(BigDecimal.ZERO, Bill::getTotalAmount, BigDecimal::add)
+                ));
+
+        List<Map<String, Object>> topCustomers = spendByCustomer.entrySet().stream()
+                .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                .limit(5)
+                .map(e -> {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("fullName", e.getKey().getFullName());
+                    row.put("email", e.getKey().getEmail());
+                    row.put("totalSpent", e.getValue());
+                    return row;
+                })
+                .toList();
+
         // ===== Revenue chart 6 months =====
         YearMonth current = YearMonth.from(LocalDate.now());
         List<String> revenueLabels = new ArrayList<>();
@@ -171,6 +204,8 @@ public class AdminDashboardController {
 
         model.addAttribute("recentCustomers", recentCustomers);
         model.addAttribute("topProducts", topProducts);
+        model.addAttribute("netRevenue", netRevenue);
+        model.addAttribute("topCustomers", topCustomers);
 
         model.addAttribute("activeVouchers", activeVouchers.size());
         model.addAttribute("inStockProducts", inStockProducts);

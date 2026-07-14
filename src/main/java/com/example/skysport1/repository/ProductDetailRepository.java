@@ -80,4 +80,29 @@ public interface ProductDetailRepository extends JpaRepository<ProductDetail, In
             "AND (lower(pd.sku) LIKE lower(concat('%', :keyword, '%')) " +
             "     OR lower(p.name) LIKE lower(concat('%', :keyword, '%')))")
     List<ProductDetail> searchForCounterSale(@Param("keyword") String keyword);
+
+    // Dùng cho màn "Bán hàng tại quầy": lọc kết hợp theo hãng/danh mục/chất
+    // liệu/size/màu + từ khoá. Mọi tham số đều optional (null = bỏ qua điều
+    // kiện đó) để 1 query phục vụ được mọi tổ hợp lọc từ UI.
+    @Query("SELECT pd FROM ProductDetail pd " +
+            "LEFT JOIN FETCH pd.product p " +
+            "LEFT JOIN FETCH pd.size " +
+            "LEFT JOIN FETCH pd.color " +
+            "WHERE pd.deleteFlag = false AND pd.status = 1 " +
+            "AND (:brandId IS NULL OR p.brand.id = :brandId) " +
+            "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
+            "AND (:materialId IS NULL OR p.material.id = :materialId) " +
+            "AND (:sizeId IS NULL OR pd.size.id = :sizeId) " +
+            "AND (:colorId IS NULL OR pd.color.id = :colorId) " +
+            "AND (:keyword IS NULL OR :keyword = '' " +
+            "     OR lower(pd.sku) LIKE lower(concat('%', :keyword, '%')) " +
+            "     OR lower(p.name) LIKE lower(concat('%', :keyword, '%'))) " +
+            "ORDER BY p.name ASC")
+    List<ProductDetail> filterForCounterSale(
+            @Param("brandId") String brandId,
+            @Param("categoryId") String categoryId,
+            @Param("materialId") String materialId,
+            @Param("sizeId") String sizeId,
+            @Param("colorId") String colorId,
+            @Param("keyword") String keyword);
 }

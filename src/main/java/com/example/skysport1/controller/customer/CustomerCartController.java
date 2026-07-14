@@ -11,6 +11,7 @@ import com.example.skysport1.service.CustomerService;
 import com.example.skysport1.service.ProductDetailService;
 import com.example.skysport1.util.mapper.CustomerMapper;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,9 @@ import java.util.Map;
 public class CustomerCartController {
 
     private static final String SESSION_GUEST_CART = "GUEST_CART";
+    // Giỏ hàng tạm cho luồng "Mua ngay" — tách biệt hoàn toàn khỏi giỏ hàng
+    // thật (persistent cart / GUEST_CART) để không làm lệch giỏ hàng của khách.
+    private static final String SESSION_BUY_NOW_ITEM = "BUY_NOW_ITEM";
 
     private final CartService cartService;
     private final AccountService accountService;
@@ -98,29 +103,68 @@ public class CustomerCartController {
     }
 
     @PostMapping("/add")
-    public String addToCart(
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> addToCart(
             @RequestParam("productDetailId") Integer productDetailId,
             @RequestParam(value = "quantity", defaultValue = "1") int quantity,
             HttpSession session
     ) {
         String customerId = getCurrentCustomerId().orElse(null);
 
-        if (productDetailId == null || productDetailId <= 0) {
-            return "redirect:/customer/cart";
-        }
-        if (quantity <= 0) {
-            return "redirect:/customer/cart";
+        if (productDetailId == null || productDetailId <= 0 || quantity <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "Vui lòng chọn biến thể và số lượng hợp lệ"));
         }
 
         if (customerId == null) {
             Map<Integer, Integer> guestCart = getGuestCart(session);
             guestCart.merge(productDetailId, quantity, Integer::sum);
             session.setAttribute(SESSION_GUEST_CART, guestCart);
-            return "redirect:/customer/cart";
+            int count = guestCart.values().stream().mapToInt(Integer::intValue).sum();
+            return ResponseEntity.ok(Map.of("success", true, "cartCount", count));
         }
 
         cartService.addToCart(customerId, productDetailId, quantity);
-        return "redirect:/customer/cart";
+        int count = cartService.getCartDetails(customerId).stream()
+                .mapToInt(CartDetail::getQuantity).sum();
+        return ResponseEntity.ok(Map.of("success", true, "cartCount", count));
+    }
+
+    /**
+     * "Mua ngay" — không đụng tới giỏ hàng thật (persistent cart / GUEST_CART).
+     * Lưu đúng 1 sản phẩm/biến thể vào 1 session key riêng, rồi chuyển thẳng
+     * tới trang checkout ở chế độ buyNow=true, nơi chỉ đọc đúng sản phẩm này.
+     */
+    @PostMapping("/buy-now")
+    public String buyNow(
+            @RequestParam("productDetailId") Integer productDetailId,
+            @RequestParam(value = "quantity", defaultValue = "1") int quantity,
+            HttpSession session
+    ) {
+        if (productDetailId == null || productDetailId <= 0 || quantity <= 0) {
+            return "redirect:/customer/cart";
+        }
+        session.setAttribute(SESSION_BUY_NOW_ITEM,
+                Collections.singletonMap(productDetailId, quantity));
+        return "redirect:/customer/checkout?buyNow=true";
+    }
+
+    /**
+     * Trả số lượng sản phẩm trong giỏ hàng thật (không tính buy-now) — dùng
+     * để hiển thị badge trên icon giỏ hàng khi trang vừa load.
+     */
+    @GetMapping("/count")
+    @ResponseBody
+    public Map<String, Object> cartCount(HttpSession session) {
+        String customerId = getCurrentCustomerId().orElse(null);
+        int count;
+        if (customerId == null) {
+            count = getGuestCart(session).values().stream().mapToInt(Integer::intValue).sum();
+        } else {
+            count = cartService.getCartDetails(customerId).stream()
+                    .mapToInt(CartDetail::getQuantity).sum();
+        }
+        return Map.of("cartCount", count);
     }
 
     @PostMapping("/update")

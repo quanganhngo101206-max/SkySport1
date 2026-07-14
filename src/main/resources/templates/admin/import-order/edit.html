@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Sửa phiếu nhập</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible">
+        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="card-sky">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-edit icon"></i>
+                Sửa phiếu nhập <span th:text="${order.id}"></span>
+            </div>
+            <div class="card-actions">
+                <a th:href="@{/admin/import-orders/{id}(id=${order.id})}" class="btn-sky btn-sky-secondary">
+                    ← Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <form th:action="@{/admin/import-orders/edit/{id}(id=${order.id})}" method="post" id="importOrderForm">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-sky-label required">Nhà cung cấp</label>
+                        <select class="form-sky" name="supplierId" required>
+                            <option value="">-- Chọn supplier --</option>
+                            <option th:each="sp : ${suppliers}" th:value="${sp.id}" th:text="${sp.name}"
+                                    th:selected="${order.supplier != null and order.supplier.id == sp.id}"></option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-sky-label">Ghi chú</label>
+                        <input class="form-sky" type="text" name="note" th:value="${order.note}" placeholder="(tuỳ chọn)"/>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-sky-label mb-0">Chi tiết hàng nhập</label>
+                        <button type="button" class="btn-sky btn-sky-secondary btn-sm" onclick="addRow()">
+                            <i class="fas fa-plus"></i> Thêm dòng
+                        </button>
+                    </div>
+
+                    <table class="table-sky table align-middle" id="detailTable">
+                        <thead>
+                        <tr>
+                            <th style="min-width: 280px;">Biến thể sản phẩm</th>
+                            <th style="width: 120px;">Số lượng</th>
+                            <th style="width: 160px;">Giá nhập</th>
+                            <th style="width: 60px;"></th>
+                        </tr>
+                        </thead>
+                        <tbody id="detailBody">
+                        <!-- Các dòng có sẵn của phiếu, render từ server -->
+                        <tr th:each="d, iter : ${details}" th:id="'existing-row-' + ${iter.index}">
+                            <td>
+                                <select class="form-sky" name="productDetailIds" required>
+                                    <option value="">-- Chọn biến thể --</option>
+                                    <option th:each="pd : ${productDetails}"
+                                            th:value="${pd.id}"
+                                            th:selected="${d.productDetail != null and pd.id == d.productDetail.id}"
+                                            th:text="${pd.product.name + ' - ' + (pd.size != null ? pd.size.name : '') + ' / ' + (pd.color != null ? pd.color.name : '') + ' (' + pd.sku + ')'}">
+                                    </option>
+                                </select>
+                            </td>
+                            <td><input class="form-sky" type="number" name="quantities" min="1" th:value="${d.quantity}" required></td>
+                            <td><input class="form-sky" type="number" name="importPrices" min="0" step="0.01" th:value="${d.importPrice}" required></td>
+                            <td>
+                                <button type="button" class="btn-sky btn-sky-danger btn-sm" onclick="this.closest('tr').remove()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <div id="emptyHint" class="empty-state" style="padding: 16px; display:none;">
+                        <div class="desc">Chưa có dòng nào. Bấm "Thêm dòng" để bắt đầu.</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn-sky btn-sky-primary">
+                        <i class="fas fa-save"></i>
+                        Lưu thay đổi
+                    </button>
+                    <a th:href="@{/admin/import-orders/{id}(id=${order.id})}" class="btn-sky btn-sky-secondary">
+                        Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- dữ liệu biến thể sản phẩm cho dropdown, render sẵn từ server -->
+    <select id="productDetailOptionsTemplate" style="display:none;">
+        <option th:each="pd : ${productDetails}"
+                th:value="${pd.id}"
+                th:text="${pd.product.name + ' - ' + (pd.size != null ? pd.size.name : '') + ' / ' + (pd.color != null ? pd.color.name : '') + ' (' + pd.sku + ')'}">
+        </option>
+    </select>
+
+</div>
+<th:block th:fragment="scripts">
+    <script th:inline="javascript">
+        let rowIndex = 0;
+
+        function addRow() {
+            const tbody = document.getElementById('detailBody');
+            const optionsHtml = document.getElementById('productDetailOptionsTemplate').innerHTML;
+            const idx = 'new-' + (rowIndex++);
+
+            const tr = document.createElement('tr');
+            tr.id = 'row-' + idx;
+            tr.innerHTML =
+                '<td><select class="form-sky" name="productDetailIds" required>' +
+                '<option value="">-- Chọn biến thể --</option>' + optionsHtml + '</select></td>' +
+                '<td><input class="form-sky" type="number" name="quantities" min="1" value="1" required></td>' +
+                '<td><input class="form-sky" type="number" name="importPrices" min="0" step="0.01" required></td>' +
+                '<td><button type="button" class="btn-sky btn-sky-danger btn-sm" onclick="this.closest(\'tr\').remove()">' +
+                '<i class="fas fa-trash"></i></button></td>';
+
+            tbody.appendChild(tr);
+        }
+
+        document.getElementById('importOrderForm').addEventListener('submit', function (e) {
+            if (document.getElementById('detailBody').children.length === 0) {
+                e.preventDefault();
+                alert('Vui lòng có ít nhất 1 dòng hàng nhập trước khi lưu.');
+            }
+        });
+    </script>
+</th:block>
+</body>
+</html>

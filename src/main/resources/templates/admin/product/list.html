@@ -57,6 +57,7 @@
                 <table id="productTable" class="table-sky">
                     <thead>
                     <tr>
+                        <th style="width:64px;">Ảnh</th>
                         <th>ID</th>
                         <th>Tên sản phẩm</th>
                         <th>Thương hiệu</th>
@@ -68,6 +69,13 @@
                     </thead>
                     <tbody>
                     <tr th:each="product : ${products}">
+                        <td>
+                            <img th:if="${thumbnails.get(product.id)} != null" th:src="${thumbnails.get(product.id)}"
+                                 alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;"/>
+                            <i th:unless="${thumbnails.get(product.id)} != null" class="fas fa-tshirt"
+                               style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+                                      border-radius:6px;background:var(--bg-hover);color:var(--text-muted);"></i>
+                        </td>
                         <td th:text="${product.id}">SP001</td>
                         <td th:text="${product.name}">Tên sản phẩm</td>
                         <td th:text="${product.brand?.name}">Nike</td>

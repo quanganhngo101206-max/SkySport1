@@ -28,8 +28,18 @@
 
                 <!-- ===== LEFT: IMAGE ===== -->
                 <div class="col-md-5">
-                    <div class="ss-card" style="padding:2rem;text-align:center;min-height:350px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fas fa-tshirt" style="font-size:8rem;color:#333;"></i>
+                    <div class="ss-card" style="padding:0;text-align:center;min-height:350px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                        <img th:if="${mainImage != null}" id="mainProductImage"
+                             th:src="${mainImage.imageUrl}" alt=""
+                             style="width:100%;height:350px;object-fit:cover;"/>
+                        <i th:if="${mainImage == null}" class="fas fa-tshirt" style="font-size:8rem;color:#333;"></i>
+                    </div>
+                    <div th:if="${#lists.size(images) > 1}" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                        <img th:each="img : ${images}" th:src="${img.imageUrl}" alt=""
+                             onclick="document.getElementById('mainProductImage').src = this.src;"
+                             style="width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;
+                                    border:2px solid var(--line);opacity:.75;transition:.2s;"
+                             onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.75"/>
                     </div>
                 </div>
 

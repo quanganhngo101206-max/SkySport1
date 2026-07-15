@@ -99,8 +99,10 @@
                 <span class="kit-tag">Hot</span>
 
                 <a th:href="@{/san-pham/{slug}(slug=${product.slug})}" style="display:block;">
-                    <div style="background:var(--panel-2);height:220px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);">
-                        <i class="fas fa-tshirt" style="font-size:4.5rem;color:#333;"></i>
+                    <div style="background:var(--panel-2);height:220px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);overflow:hidden;">
+                        <img th:if="${thumbnails.get(product.id)} != null" th:src="${thumbnails.get(product.id)}"
+                             alt="" style="width:100%;height:100%;object-fit:cover;"/>
+                        <i th:unless="${thumbnails.get(product.id)} != null" class="fas fa-tshirt" style="font-size:4.5rem;color:#333;"></i>
                     </div>
                 </a>
 

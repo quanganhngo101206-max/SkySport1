@@ -14,5 +14,9 @@ public interface ImageRepository extends JpaRepository<Image, Integer> {
 
     Optional<Image> findByProductIdAndIsThumbnailTrue(String productId);
 
+    // Dùng cho trang danh sách sản phẩm — lấy ảnh đại diện của nhiều sản
+    // phẩm cùng lúc (tránh N+1 query khi list có nhiều dòng)
+    List<Image> findByProductIdInAndIsThumbnailTrue(List<String> productIds);
+
     void deleteByProductId(String productId);
 }

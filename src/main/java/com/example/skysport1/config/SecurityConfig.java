@@ -136,6 +136,7 @@ public class SecurityConfig {
                                 "/login", "/dang-ky",
                                 "/403", "/404",
                                 "/css/**", "/js/**", "/images/**", "/dist/**", "/plugins/**",
+                                "/uploads/**",
                                 "/guest/**"
                         ).permitAll()
                         // Giỏ hàng/checkout: cho phép khách vãng lai (chưa đăng nhập) và

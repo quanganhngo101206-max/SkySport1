@@ -9,6 +9,7 @@ import com.example.skysport1.repository.BrandRepository;
 import com.example.skysport1.repository.CategoryRepository;
 import com.example.skysport1.service.AccountService;
 import com.example.skysport1.service.CustomerService;
+import com.example.skysport1.service.ImageService;
 import com.example.skysport1.service.ProductService;
 import com.example.skysport1.service.WishlistService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,6 +39,7 @@ public class HomeController {
     private final WishlistService wishlistService;
     private final AccountService accountService;
     private final CustomerService customerService;
+    private final ImageService imageService;
 
     /**
      * customerId của người đang đăng nhập (customer), null nếu là guest
@@ -61,7 +64,10 @@ public class HomeController {
         List<Product> products = productService.findAllActive();
         // Method này đã dùng fetch join để load brand, category, productDetails
 
-        model.addAttribute("featuredProducts", products.stream().limit(8).toList());
+        List<Product> featured = products.stream().limit(8).toList();
+        model.addAttribute("featuredProducts", featured);
+        model.addAttribute("thumbnails", imageService.findThumbnailUrlsByProductIds(
+                featured.stream().map(Product::getId).toList()));
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("brands", brandRepository.findAll());
         return "home";
@@ -84,6 +90,8 @@ public class HomeController {
             products = productService.findAllActive();
         }
         model.addAttribute("products", products);
+        model.addAttribute("thumbnails", imageService.findThumbnailUrlsByProductIds(
+                products.stream().map(Product::getId).toList()));
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("brands", brandRepository.findAll());
         model.addAttribute("wishlistProductIds", wishlistService.findProductIdsInWishlist(getCurrentCustomerId()));
@@ -99,6 +107,12 @@ public class HomeController {
         var details = productService.findDetailsByProductId(product.getId());
         model.addAttribute("product", product);
         model.addAttribute("productDetails", details);
+        List<com.example.skysport1.entity.Image> images = imageService.findByProductId(product.getId());
+        model.addAttribute("images", images);
+        model.addAttribute("mainImage", images.stream()
+                .filter(i -> Boolean.TRUE.equals(i.getIsThumbnail()))
+                .findFirst()
+                .orElse(images.isEmpty() ? null : images.get(0)));
 
 //         Danh sách màu/size DUY NHẤT để vẽ swatch/button — trước đây vòng
 //         lặp chạy trực tiếp trên productDetails (mỗi dòng = 1 tổ hợp

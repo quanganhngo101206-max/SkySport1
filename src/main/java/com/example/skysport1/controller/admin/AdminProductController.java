@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ public class AdminProductController {
     private final SizeService       sizeService;
     private final ColorService      colorService;
     private final IdGenerator       idGenerator;
+    private final ImageService      imageService;
 
     // ============================================================
     // PRODUCT LIST
@@ -62,6 +64,8 @@ public class AdminProductController {
         }
 
         model.addAttribute("products",   products);
+        model.addAttribute("thumbnails", imageService.findThumbnailUrlsByProductIds(
+                products.stream().map(Product::getId).toList()));
         model.addAttribute("brands",     brandService.findAll());
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("keyword",    keyword);
@@ -312,9 +316,56 @@ public class AdminProductController {
         model.addAttribute("sizes",      sizeService.findAll());
         model.addAttribute("colors",     colorService.findAll());
         model.addAttribute("newDetail",  new ProductDetail());
+        model.addAttribute("images",     imageService.findByProductId(id));
         model.addAttribute("pageContent", "admin/product/detail");
         model.addAttribute("title", "Biến thể sản phẩm");
         return "layouts/adminlte/layout";
+    }
+
+    // ============================================================
+    // ẢNH SẢN PHẨM
+    // ============================================================
+
+    @PostMapping("/{id}/images/upload")
+    public String uploadImages(@PathVariable String id,
+                               @RequestParam(value = "images", required = false) List<MultipartFile> images,
+                               RedirectAttributes ra) {
+        try {
+            if (images == null || images.isEmpty() || images.stream().allMatch(MultipartFile::isEmpty)) {
+                ra.addFlashAttribute("error", "Vui lòng chọn ít nhất 1 ảnh để upload");
+            } else {
+                imageService.uploadImages(id, images);
+                ra.addFlashAttribute("success", "Đã upload ảnh thành công");
+            }
+        } catch (Exception e) {
+            log.error("Lỗi upload ảnh sản phẩm {}: {}", id, e.getMessage(), e);
+            ra.addFlashAttribute("error", "Lỗi khi upload ảnh: " + e.getMessage());
+        }
+        return "redirect:/admin/products/" + id + "/details";
+    }
+
+    @PostMapping("/{id}/images/{imageId}/delete")
+    public String deleteImage(@PathVariable String id, @PathVariable Integer imageId, RedirectAttributes ra) {
+        try {
+            imageService.deleteImage(imageId);
+            ra.addFlashAttribute("success", "Đã xoá ảnh");
+        } catch (Exception e) {
+            log.error("Lỗi xoá ảnh {}: {}", imageId, e.getMessage(), e);
+            ra.addFlashAttribute("error", "Lỗi khi xoá ảnh: " + e.getMessage());
+        }
+        return "redirect:/admin/products/" + id + "/details";
+    }
+
+    @PostMapping("/{id}/images/{imageId}/set-thumbnail")
+    public String setThumbnailImage(@PathVariable String id, @PathVariable Integer imageId, RedirectAttributes ra) {
+        try {
+            imageService.setThumbnail(imageId);
+            ra.addFlashAttribute("success", "Đã đặt ảnh đại diện");
+        } catch (Exception e) {
+            log.error("Lỗi đặt ảnh đại diện {}: {}", imageId, e.getMessage(), e);
+            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/products/" + id + "/details";
     }
 
     @PostMapping("/{productId}/details/save")
